@@ -1,0 +1,816 @@
+"use client";
+
+import dynamic from "next/dynamic";
+import { useMemo } from "react";
+import {
+  Activity,
+  BatteryCharging,
+  ChartNoAxesCombined,
+  CloudSun,
+  Leaf,
+  MapPin,
+  PanelTop,
+  RefreshCcw,
+  Sprout,
+  Sun,
+} from "lucide-react";
+
+import IrradianceChart from "@/components/charts/IrradianceChart";
+import SpatialDLIHeatmap from "@/components/charts/SpatialDLIHeatmap";
+import WeatherConnectionCard from "@/components/dashboard/WeatherConnectionCard";
+import { CROP_PROFILES } from "@/lib/simulation/crops";
+import { runSimulation } from "@/lib/simulation/engine";
+import { useWeather } from "@/lib/weather/useWeather";
+import { useSimulationStore } from "@/store/useSimulationStore";
+import {
+  CropId,
+  TrackingMode,
+} from "@/types/simulation";
+
+const AgrivoltaicScene = dynamic(
+  () => import("@/components/twin/AgrivoltaicScene"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="scene-loading">
+        Preparing the three-dimensional farm…
+      </div>
+    ),
+  },
+);
+
+interface NumericInputProps {
+  label: string;
+  value: number;
+  min?: number;
+  max?: number;
+  step?: number;
+  unit?: string;
+  onChange: (value: number) => void;
+}
+
+function NumericInput({
+  label,
+  value,
+  min,
+  max,
+  step = 1,
+  unit,
+  onChange,
+}: NumericInputProps) {
+  return (
+    <label className="field">
+      <span>{label}</span>
+
+      <div className="input-with-unit">
+        <input
+          type="number"
+          value={value}
+          min={min}
+          max={max}
+          step={step}
+          onChange={(event) =>
+            onChange(Number(event.target.value))
+          }
+        />
+
+        {unit && <small>{unit}</small>}
+      </div>
+    </label>
+  );
+}
+
+interface MetricCardProps {
+  title: string;
+  value: string;
+  description: string;
+  icon: React.ReactNode;
+  status?: "good" | "warning" | "neutral";
+}
+
+function MetricCard({
+  title,
+  value,
+  description,
+  icon,
+  status = "neutral",
+}: MetricCardProps) {
+  return (
+    <article className={`metric-card ${status}`}>
+      <div className="metric-icon">{icon}</div>
+
+      <div>
+        <p>{title}</p>
+        <strong>{value}</strong>
+        <small>{description}</small>
+      </div>
+    </article>
+  );
+}
+
+export default function Home() {
+  const configuration = useSimulationStore(
+    (state) => state.configuration,
+  );
+
+  const selectedHour = useSimulationStore(
+    (state) => state.selectedHour,
+  );
+
+  const updateSite = useSimulationStore(
+    (state) => state.updateSite,
+  );
+
+  const updatePV = useSimulationStore(
+    (state) => state.updatePV,
+  );
+
+  const setCrop = useSimulationStore(
+    (state) => state.setCrop,
+  );
+
+  const setTrackingMode = useSimulationStore(
+    (state) => state.setTrackingMode,
+  );
+
+  const setSelectedHour = useSimulationStore(
+    (state) => state.setSelectedHour,
+  );
+
+  const setSimulationDate = useSimulationStore(
+    (state) => state.setSimulationDate,
+  );
+
+  const resetConfiguration = useSimulationStore(
+    (state) => state.resetConfiguration,
+  );
+
+  const {
+    weather,
+    loading: weatherLoading,
+    error: weatherError,
+    reload: reloadWeather,
+  } = useWeather({
+    latitude: configuration.site.latitude,
+    longitude: configuration.site.longitude,
+    date: configuration.simulationDate,
+  });
+
+  const results = useMemo(
+    () => runSimulation(configuration, weather),
+    [configuration, weather],
+  );
+
+  const selectedCrop =
+    CROP_PROFILES.find(
+      (crop) => crop.id === configuration.cropId,
+    ) ?? CROP_PROFILES[0];
+
+  const dliStatus: "good" | "warning" =
+    results.cropDLI >= selectedCrop.minimumDLI
+      ? "good"
+      : "warning";
+
+  const cropYieldStatus: "good" | "warning" =
+    results.estimatedCropYield >= 85
+      ? "good"
+      : "warning";
+
+  const landEquivalentStatus: "good" | "warning" =
+    results.landEquivalentRatio > 1
+      ? "good"
+      : "warning";
+
+  const currentWeatherPoint =
+    weather?.hourly[selectedHour] ?? null;
+
+  return (
+    <main>
+      <header className="topbar">
+        <div className="brand">
+          <div className="brand-icon">
+            <Sun size={25} />
+            <Leaf size={17} />
+          </div>
+
+          <div>
+            <h1>AgriTwin</h1>
+            <p>Agrivoltaic Digital Twin</p>
+          </div>
+        </div>
+
+        <div className="header-status">
+          <span className="status-dot" />
+
+          {weather
+            ? "Weather-connected simulation"
+            : "Simulation mode"}
+
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={resetConfiguration}
+          >
+            <RefreshCcw size={15} />
+            Reset
+          </button>
+        </div>
+      </header>
+
+      <div className="app-shell">
+        <aside className="configuration-panel">
+          <section className="panel-heading">
+            <div>
+              <h2>System configuration</h2>
+
+              <p>
+                Adjust the physical twin and simulation inputs.
+              </p>
+            </div>
+          </section>
+
+          <section className="form-section">
+            <h3>
+              <MapPin size={17} />
+              Site
+            </h3>
+
+            <label className="field">
+              <span>Site name</span>
+
+              <input
+                type="text"
+                value={configuration.site.name}
+                onChange={(event) =>
+                  updateSite({
+                    name: event.target.value,
+                  })
+                }
+              />
+            </label>
+
+            <div className="form-grid">
+              <NumericInput
+                label="Latitude"
+                value={configuration.site.latitude}
+                min={-90}
+                max={90}
+                step={0.0001}
+                onChange={(latitude) =>
+                  updateSite({ latitude })
+                }
+              />
+
+              <NumericInput
+                label="Longitude"
+                value={configuration.site.longitude}
+                min={-180}
+                max={180}
+                step={0.0001}
+                onChange={(longitude) =>
+                  updateSite({ longitude })
+                }
+              />
+            </div>
+
+            <label className="field">
+              <span>Simulation date</span>
+
+              <input
+                type="date"
+                value={configuration.simulationDate}
+                onChange={(event) =>
+                  setSimulationDate(event.target.value)
+                }
+              />
+            </label>
+          </section>
+
+          <section className="form-section">
+            <h3>
+              <PanelTop size={17} />
+              PV array
+            </h3>
+
+            <div className="form-grid">
+              <NumericInput
+                label="Panel rows"
+                value={configuration.pv.numberOfRows}
+                min={1}
+                max={10}
+                onChange={(numberOfRows) =>
+                  updatePV({ numberOfRows })
+                }
+              />
+
+              <NumericInput
+                label="Modules per row"
+                value={configuration.pv.modulesPerRow}
+                min={1}
+                max={20}
+                onChange={(modulesPerRow) =>
+                  updatePV({ modulesPerRow })
+                }
+              />
+
+              <NumericInput
+                label="Row spacing"
+                value={configuration.pv.rowSpacing}
+                min={2}
+                max={12}
+                step={0.5}
+                unit="m"
+                onChange={(rowSpacing) =>
+                  updatePV({ rowSpacing })
+                }
+              />
+
+              <NumericInput
+                label="Panel height"
+                value={configuration.pv.panelHeight}
+                min={0.5}
+                max={8}
+                step={0.25}
+                unit="m"
+                onChange={(panelHeight) =>
+                  updatePV({ panelHeight })
+                }
+              />
+
+              <NumericInput
+                label="Tilt"
+                value={configuration.pv.tilt}
+                min={0}
+                max={80}
+                unit="°"
+                onChange={(tilt) =>
+                  updatePV({ tilt })
+                }
+              />
+
+              <NumericInput
+                label="Azimuth"
+                value={configuration.pv.azimuth}
+                min={0}
+                max={360}
+                unit="°"
+                onChange={(azimuth) =>
+                  updatePV({ azimuth })
+                }
+              />
+
+              <NumericInput
+                label="Module power"
+                value={configuration.pv.modulePower}
+                min={100}
+                max={800}
+                step={10}
+                unit="W"
+                onChange={(modulePower) =>
+                  updatePV({ modulePower })
+                }
+              />
+
+              <NumericInput
+                label="System efficiency"
+                value={Number(
+                  (
+                    configuration.pv.systemEfficiency *
+                    100
+                  ).toFixed(0),
+                )}
+                min={50}
+                max={100}
+                unit="%"
+                onChange={(percentage) =>
+                  updatePV({
+                    systemEfficiency:
+                      percentage / 100,
+                  })
+                }
+              />
+              <NumericInput
+                label="Ground albedo"
+                value={configuration.pv.groundAlbedo}
+                min={0}
+                max={1}
+                step={0.05}
+                onChange={(groundAlbedo) => updatePV({ groundAlbedo })}
+              />
+              <NumericInput
+                label="Tracker limit"
+                value={configuration.pv.maximumTrackerAngle}
+                min={10}
+                max={90}
+                step={5}
+                unit="°"
+                onChange={(maximumTrackerAngle) => updatePV({ maximumTrackerAngle })}
+              />
+            </div>
+
+            <label className="field">
+              <span>Tracking strategy</span>
+
+              <select
+                value={configuration.pv.trackingMode}
+                onChange={(event) =>
+                  setTrackingMode(
+                    event.target.value as TrackingMode,
+                  )
+                }
+              >
+                <option value="fixed">
+                  Fixed tilt
+                </option>
+
+                <option value="standard">
+                  Standard tracking
+                </option>
+
+                <option value="reverse">
+                  Reverse tracking
+                </option>
+
+                <option value="custom">
+                  Custom adaptive tracking
+                </option>
+              </select>
+            </label>
+          </section>
+
+          <section className="form-section">
+            <h3>
+              <Sprout size={17} />
+              Crop
+            </h3>
+
+            <label className="field">
+              <span>Crop type</span>
+
+              <select
+                value={configuration.cropId}
+                onChange={(event) =>
+                  setCrop(
+                    event.target.value as CropId,
+                  )
+                }
+              >
+                {CROP_PROFILES.map((crop) => (
+                  <option
+                    key={crop.id}
+                    value={crop.id}
+                  >
+                    {crop.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <div className="crop-information">
+              <strong>{selectedCrop.name}</strong>
+
+              <em>
+                {selectedCrop.scientificName}
+              </em>
+
+              <span>
+                Minimum DLI:{" "}
+                {selectedCrop.minimumDLI} mol/m²/day
+              </span>
+
+              <span>
+                Optimum DLI:{" "}
+                {selectedCrop.optimumDLI} mol/m²/day
+              </span>
+
+              <span>
+                Shade tolerance:{" "}
+                {selectedCrop.shadeTolerance}
+              </span>
+            </div>
+          </section>
+        </aside>
+
+        <section className="workspace">
+          <div className="workspace-heading">
+            <div>
+              <span className="eyebrow">
+                Virtual environment
+              </span>
+
+              <h2>{configuration.site.name}</h2>
+
+              <p>
+                {configuration.site.latitude.toFixed(4)}°,{" "}
+                {configuration.site.longitude.toFixed(4)}°
+              </p>
+            </div>
+
+            <div className="capacity-badge">
+              <BatteryCharging size={18} />
+              {results.installedCapacityKW} kWp
+            </div>
+          </div>
+
+          <WeatherConnectionCard
+            weather={weather}
+            loading={weatherLoading}
+            error={weatherError}
+            selectedHour={selectedHour}
+            onRefresh={reloadWeather}
+          />
+
+          <div className="scene-card">
+            <AgrivoltaicScene />
+
+            <div className="time-control">
+              <div>
+                <CloudSun size={18} />
+
+                <span>Time of day</span>
+
+                <strong>
+                  {selectedHour
+                    .toString()
+                    .padStart(2, "0")}
+                  :00
+                </strong>
+              </div>
+
+              <input
+                aria-label="Time of day"
+                type="range"
+                min={6}
+                max={18}
+                step={1}
+                value={selectedHour}
+                onChange={(event) =>
+                  setSelectedHour(
+                    Number(event.target.value),
+                  )
+                }
+              />
+
+              {currentWeatherPoint && (
+                <div>
+                  <span>
+                    GHI:{" "}
+                    {
+                      currentWeatherPoint.shortwaveRadiation
+                    }{" "}
+                    W/m²
+                  </span>
+
+                  <strong>
+                    {currentWeatherPoint.temperature.toFixed(
+                      1,
+                    )}
+                    °C
+                  </strong>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <section className="metrics-grid">
+            <MetricCard
+              title="PV energy"
+              value={`${results.dailyEnergyKWh} kWh/day`}
+              description={
+                results.dataSource === "open-meteo"
+                  ? "Weather-driven daily estimate"
+                  : "Synthetic fallback estimate"
+              }
+              icon={
+                <BatteryCharging size={21} />
+              }
+              status="good"
+            />
+
+            <MetricCard
+              title="Crop-level DLI"
+              value={`${results.cropDLI} mol/m²/day`}
+              description={`Minimum target: ${selectedCrop.minimumDLI}`}
+              icon={<Leaf size={21} />}
+              status={dliStatus}
+            />
+
+            <MetricCard
+              title="Crop yield index"
+              value={`${results.estimatedCropYield}%`}
+              description="Relative light-based estimate"
+              icon={<Activity size={21} />}
+              status={cropYieldStatus}
+            />
+
+            <MetricCard
+              title="Land equivalent ratio"
+              value={results.landEquivalentRatio.toFixed(
+                2,
+              )}
+              description={
+                results.landEquivalentRatio > 1
+                  ? "Combined land-use advantage"
+                  : "Configuration needs improvement"
+              }
+              icon={
+                <ChartNoAxesCombined size={21} />
+              }
+              status={landEquivalentStatus}
+            />
+          </section>
+
+          <section className="analysis-grid">
+            <article className="content-card chart-card">
+              <div className="card-title">
+                <div>
+                  <span className="eyebrow">
+                    Light distribution
+                  </span>
+
+                  <h3>Hourly irradiance</h3>
+                </div>
+
+                <Sun size={22} />
+              </div>
+
+              <IrradianceChart
+                data={results.hourly}
+              />
+            </article>
+
+            <article className="content-card summary-card">
+              <div className="card-title">
+                <div>
+                  <span className="eyebrow">
+                    Interpretation
+                  </span>
+
+                  <h3>
+                    Configuration summary
+                  </h3>
+                </div>
+              </div>
+
+              <dl>
+                <div>
+                  <dt>Ground coverage ratio</dt>
+
+                  <dd>
+                    {results.groundCoverageRatio}%
+                  </dd>
+                </div>
+
+                <div>
+                  <dt>Open-field DLI</dt>
+
+                  <dd>
+                    {results.openFieldDLI}{" "}
+                    mol/m²/day
+                  </dd>
+                </div>
+
+                <div>
+                  <dt>Crop light reduction</dt>
+
+                  <dd>
+                    {results.cropLightReduction}%
+                  </dd>
+                </div>
+
+                <div>
+                  <dt>DLI target achievement</dt>
+
+                  <dd>
+                    {results.dliAchievement}%
+                  </dd>
+                </div>
+
+                {weather && (
+                  <>
+                    <div>
+                      <dt>Daily GHI</dt>
+
+                      <dd>
+                        {weather.summary.dailyGHI.toFixed(
+                          2,
+                        )}{" "}
+                        kWh/m²
+                      </dd>
+                    </div>
+
+                    <div>
+                      <dt>Maximum wind</dt>
+
+                      <dd>
+                        {weather.summary.maximumWindSpeed.toFixed(
+                          1,
+                        )}{" "}
+                        km/h
+                      </dd>
+                    </div>
+
+                    <div>
+                      <dt>Precipitation</dt>
+
+                      <dd>
+                        {weather.summary.totalPrecipitation.toFixed(
+                          1,
+                        )}{" "}
+                        mm
+                      </dd>
+                    </div>
+                  </>
+                )}
+              </dl>
+
+              <div
+                className={`recommendation ${dliStatus}`}
+              >
+                <strong>
+                  {dliStatus === "good"
+                    ? "Crop light target satisfied"
+                    : "Insufficient crop light"}
+                </strong>
+
+                <p>
+                  {dliStatus === "good"
+                    ? "This preliminary configuration provides enough light for the selected crop."
+                    : "Increase row spacing, increase panel height, or use reverse/custom tracking for more hours."}
+                </p>
+              </div>
+            </article>
+          </section>
+
+          <section className="content-card engineering-table-card">
+            <div className="card-title">
+              <div>
+                <span className="eyebrow">Phase 5 engineering model</span>
+                <h3>Hourly solar, tracker and POA results</h3>
+              </div>
+            </div>
+            <div className="engineering-table-wrap">
+              <table className="engineering-table">
+                <thead><tr>
+                  <th>Time</th><th>Altitude</th><th>Azimuth</th><th>Tracker</th>
+                  <th>AOI</th><th>POA</th><th>PV power</th><th>Crop light</th><th>Shade</th>
+                </tr></thead>
+                <tbody>
+                  {results.hourly.map((point) => (
+                    <tr key={point.hour} className={Number(point.hour.slice(0, 2)) === selectedHour ? "selected" : ""}>
+                      <td>{point.hour}</td><td>{point.solarAltitude}°</td><td>{point.solarAzimuth}°</td>
+                      <td>{point.trackerAngle}°</td><td>{point.angleOfIncidence}°</td>
+                      <td>{point.poaIrradiance} W/m²</td><td>{point.pvPower} kW</td>
+                      <td>{point.cropIrradiance} W/m²</td><td>{point.shadePercentage}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section className="content-card spatial-light-card">
+            <div className="card-title">
+              <div>
+                <span className="eyebrow">Phase 6 spatial crop-light model</span>
+                <h3>Ground-level daily light integral</h3>
+              </div>
+            </div>
+            <div className="spatial-light-layout">
+              <SpatialDLIHeatmap data={results.spatialLight} selectedHour={selectedHour} />
+              <dl className="spatial-statistics">
+                <div><dt>Minimum DLI</dt><dd>{results.spatialLight.minimumDLI} mol/m²/day</dd></div>
+                <div><dt>Mean DLI</dt><dd>{results.spatialLight.meanDLI} mol/m²/day</dd></div>
+                <div><dt>Maximum DLI</dt><dd>{results.spatialLight.maximumDLI} mol/m²/day</dd></div>
+                <div><dt>Spatial CV</dt><dd>{results.spatialLight.coefficientOfVariation}%</dd></div>
+              </dl>
+            </div>
+            <div className="zone-statistics">
+              {results.spatialLight.zoneSummaries.map((zone) => (
+                <article key={zone.zone}>
+                  <strong>{zone.label}</strong>
+                  <span>{zone.meanDLI} mol/m²/day</span>
+                  <small>{zone.meanRelativeDLI}% of open field • {zone.cellCount} cells</small>
+                </article>
+              ))}
+            </div>
+            <p className="spatial-model-note">
+              Each cell integrates hourly light after geometric row-shadow projection. This is a design-stage estimate and requires PAR-sensor validation.
+            </p>
+          </section>
+
+          <footer className="model-notice">
+            Radiation source:{" "}
+            <strong>
+              {results.dataSource === "open-meteo"
+                ? "Open-Meteo location-specific weather"
+                : "synthetic fallback curve"}
+            </strong>
+            . Crop response and field-sensor calibration
+            remain preliminary.
+          </footer>
+        </section>
+      </div>
+    </main>
+  );
+}
