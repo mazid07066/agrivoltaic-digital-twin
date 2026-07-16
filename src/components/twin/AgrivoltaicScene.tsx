@@ -131,7 +131,7 @@ function CropRows() {
   );
 }
 
-function Farm() {
+function Farm({ trackerAngleOverride }: { trackerAngleOverride?: number }) {
   const configuration = useSimulationStore(
     (state) => state.configuration,
   );
@@ -157,6 +157,7 @@ function Farm() {
   const surface = getSurfaceOrientation(
     pv.trackingMode, solar, pv.tilt, pv.azimuth, pv.maximumTrackerAngle,
   );
+  const displayedTrackerAngle = trackerAngleOverride ?? surface.trackerAngle;
 
   return (
     <>
@@ -196,7 +197,7 @@ function Farm() {
           key={`panel-row-${index}`}
           rowIndex={index}
           rowPosition={rowPosition}
-          trackerAngle={surface.trackerAngle}
+          trackerAngle={displayedTrackerAngle}
         />
       ))}
 
@@ -219,7 +220,7 @@ function Farm() {
   );
 }
 
-export default function AgrivoltaicScene() {
+export default function AgrivoltaicScene({ trackerAngle }: { trackerAngle?: number }) {
   const configuration = useSimulationStore((state) => state.configuration);
   const selectedHour = useSimulationStore((state) => state.selectedHour);
   const solar = useMemo(() => getSolarPosition(
@@ -239,7 +240,7 @@ export default function AgrivoltaicScene() {
         }}
       >
         <Suspense fallback={null}>
-          <Farm />
+          <Farm trackerAngleOverride={trackerAngle} />
           <OrbitControls
             makeDefault
             enableDamping

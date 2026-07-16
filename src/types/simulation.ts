@@ -33,6 +33,7 @@ export interface SiteConfiguration {
 }
 
 export interface PVConfiguration {
+  moduleProfileId: string;
   numberOfRows: number;
   modulesPerRow: number;
   moduleWidth: number;
@@ -46,6 +47,13 @@ export interface PVConfiguration {
   trackingMode: TrackingMode;
   groundAlbedo: number;
   maximumTrackerAngle: number;
+  moduleEfficiency: number;
+  moduleNOCT: number;
+  temperatureCoefficientPmax: number;
+  moduleVoc: number | null;
+  moduleVmpp: number | null;
+  moduleIsc: number | null;
+  moduleImpp: number | null;
 }
 
 export interface SimulationConfiguration {
@@ -72,6 +80,23 @@ export interface HourlySimulationPoint {
   poaSkyDiffuse: number;
   poaGroundReflected: number;
   poaIrradiance: number;
+  operatingMode: "fixed" | "standard" | "reverse";
+  moduleTemperature: number;
+  temperatureFactor: number;
+}
+
+export interface AdaptiveControllerResults {
+  enabled: boolean;
+  targetDLI: number;
+  predictedDLI: number;
+  targetSatisfied: boolean;
+  standardTrackingHours: number;
+  reverseTrackingHours: number;
+  schedule: Array<"standard" | "reverse">;
+  protectionBasis: "beneath-panel";
+  wholeFieldDLI: number;
+  protectedZoneDLI: number;
+  effectiveControllerTarget: number;
 }
 
 export interface SimulationResults {
@@ -87,6 +112,7 @@ export interface SimulationResults {
   dataSource: "synthetic" | "open-meteo";
   hourly: HourlySimulationPoint[];
   spatialLight: SpatialLightResults;
+  adaptiveController: AdaptiveControllerResults;
 }
 
 export interface SpatialLightCell {

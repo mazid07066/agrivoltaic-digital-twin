@@ -45,8 +45,9 @@ export function calculateSpatialLight(
       const shadowLength = pv.panelHeight / Math.max(Math.tan(altitude), 0.12);
       const shadowShiftX = -Math.sin(azimuth) * shadowLength;
       const shadowShiftZ = Math.cos(azimuth) * shadowLength;
+      const modeProjection = point.operatingMode === "reverse" ? 0.52 : point.operatingMode === "standard" ? 1.15 : 1;
       const projectedWidth = Math.max(
-        pv.moduleLength * Math.abs(Math.cos(point.surfaceTilt * Math.PI / 180)), 0.25,
+        pv.moduleLength * Math.abs(Math.cos(point.surfaceTilt * Math.PI / 180)) * modeProjection, 0.25,
       );
       const withinRowLength = Math.abs(x - shadowShiftX) <= arrayHalfLength;
       const shaded = withinRowLength && rowPositions.some(

@@ -20,6 +20,7 @@ import SpatialDLIHeatmap from "@/components/charts/SpatialDLIHeatmap";
 import WeatherConnectionCard from "@/components/dashboard/WeatherConnectionCard";
 import { CROP_PROFILES } from "@/lib/simulation/crops";
 import { runSimulation } from "@/lib/simulation/engine";
+import { getPVModuleProfile, PV_MODULE_MANUFACTURERS, PV_MODULE_PROFILES } from "@/lib/pv/moduleProfiles";
 import { useWeather } from "@/lib/weather/useWeather";
 import { useSimulationStore } from "@/store/useSimulationStore";
 import {
@@ -47,6 +48,7 @@ interface NumericInputProps {
   step?: number;
   unit?: string;
   onChange: (value: number) => void;
+  disabled?: boolean;
 }
 
 function NumericInput({
@@ -57,6 +59,7 @@ function NumericInput({
   step = 1,
   unit,
   onChange,
+  disabled = false,
 }: NumericInputProps) {
   return (
     <label className="field">
@@ -69,6 +72,7 @@ function NumericInput({
           min={min}
           max={max}
           step={step}
+          disabled={disabled}
           onChange={(event) =>
             onChange(Number(event.target.value))
           }
@@ -132,6 +136,7 @@ export default function Home() {
   const setTrackingMode = useSimulationStore(
     (state) => state.setTrackingMode,
   );
+  const setModuleProfile = useSimulationStore((state) => state.setModuleProfile);
 
   const setSelectedHour = useSimulationStore(
     (state) => state.setSelectedHour,
@@ -165,6 +170,7 @@ export default function Home() {
     CROP_PROFILES.find(
       (crop) => crop.id === configuration.cropId,
     ) ?? CROP_PROFILES[0];
+  const selectedModule = getPVModuleProfile(configuration.pv.moduleProfileId);
 
   const dliStatus: "good" | "warning" =
     results.cropDLI >= selectedCrop.minimumDLI
@@ -292,6 +298,39 @@ export default function Home() {
               PV array
             </h3>
 
+            <label className="field">
+              <span>PV module profile</span>
+              <select
+                value={configuration.pv.moduleProfileId}
+                onChange={(event) => setModuleProfile(event.target.value)}
+              >
+                {PV_MODULE_MANUFACTURERS.map((manufacturer) => (
+                  <optgroup key={manufacturer} label={manufacturer}>
+                    {PV_MODULE_PROFILES.filter((profile) => profile.manufacturer === manufacturer).map((profile) => (
+                      <option key={profile.id} value={profile.id}>
+                        {profile.model} · {profile.pmaxW} W · {profile.moduleType}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+            </label>
+
+            <div className="module-profile-card">
+              <strong>{selectedModule.manufacturer} {selectedModule.model}</strong>
+              <span>{selectedModule.series}</span>
+              <div className="module-profile-grid">
+                <span><b>{selectedModule.pmaxW} W</b> Pmax</span>
+                <span><b>{selectedModule.efficiencyPercent ?? "—"}%</b> efficiency</span>
+                <span><b>{selectedModule.cellTechnology}</b> cell</span>
+                <span><b>{selectedModule.moduleType}</b> module</span>
+                <span><b>{selectedModule.lengthM.toFixed(3)} × {selectedModule.widthM.toFixed(3)} m</b> size</span>
+                <span><b>{selectedModule.noctC}°C</b> NOCT/NMOT</span>
+                <span><b>{selectedModule.tempCoeffPmaxPercentPerC}%/°C</b> Pmax coefficient</span>
+                <span><b>{selectedModule.vmppV?.toFixed(2) ?? "—"} V / {selectedModule.imppA?.toFixed(2) ?? "—"} A</b> MPP</span>
+              </div>
+            </div>
+
             <div className="form-grid">
               <NumericInput
                 label="Panel rows"
@@ -366,6 +405,7 @@ export default function Home() {
                 max={800}
                 step={10}
                 unit="W"
+                disabled
                 onChange={(modulePower) =>
                   updatePV({ modulePower })
                 }
@@ -521,7 +561,7 @@ export default function Home() {
           />
 
           <div className="scene-card">
-            <AgrivoltaicScene />
+            <AgrivoltaicScene trackerAngle={results.hourly[selectedHour]?.trackerAngle} />
 
             <div className="time-control">
               <div>
@@ -743,6 +783,18 @@ export default function Home() {
           </section>
 
           <section className="content-card engineering-table-card">
+            {configuration.pv.trackingMode === "custom" && (
+              <div className={`adaptive-controller ${results.adaptiveController.targetSatisfied ? "satisfied" : "deficit"}`}>
+                <div><span className="eyebrow">Phase 7B protected-zone DLI controller</span>
+                  <h3>{results.adaptiveController.targetSatisfied ? "Crop-light target protected" : "Crop-light deficit remains"}</h3></div>
+                <dl>
+                  <div><dt>Target DLI</dt><dd>{results.adaptiveController.targetDLI} mol/m²/day</dd></div>
+                  <div><dt>Beneath-panel DLI</dt><dd>{results.adaptiveController.protectedZoneDLI} mol/m²/day</dd></div>
+                  <div><dt>Standard tracking</dt><dd>{results.adaptiveController.standardTrackingHours} h</dd></div>
+                  <div><dt>Reverse tracking</dt><dd>{results.adaptiveController.reverseTrackingHours} h</dd></div>
+                </dl>
+              </div>
+            )}
             <div className="card-title">
               <div>
                 <span className="eyebrow">Phase 5 engineering model</span>
@@ -752,15 +804,15 @@ export default function Home() {
             <div className="engineering-table-wrap">
               <table className="engineering-table">
                 <thead><tr>
-                  <th>Time</th><th>Altitude</th><th>Azimuth</th><th>Tracker</th>
-                  <th>AOI</th><th>POA</th><th>PV power</th><th>Crop light</th><th>Shade</th>
+                  <th>Time</th><th>Mode</th><th>Altitude</th><th>Azimuth</th><th>Tracker</th>
+                  <th>AOI</th><th>POA</th><th>Module temp.</th><th>PV power</th><th>Crop light</th><th>Shade</th>
                 </tr></thead>
                 <tbody>
                   {results.hourly.map((point) => (
                     <tr key={point.hour} className={Number(point.hour.slice(0, 2)) === selectedHour ? "selected" : ""}>
-                      <td>{point.hour}</td><td>{point.solarAltitude}°</td><td>{point.solarAzimuth}°</td>
+                      <td>{point.hour}</td><td>{point.operatingMode === "standard" ? "ST" : point.operatingMode === "reverse" ? "RT" : "Fixed"}</td><td>{point.solarAltitude}°</td><td>{point.solarAzimuth}°</td>
                       <td>{point.trackerAngle}°</td><td>{point.angleOfIncidence}°</td>
-                      <td>{point.poaIrradiance} W/m²</td><td>{point.pvPower} kW</td>
+                      <td>{point.poaIrradiance} W/m²</td><td>{point.moduleTemperature}°C</td><td>{point.pvPower} kW</td>
                       <td>{point.cropIrradiance} W/m²</td><td>{point.shadePercentage}%</td>
                     </tr>
                   ))}
