@@ -1,5 +1,4 @@
-"use client";
-import { useWeather } from "@/lib/weather/useWeather";
+﻿"use client";
 import { useState } from "react";
 import {
   CloudRain,
@@ -121,7 +120,7 @@ export default function WeatherTestPage() {
               <CloudSun size={18} />
             )}
 
-            {loading ? "Loading…" : "Load real weather"}
+            {loading ? "Loadingâ€¦" : "Load real weather"}
           </button>
         </div>
 
@@ -139,12 +138,12 @@ export default function WeatherTestPage() {
 
               <div>
                 <strong>
-                  {weather.summary.latitude.toFixed(4)}°,{" "}
-                  {weather.summary.longitude.toFixed(4)}°
+                  {weather.summary.latitude.toFixed(4)}Â°,{" "}
+                  {weather.summary.longitude.toFixed(4)}Â°
                 </strong>
 
                 <span>
-                  {weather.summary.date} •{" "}
+                  {weather.summary.date} â€¢{" "}
                   {weather.summary.timezone}
                 </span>
               </div>
@@ -155,7 +154,7 @@ export default function WeatherTestPage() {
                 <Sun size={23} />
                 <span>Daily GHI</span>
                 <strong>
-                  {weather.summary.dailyGHI.toFixed(2)} kWh/m²
+                  {weather.summary.dailyGHI.toFixed(2)} kWh/mÂ²
                 </strong>
               </article>
 
@@ -164,8 +163,8 @@ export default function WeatherTestPage() {
                 <span>Temperature</span>
                 <strong>
                   {weather.summary.minimumTemperature.toFixed(1)}
-                  –{weather.summary.maximumTemperature.toFixed(1)}
-                  °C
+                  â€“{weather.summary.maximumTemperature.toFixed(1)}
+                  Â°C
                 </strong>
               </article>
 
@@ -205,12 +204,12 @@ export default function WeatherTestPage() {
                   {weather.hourly.map((point) => (
                     <tr key={point.time}>
                       <td>{point.hour}</td>
-                      <td>{point.shortwaveRadiation} W/m²</td>
+                      <td>{point.shortwaveRadiation} W/mÂ²</td>
                       <td>
-                        {point.directNormalIrradiance} W/m²
+                        {point.directNormalIrradiance} W/mÂ²
                       </td>
-                      <td>{point.diffuseRadiation} W/m²</td>
-                      <td>{point.temperature}°C</td>
+                      <td>{point.diffuseRadiation} W/mÂ²</td>
+                      <td>{point.temperature}Â°C</td>
                       <td>{point.relativeHumidity}%</td>
                       <td>{point.cloudCover}%</td>
                       <td>{point.windSpeed} km/h</td>

@@ -1,4 +1,4 @@
-import { SimulationConfiguration, SimulationResults, TrackingMode } from "@/types/simulation";
+﻿import { SimulationConfiguration, SimulationResults, TrackingMode } from "@/types/simulation";
 import { WeatherResponse } from "@/types/weather";
 import { getCropProfile } from "./crops";
 import { angleOfIncidence, getSolarPosition, getSurfaceOrientation } from "./solarPosition";
@@ -166,7 +166,7 @@ export function runSimulation(
   )?.meanDLI ?? cropDLI;
   const dliAchievement = clamp(cropDLI / crop.optimumDLI * 100, 0, 130);
   const cropLightReduction = openFieldDLI > 0 ? clamp((1 - cropDLI / openFieldDLI) * 100, 0, 100) : 0;
-  let estimatedCropYield = cropDLI < crop.minimumDLI
+  const estimatedCropYield = cropDLI < crop.minimumDLI
     ? clamp(cropDLI / crop.minimumDLI * 85, 0, 85)
     : cropDLI <= crop.maximumDLI
       ? clamp(92 + (1 - Math.abs(cropDLI - crop.optimumDLI) / Math.max(crop.optimumDLI, 1)) * 8, 85, 100)
@@ -199,3 +199,4 @@ export function runSimulation(
     },
   };
 }
+
