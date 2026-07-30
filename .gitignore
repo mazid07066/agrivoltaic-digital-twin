@@ -40,3 +40,5 @@ Thumbs.db
 # Local archives
 *.zip
 AGRIVOLTAIC_PROJECT_DUMP.txt
+
+phase-8a-backup-*/

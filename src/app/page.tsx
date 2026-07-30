@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -22,7 +22,7 @@ import IrradianceChart from "@/components/charts/IrradianceChart";
 import SpatialDLIHeatmap from "@/components/charts/SpatialDLIHeatmap";
 import WeatherConnectionCard from "@/components/dashboard/WeatherConnectionCard";
 import { CROP_PROFILES } from "@/lib/simulation/crops";
-import { runSimulation } from "@/lib/simulation/engine";
+import { runLandAgrivoltaicSimulation, toLandSimulationConfiguration } from "@/lib/sites/adapters/landAgrivoltaic";
 import { getPVModuleProfile, PV_MODULE_MANUFACTURERS, PV_MODULE_PROFILES } from "@/lib/pv/moduleProfiles";
 import { useWeather } from "@/lib/weather/useWeather";
 import { useSimulationStore } from "@/store/useSimulationStore";
@@ -116,8 +116,13 @@ function MetricCard({
 }
 
 export default function Home() {
-  const configuration = useSimulationStore(
-    (state) => state.configuration,
+  const activeSite = useSimulationStore(
+    (state) => state.activeSite,
+  );
+
+  const configuration = useMemo(
+    () => toLandSimulationConfiguration(activeSite),
+    [activeSite],
   );
 
   const selectedHour = useSimulationStore(
@@ -165,8 +170,8 @@ export default function Home() {
   });
 
   const results = useMemo(
-    () => runSimulation(configuration, weather),
-    [configuration, weather],
+    () => runLandAgrivoltaicSimulation(activeSite, weather),
+    [activeSite, weather],
   );
 
   const selectedCrop =
@@ -239,6 +244,10 @@ export default function Home() {
 
     <div className="header-status">
       <span className="status-dot" />
+
+      <span className="header-status-text">
+        {activeSite.siteType.replaceAll("_", " ")} · {activeSite.dataMode}
+      </span>
 
       <span className="header-status-text">
         {weather
