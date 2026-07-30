@@ -65,6 +65,67 @@ export type Database = {
           },
         ]
       }
+      client_migration_receipts: {
+        Row: {
+          created_at: string
+          id: string
+          migration_key: string
+          project_id: string
+          site_id: string
+          site_version_id: string
+          source_client_site_id: string | null
+          source_schema_version: number
+          source_site_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          migration_key: string
+          project_id: string
+          site_id: string
+          site_version_id: string
+          source_client_site_id?: string | null
+          source_schema_version: number
+          source_site_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          migration_key?: string
+          project_id?: string
+          site_id?: string
+          site_version_id?: string
+          source_client_site_id?: string | null
+          source_schema_version?: number
+          source_site_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_migration_receipts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_migration_receipts_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_migration_receipts_site_version_id_fkey"
+            columns: ["site_version_id"]
+            isOneToOne: false
+            referencedRelation: "site_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       model_versions: {
         Row: {
           created_at: string
@@ -487,6 +548,7 @@ export type Database = {
         Row: {
           active_version_id: string | null
           archived_at: string | null
+          client_reference: string | null
           created_at: string
           data_mode: string
           id: string
@@ -499,6 +561,7 @@ export type Database = {
         Insert: {
           active_version_id?: string | null
           archived_at?: string | null
+          client_reference?: string | null
           created_at?: string
           data_mode?: string
           id?: string
@@ -511,6 +574,7 @@ export type Database = {
         Update: {
           active_version_id?: string | null
           archived_at?: string | null
+          client_reference?: string | null
           created_at?: string
           data_mode?: string
           id?: string
@@ -542,6 +606,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      bootstrap_first_agritwin_project: {
+        Args: {
+          p_migration_key: string
+          p_project_name: string
+          p_site_profile: Json
+        }
+        Returns: {
+          already_migrated: boolean
+          project_id: string
+          site_id: string
+          site_version_id: string
+        }[]
+      }
       can_edit_project: {
         Args: { target_project_id: string }
         Returns: boolean
