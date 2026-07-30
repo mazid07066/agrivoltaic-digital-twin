@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { createProjectRepository } from "@/lib/repositories/index.server";
-import { isSiteProfile } from "@/lib/sites/migrations";
+import { isFlatRoofSiteProfile, isLandAgrivoltaicSiteProfile } from "@/lib/sites/migrations";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 type RegistryAction =
   | "switch"
   | "create"
+  | "create-flat-roof"
   | "duplicate"
   | "rename"
   | "archive"
@@ -37,15 +38,51 @@ export async function POST(request: Request) {
       }
 
       case "create": {
-        if (!isSiteProfile(body.siteProfile)) {
-          throw new Error("A valid land SiteProfile is required.");
+        if (
+          !isLandAgrivoltaicSiteProfile(
+            body.siteProfile,
+          )
+        ) {
+          throw new Error(
+            "A valid land SiteProfile is required.",
+          );
         }
-        const result = await repository.createLandSite(
-          body.projectId ?? "",
-          body.name ?? "",
-          body.siteProfile,
-        );
-        return NextResponse.json({ ok: true, result });
+
+        const result =
+          await repository.createLandSite(
+            body.projectId ?? "",
+            body.name ?? "",
+            body.siteProfile,
+          );
+
+        return NextResponse.json({
+          ok: true,
+          result,
+        });
+      }
+
+      case "create-flat-roof": {
+        if (
+          !isFlatRoofSiteProfile(
+            body.siteProfile,
+          )
+        ) {
+          throw new Error(
+            "A valid flat-roof SiteProfile is required.",
+          );
+        }
+
+        const result =
+          await repository.createFlatRoofSite(
+            body.projectId ?? "",
+            body.name ?? "",
+            body.siteProfile,
+          );
+
+        return NextResponse.json({
+          ok: true,
+          result,
+        });
       }
 
       case "duplicate": {
