@@ -601,11 +601,51 @@ export type Database = {
           },
         ]
       }
+      user_workspace_preferences: {
+        Row: {
+          active_project_id: string | null
+          active_site_id: string | null
+          created_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active_project_id?: string | null
+          active_site_id?: string | null
+          created_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active_project_id?: string | null
+          active_site_id?: string | null
+          created_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_workspace_preferences_active_project_id_fkey"
+            columns: ["active_project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_workspace_preferences_active_site_id_fkey"
+            columns: ["active_site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      archive_site: { Args: { p_site_id: string }; Returns: Json }
       bootstrap_first_agritwin_project: {
         Args: {
           p_migration_key: string
@@ -623,9 +663,38 @@ export type Database = {
         Args: { target_project_id: string }
         Returns: boolean
       }
+      create_land_site: {
+        Args: { p_name: string; p_project_id: string; p_source_profile: Json }
+        Returns: Json
+      }
+      duplicate_site: {
+        Args: { p_name: string; p_site_id: string }
+        Returns: Json
+      }
       is_project_member: {
         Args: { target_project_id: string }
         Returns: boolean
+      }
+      is_project_owner: {
+        Args: { target_project_id: string }
+        Returns: boolean
+      }
+      make_site_operation_result: {
+        Args: {
+          p_project_id: string
+          p_site_id: string
+          p_site_version_id: string
+        }
+        Returns: Json
+      }
+      rename_site: {
+        Args: { p_name: string; p_site_id: string }
+        Returns: Json
+      }
+      restore_site: { Args: { p_site_id: string }; Returns: Json }
+      set_active_workspace: {
+        Args: { p_project_id: string; p_site_id: string }
+        Returns: Json
       }
     }
     Enums: {

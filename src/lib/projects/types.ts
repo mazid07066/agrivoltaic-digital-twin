@@ -1,4 +1,4 @@
-﻿import type { Database } from "@/lib/database/database.types";
+import type { Database } from "@/lib/database/database.types";
 import type { SiteProfile } from "@/lib/sites/schema";
 
 export type ProjectRow =
@@ -12,6 +12,9 @@ export type SiteVersionRow =
 
 export type MigrationReceiptRow =
   Database["public"]["Tables"]["client_migration_receipts"]["Row"];
+
+export type WorkspacePreferenceRow =
+  Database["public"]["Tables"]["user_workspace_preferences"]["Row"];
 
 export interface ProjectSiteSummary {
   id: string;
@@ -37,6 +40,11 @@ export interface ProjectSummary {
   sites: ProjectSiteSummary[];
 }
 
+export interface WorkspaceSelection {
+  activeProjectId: string | null;
+  activeSiteId: string | null;
+}
+
 export interface BootstrapFirstProjectInput {
   migrationKey: string;
   projectName: string;
@@ -48,6 +56,13 @@ export interface BootstrapFirstProjectResult {
   siteId: string;
   siteVersionId: string;
   alreadyMigrated: boolean;
+}
+
+export interface SiteOperationResult {
+  projectId: string;
+  siteId: string;
+  siteVersionId: string;
+  siteProfile: SiteProfile;
 }
 
 export interface SiteVersionSnapshot {
