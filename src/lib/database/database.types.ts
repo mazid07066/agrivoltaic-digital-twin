@@ -542,7 +542,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      can_edit_project: {
+        Args: { target_project_id: string }
+        Returns: boolean
+      }
+      is_project_member: {
+        Args: { target_project_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
