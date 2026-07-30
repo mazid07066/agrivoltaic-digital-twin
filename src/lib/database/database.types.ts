@@ -683,7 +683,30 @@ export type Database = {
         Args: { target_project_id: string }
         Returns: boolean
       }
+      list_site_versions: {
+        Args: { p_site_id: string }
+        Returns: {
+          change_summary: string
+          configuration_hash: string
+          created_at: string
+          created_by: string
+          creator_display_name: string
+          is_active: boolean
+          schema_version: number
+          site_id: string
+          version_id: string
+          version_number: number
+        }[]
+      }
       make_site_operation_result: {
+        Args: {
+          p_project_id: string
+          p_site_id: string
+          p_site_version_id: string
+        }
+        Returns: Json
+      }
+      make_site_version_operation_result: {
         Args: {
           p_project_id: string
           p_site_id: string
@@ -696,6 +719,25 @@ export type Database = {
         Returns: Json
       }
       restore_site: { Args: { p_site_id: string }; Returns: Json }
+      restore_site_version: {
+        Args: {
+          p_change_summary: string
+          p_expected_active_version_id: string
+          p_site_id: string
+          p_source_version_id: string
+        }
+        Returns: Json
+      }
+      save_site_version: {
+        Args: {
+          p_change_summary: string
+          p_configuration: Json
+          p_expected_active_version_id: string
+          p_schema_version: number
+          p_site_id: string
+        }
+        Returns: Json
+      }
       set_active_workspace: {
         Args: { p_project_id: string; p_site_id: string }
         Returns: Json
