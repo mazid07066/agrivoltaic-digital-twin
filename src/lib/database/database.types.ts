@@ -663,6 +663,10 @@ export type Database = {
         Args: { target_project_id: string }
         Returns: boolean
       }
+      create_flat_roof_site: {
+        Args: { p_name: string; p_project_id: string; p_source_profile: Json }
+        Returns: Json
+      }
       create_land_site: {
         Args: { p_name: string; p_project_id: string; p_source_profile: Json }
         Returns: Json
