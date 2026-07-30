@@ -1,0 +1,792 @@
+"use client";
+
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { useMemo } from "react";
+import {
+  Building2,
+  CloudSun,
+  Gauge,
+  Grid3X3,
+  LayoutDashboard,
+  PanelTop,
+  RefreshCcw,
+  Ruler,
+  Sun,
+  ThermometerSun,
+  Zap,
+} from "lucide-react";
+
+import { solveRectangularRoofLayout } from "@/lib/geometry/rectangularRoof";
+import {
+  getPVModuleProfile,
+  PV_MODULE_MANUFACTURERS,
+  PV_MODULE_PROFILES,
+} from "@/lib/pv/moduleProfiles";
+import {
+  FLAT_ROOF_STRUCTURAL_DISCLAIMER,
+} from "@/lib/sites/adapters/flatRoof";
+import { runFlatRoofSimulation } from "@/lib/rooftop/simulation";
+import { useWeather } from "@/lib/weather/useWeather";
+import { useRooftopStore } from "@/store/useRooftopStore";
+
+const RooftopScene = dynamic(
+  () => import("./RooftopScene"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-[480px] items-center justify-center rounded-2xl bg-slate-100 text-slate-600">
+        Preparing rooftop digital twin…
+      </div>
+    ),
+  },
+);
+
+interface NumberFieldProps {
+  label: string;
+  value: number;
+  min?: number;
+  max?: number;
+  step?: number;
+  unit?: string;
+  onChange: (value: number) => void;
+}
+
+function NumberField({
+  label,
+  value,
+  min,
+  max,
+  step = 0.1,
+  unit,
+  onChange,
+}: NumberFieldProps) {
+  return (
+    <label className="space-y-1 text-sm">
+      <span className="font-medium text-slate-700">
+        {label}
+      </span>
+      <div className="flex rounded-lg border border-slate-300 bg-white">
+        <input
+          type="number"
+          value={value}
+          min={min}
+          max={max}
+          step={step}
+          onChange={(event) =>
+            onChange(
+              Number(event.target.value),
+            )
+          }
+          className="min-w-0 flex-1 rounded-lg px-3 py-2 outline-none"
+        />
+        {unit ? (
+          <span className="flex items-center border-l border-slate-200 px-2 text-slate-500">
+            {unit}
+          </span>
+        ) : null}
+      </div>
+    </label>
+  );
+}
+
+function Metric({
+  label,
+  value,
+  detail,
+  icon,
+}: {
+  label: string;
+  value: string;
+  detail: string;
+  icon: React.ReactNode;
+}) {
+  return (
+    <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex items-center gap-3">
+        <div className="rounded-xl bg-amber-50 p-2 text-amber-700">
+          {icon}
+        </div>
+        <div>
+          <p className="text-sm text-slate-500">
+            {label}
+          </p>
+          <strong className="text-xl text-slate-900">
+            {value}
+          </strong>
+        </div>
+      </div>
+      <p className="mt-2 text-xs text-slate-500">
+        {detail}
+      </p>
+    </article>
+  );
+}
+
+export default function RooftopDashboard() {
+  const site = useRooftopStore(
+    (state) => state.activeSite,
+  );
+  const selectedHour = useRooftopStore(
+    (state) => state.selectedHour,
+  );
+  const setSelectedHour = useRooftopStore(
+    (state) => state.setSelectedHour,
+  );
+  const updateIdentity = useRooftopStore(
+    (state) => state.updateIdentity,
+  );
+  const updateGeometry = useRooftopStore(
+    (state) => state.updateGeometry,
+  );
+  const updateParapet = useRooftopStore(
+    (state) => state.updateParapet,
+  );
+  const updateSetbacks = useRooftopStore(
+    (state) => state.updateSetbacks,
+  );
+  const updateArray = useRooftopStore(
+    (state) => state.updateArray,
+  );
+  const setModuleProfile = useRooftopStore(
+    (state) => state.setModuleProfile,
+  );
+  const reset = useRooftopStore(
+    (state) => state.reset,
+  );
+
+  const {
+    weather,
+    loading,
+    error,
+    reload,
+  } = useWeather({
+    latitude: site.location.latitude,
+    longitude: site.location.longitude,
+    date: site.simulationDate,
+  });
+
+  const layout = useMemo(
+    () =>
+      solveRectangularRoofLayout({
+        geometry: site.siteGeometry,
+        moduleWidthM:
+          site.pvConfiguration.moduleWidth,
+        moduleLengthM:
+          site.pvConfiguration.moduleLength,
+        modulePowerW:
+          site.pvConfiguration.modulePower,
+      }),
+    [site],
+  );
+
+  const results = useMemo(
+    () => runFlatRoofSimulation(site, weather),
+    [site, weather],
+  );
+
+  const selectedPoint =
+    results.hourly[selectedHour];
+  const selectedModule = getPVModuleProfile(
+    site.pvConfiguration.moduleProfileId,
+  );
+
+  return (
+    <main className="min-h-screen bg-slate-50">
+      <header className="border-b border-slate-200 bg-white px-5 py-4">
+        <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <Building2 className="text-amber-600" />
+              <h1 className="text-2xl font-bold text-slate-900">
+                AgriTwin Rooftop
+              </h1>
+            </div>
+            <p className="text-sm text-slate-500">
+              Rectangular flat-roof PV digital twin
+            </p>
+          </div>
+
+          <nav className="flex flex-wrap gap-2">
+            <Link
+              href="/"
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+            >
+              Land dashboard
+            </Link>
+            <Link
+              href="/projects"
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+            >
+              Projects
+            </Link>
+            <button
+              type="button"
+              onClick={reset}
+              className="flex items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-sm text-white"
+            >
+              <RefreshCcw size={15} />
+              Reset rooftop
+            </button>
+          </nav>
+        </div>
+      </header>
+
+      <div className="mx-auto grid max-w-[1600px] gap-6 p-5 xl:grid-cols-[360px_1fr]">
+        <aside className="space-y-5">
+          <section className="rounded-2xl border border-slate-200 bg-white p-5">
+            <h2 className="flex items-center gap-2 font-semibold">
+              <LayoutDashboard size={18} />
+              Site identity
+            </h2>
+            <div className="mt-4 space-y-3">
+              <label className="space-y-1 text-sm">
+                <span className="font-medium text-slate-700">
+                  Site name
+                </span>
+                <input
+                  value={site.name}
+                  onChange={(event) =>
+                    updateIdentity({
+                      name: event.target.value,
+                    })
+                  }
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                />
+              </label>
+
+              <div className="grid grid-cols-2 gap-3">
+                <NumberField
+                  label="Latitude"
+                  value={site.location.latitude}
+                  min={-90}
+                  max={90}
+                  step={0.0001}
+                  onChange={(latitude) =>
+                    updateIdentity({ latitude })
+                  }
+                />
+                <NumberField
+                  label="Longitude"
+                  value={site.location.longitude}
+                  min={-180}
+                  max={180}
+                  step={0.0001}
+                  onChange={(longitude) =>
+                    updateIdentity({ longitude })
+                  }
+                />
+              </div>
+
+              <label className="space-y-1 text-sm">
+                <span className="font-medium text-slate-700">
+                  Simulation date
+                </span>
+                <input
+                  type="date"
+                  value={site.simulationDate}
+                  onChange={(event) =>
+                    updateIdentity({
+                      simulationDate:
+                        event.target.value,
+                    })
+                  }
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                />
+              </label>
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-slate-200 bg-white p-5">
+            <h2 className="flex items-center gap-2 font-semibold">
+              <Ruler size={18} />
+              Roof geometry
+            </h2>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <NumberField
+                label="Building height"
+                value={
+                  site.siteGeometry
+                    .buildingHeightM
+                }
+                min={0}
+                unit="m"
+                onChange={(buildingHeightM) =>
+                  updateGeometry({
+                    buildingHeightM,
+                  })
+                }
+              />
+              <NumberField
+                label="Roof slope"
+                value={
+                  site.siteGeometry.roofSlopeDeg
+                }
+                min={0}
+                max={10}
+                unit="°"
+                onChange={(roofSlopeDeg) =>
+                  updateGeometry({ roofSlopeDeg })
+                }
+              />
+              <NumberField
+                label="Roof length"
+                value={
+                  site.siteGeometry.roofLengthM
+                }
+                min={1}
+                unit="m"
+                onChange={(roofLengthM) =>
+                  updateGeometry({ roofLengthM })
+                }
+              />
+              <NumberField
+                label="Roof width"
+                value={
+                  site.siteGeometry.roofWidthM
+                }
+                min={1}
+                unit="m"
+                onChange={(roofWidthM) =>
+                  updateGeometry({ roofWidthM })
+                }
+              />
+              <NumberField
+                label="Roof azimuth"
+                value={
+                  site.siteGeometry.roofAzimuthDeg
+                }
+                min={0}
+                max={359.9}
+                unit="°"
+                onChange={(roofAzimuthDeg) =>
+                  updateGeometry({ roofAzimuthDeg })
+                }
+              />
+              <NumberField
+                label="Surface albedo"
+                value={
+                  site.siteGeometry.surfaceAlbedo
+                }
+                min={0}
+                max={1}
+                step={0.01}
+                onChange={(surfaceAlbedo) =>
+                  updateGeometry({
+                    surfaceAlbedo,
+                  })
+                }
+              />
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-slate-200 bg-white p-5">
+            <h2 className="font-semibold">
+              Setbacks and parapet
+            </h2>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              {(
+                [
+                  "northM",
+                  "southM",
+                  "eastM",
+                  "westM",
+                ] as const
+              ).map((key) => (
+                <NumberField
+                  key={key}
+                  label={key.replace("M", "")}
+                  value={
+                    site.siteGeometry.setbacks[
+                      key
+                    ]
+                  }
+                  min={0}
+                  unit="m"
+                  onChange={(value) =>
+                    updateSetbacks({
+                      [key]: value,
+                    })
+                  }
+                />
+              ))}
+              <NumberField
+                label="Parapet height"
+                value={
+                  site.siteGeometry.parapet
+                    .heightM
+                }
+                min={0}
+                unit="m"
+                onChange={(heightM) =>
+                  updateParapet({ heightM })
+                }
+              />
+              <NumberField
+                label="Parapet width"
+                value={
+                  site.siteGeometry.parapet.widthM
+                }
+                min={0}
+                unit="m"
+                onChange={(widthM) =>
+                  updateParapet({ widthM })
+                }
+              />
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-slate-200 bg-white p-5">
+            <h2 className="flex items-center gap-2 font-semibold">
+              <PanelTop size={18} />
+              PV array
+            </h2>
+            <div className="mt-4 space-y-3">
+              <label className="space-y-1 text-sm">
+                <span className="font-medium text-slate-700">
+                  Module profile
+                </span>
+                <select
+                  value={
+                    site.pvConfiguration
+                      .moduleProfileId
+                  }
+                  onChange={(event) =>
+                    setModuleProfile(
+                      event.target.value,
+                    )
+                  }
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                >
+                  {PV_MODULE_MANUFACTURERS.map(
+                    (manufacturer) => (
+                      <optgroup
+                        key={manufacturer}
+                        label={manufacturer}
+                      >
+                        {PV_MODULE_PROFILES.filter(
+                          (profile) =>
+                            profile.manufacturer ===
+                            manufacturer,
+                        ).map((profile) => (
+                          <option
+                            key={profile.id}
+                            value={profile.id}
+                          >
+                            {profile.model} ·{" "}
+                            {profile.pmaxW} W
+                          </option>
+                        ))}
+                      </optgroup>
+                    ),
+                  )}
+                </select>
+              </label>
+
+              <p className="rounded-lg bg-slate-50 p-3 text-xs text-slate-600">
+                {selectedModule.manufacturer}{" "}
+                {selectedModule.model} ·{" "}
+                {selectedModule.lengthM.toFixed(
+                  3,
+                )}{" "}
+                ×{" "}
+                {selectedModule.widthM.toFixed(
+                  3,
+                )}{" "}
+                m
+              </p>
+
+              <div className="grid grid-cols-2 gap-3">
+                <NumberField
+                  label="Rack height"
+                  value={
+                    site.siteGeometry.array
+                      .rackHeightM
+                  }
+                  min={0}
+                  unit="m"
+                  onChange={(rackHeightM) =>
+                    updateArray({ rackHeightM })
+                  }
+                />
+                <NumberField
+                  label="Row spacing"
+                  value={
+                    site.siteGeometry.array
+                      .rowSpacingM
+                  }
+                  min={0}
+                  unit="m"
+                  onChange={(rowSpacingM) =>
+                    updateArray({ rowSpacingM })
+                  }
+                />
+                <NumberField
+                  label="Array tilt"
+                  value={
+                    site.siteGeometry.array.tiltDeg
+                  }
+                  min={0}
+                  max={60}
+                  unit="°"
+                  onChange={(tiltDeg) =>
+                    updateArray({ tiltDeg })
+                  }
+                />
+                <NumberField
+                  label="Array azimuth"
+                  value={
+                    site.siteGeometry.array
+                      .azimuthDeg
+                  }
+                  min={0}
+                  max={359.9}
+                  unit="°"
+                  onChange={(azimuthDeg) =>
+                    updateArray({ azimuthDeg })
+                  }
+                />
+              </div>
+
+              <label className="space-y-1 text-sm">
+                <span className="font-medium text-slate-700">
+                  Module orientation
+                </span>
+                <select
+                  value={
+                    site.siteGeometry.array
+                      .orientation
+                  }
+                  onChange={(event) =>
+                    updateArray({
+                      orientation:
+                        event.target.value as
+                          | "portrait"
+                          | "landscape",
+                    })
+                  }
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                >
+                  <option value="portrait">
+                    Portrait
+                  </option>
+                  <option value="landscape">
+                    Landscape
+                  </option>
+                </select>
+              </label>
+            </div>
+          </section>
+        </aside>
+
+        <section className="space-y-6">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <Metric
+              label="Installed DC capacity"
+              value={`${results.installedCapacityKW.toFixed(
+                2,
+              )} kW`}
+              detail={`${results.moduleCount} modules`}
+              icon={<Zap size={20} />}
+            />
+            <Metric
+              label="Daily PV energy"
+              value={`${results.dailyEnergyKWh.toFixed(
+                2,
+              )} kWh`}
+              detail={`${results.specificYieldKWhPerKW.toFixed(
+                2,
+              )} kWh/kW`}
+              icon={<Sun size={20} />}
+            />
+            <Metric
+              label="Usable roof area"
+              value={`${results.usableRoofAreaM2.toFixed(
+                1,
+              )} m²`}
+              detail={`${results.usableAreaPercent.toFixed(
+                1,
+              )}% of total roof`}
+              icon={<Grid3X3 size={20} />}
+            />
+            <Metric
+              label="Selected-hour power"
+              value={`${selectedPoint.dcPowerKW.toFixed(
+                2,
+              )} kW`}
+              detail={`${selectedPoint.poaIrradiance.toFixed(
+                0,
+              )} W/m² POA`}
+              icon={<Gauge size={20} />}
+            />
+          </div>
+
+          <section className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+            <strong>
+              Structural-engineering limitation
+            </strong>
+            <p className="mt-1">
+              {FLAT_ROOF_STRUCTURAL_DISCLAIMER}
+            </p>
+          </section>
+
+          <RooftopScene site={site} />
+
+          <section className="grid gap-4 lg:grid-cols-3">
+            <article className="rounded-2xl border border-slate-200 bg-white p-5">
+              <h2 className="flex items-center gap-2 font-semibold">
+                <CloudSun size={18} />
+                Weather connection
+              </h2>
+              <p className="mt-3 text-sm text-slate-600">
+                {loading
+                  ? "Loading Open-Meteo data…"
+                  : error
+                    ? error
+                    : `${results.dataSource} data active`}
+              </p>
+              <button
+                type="button"
+                onClick={reload}
+                className="mt-3 rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              >
+                Reload weather
+              </button>
+            </article>
+
+            <article className="rounded-2xl border border-slate-200 bg-white p-5">
+              <h2 className="flex items-center gap-2 font-semibold">
+                <ThermometerSun size={18} />
+                Module temperature
+              </h2>
+              <p className="mt-3 text-3xl font-bold">
+                {selectedPoint.moduleTemperatureC.toFixed(
+                  1,
+                )}
+                °C
+              </p>
+              <p className="text-sm text-slate-500">
+                Ambient{" "}
+                {selectedPoint.ambientTemperatureC.toFixed(
+                  1,
+                )}
+                °C
+              </p>
+            </article>
+
+            <article className="rounded-2xl border border-slate-200 bg-white p-5">
+              <h2 className="font-semibold">
+                Layout summary
+              </h2>
+              <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                <dt>Rows</dt>
+                <dd className="text-right font-medium">
+                  {layout.rows}
+                </dd>
+                <dt>Modules/row</dt>
+                <dd className="text-right font-medium">
+                  {layout.modulesPerRow}
+                </dd>
+                <dt>Total modules</dt>
+                <dd className="text-right font-medium">
+                  {layout.moduleCount}
+                </dd>
+                <dt>Coverage</dt>
+                <dd className="text-right font-medium">
+                  {(
+                    layout.usableAreaCoverageRatio *
+                    100
+                  ).toFixed(1)}
+                  %
+                </dd>
+              </dl>
+            </article>
+          </section>
+
+          <section className="rounded-2xl border border-slate-200 bg-white p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="font-semibold">
+                  Hourly rooftop performance
+                </h2>
+                <p className="text-sm text-slate-500">
+                  Select an hour to synchronize
+                  engineering outputs.
+                </p>
+              </div>
+              <strong>
+                {selectedPoint.hour}
+              </strong>
+            </div>
+
+            <input
+              type="range"
+              min={0}
+              max={23}
+              value={selectedHour}
+              onChange={(event) =>
+                setSelectedHour(
+                  Number(event.target.value),
+                )
+              }
+              className="mt-5 w-full"
+            />
+
+            <div className="mt-5 overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left text-slate-500">
+                    <th className="p-2">Hour</th>
+                    <th className="p-2">GHI</th>
+                    <th className="p-2">POA</th>
+                    <th className="p-2">
+                      Module °C
+                    </th>
+                    <th className="p-2">
+                      DC power
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {results.hourly.map(
+                    (point, index) => (
+                      <tr
+                        key={point.hour}
+                        className={
+                          index === selectedHour
+                            ? "bg-amber-50"
+                            : "border-b border-slate-100"
+                        }
+                      >
+                        <td className="p-2">
+                          {point.hour}
+                        </td>
+                        <td className="p-2">
+                          {point.ghi.toFixed(0)} W/m²
+                        </td>
+                        <td className="p-2">
+                          {point.poaIrradiance.toFixed(
+                            0,
+                          )}{" "}
+                          W/m²
+                        </td>
+                        <td className="p-2">
+                          {point.moduleTemperatureC.toFixed(
+                            1,
+                          )}
+                        </td>
+                        <td className="p-2">
+                          {point.dcPowerKW.toFixed(2)} kW
+                        </td>
+                      </tr>
+                    ),
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+      </div>
+    </main>
+  );
+}

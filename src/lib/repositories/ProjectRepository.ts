@@ -32,6 +32,12 @@ export interface ProjectRepository {
     sourceProfile: SiteProfile,
   ): Promise<SiteOperationResult>;
 
+  createFlatRoofSite(
+    projectId: string,
+    name: string,
+    sourceProfile: SiteProfile,
+  ): Promise<SiteOperationResult>;
+
   duplicateSite(
     siteId: string,
     name: string,

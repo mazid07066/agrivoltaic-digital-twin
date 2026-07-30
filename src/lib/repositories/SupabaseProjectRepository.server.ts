@@ -259,6 +259,38 @@ export class SupabaseProjectRepository
     return parseSiteOperationResult(data);
   }
 
+  async createFlatRoofSite(
+    projectId: string,
+    name: string,
+    sourceProfile: SiteProfile,
+  ): Promise<SiteOperationResult> {
+    const { supabase } =
+      await this.createAuthenticatedClient();
+    const snapshot =
+      createSiteProfileSnapshot(sourceProfile);
+
+    const { data, error } = await supabase.rpc(
+      "create_flat_roof_site",
+      {
+        p_project_id: ensureRequiredId(
+          projectId,
+          "Project ID",
+        ),
+        p_name: ensureName(name, "Site name"),
+        p_source_profile:
+          snapshot as unknown as Json,
+      },
+    );
+
+    if (error) {
+      throw new Error(
+        `Unable to create the flat-roof site: ${error.message}`,
+      );
+    }
+
+    return parseSiteOperationResult(data);
+  }
+
   async duplicateSite(
     siteId: string,
     name: string,

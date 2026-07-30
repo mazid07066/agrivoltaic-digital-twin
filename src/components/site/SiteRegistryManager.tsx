@@ -8,7 +8,12 @@ import type {
   SiteOperationResult,
   WorkspaceSelection,
 } from "@/lib/projects/types";
-import { isLandAgrivoltaicSiteProfile } from "@/lib/sites/migrations";
+import { createDefaultFlatRoofSiteProfile } from "@/lib/sites/defaults";
+import {
+  isFlatRoofSiteProfile,
+  isLandAgrivoltaicSiteProfile,
+} from "@/lib/sites/migrations";
+import { useRooftopStore } from "@/store/useRooftopStore";
 import { useSimulationStore } from "@/store/useSimulationStore";
 
 interface SiteRegistryManagerProps {
@@ -28,23 +33,32 @@ export default function SiteRegistryManager({
 }: SiteRegistryManagerProps) {
   const router = useRouter();
 
-  const activeSite = useSimulationStore(
+  const activeLandSite = useSimulationStore(
     (state) => state.activeSite,
   );
-
-  const replaceActiveSite = useSimulationStore(
+  const replaceLandSite = useSimulationStore(
+    (state) => state.replaceActiveSite,
+  );
+  const replaceRooftopSite = useRooftopStore(
     (state) => state.replaceActiveSite,
   );
 
-  const [busyKey, setBusyKey] = useState<
-    string | null
-  >(null);
-
+  const [busyKey, setBusyKey] =
+    useState<string | null>(null);
   const [message, setMessage] =
-    useState<string>("");
-
-  const [newSiteName, setNewSiteName] =
+    useState("");
+  const [newLandSiteName, setNewLandSiteName] =
     useState("New land site");
+  const [newRoofName, setNewRoofName] =
+    useState("New flat-roof PV site");
+  const [roofLengthM, setRoofLengthM] =
+    useState(30);
+  const [roofWidthM, setRoofWidthM] =
+    useState(20);
+  const [
+    buildingHeightM,
+    setBuildingHeightM,
+  ] = useState(12);
 
   async function runOperation(
     key: string,
@@ -79,25 +93,37 @@ export default function SiteRegistryManager({
         );
       }
 
+      let targetPath: "/" | "/rooftop" | null =
+        null;
+
       if (options?.loadResult && data.result) {
         const returnedSite =
           data.result.siteProfile;
 
         if (
-          !isLandAgrivoltaicSiteProfile(
+          isLandAgrivoltaicSiteProfile(
             returnedSite,
           )
         ) {
+          replaceLandSite(returnedSite);
+          targetPath = "/";
+        } else if (
+          isFlatRoofSiteProfile(returnedSite)
+        ) {
+          replaceRooftopSite(returnedSite);
+          targetPath = "/rooftop";
+        } else {
           throw new Error(
-            "The current dashboard supports land agrivoltaic sites only. Flat-roof dashboard support will be enabled in Phase 8C-2.",
+            "The selected site profile is not supported by this application version.",
           );
         }
-
-        replaceActiveSite(returnedSite);
       }
 
-      if (options?.goDashboard) {
-        window.location.assign("/");
+      if (
+        options?.goDashboard &&
+        targetPath
+      ) {
+        window.location.assign(targetPath);
         return;
       }
 
@@ -116,8 +142,25 @@ export default function SiteRegistryManager({
   const activeProject =
     projects.find(
       (project) =>
-        project.id === workspace.activeProjectId,
+        project.id ===
+        workspace.activeProjectId,
     ) ?? projects[0];
+
+  function createRooftopProfile() {
+    const profile =
+      createDefaultFlatRoofSiteProfile();
+
+    return {
+      ...profile,
+      name: newRoofName.trim(),
+      siteGeometry: {
+        ...profile.siteGeometry,
+        roofLengthM,
+        roofWidthM,
+        buildingHeightM,
+      },
+    };
+  }
 
   return (
     <div className="space-y-6">
@@ -131,57 +174,160 @@ export default function SiteRegistryManager({
       ) : null}
 
       {activeProject ? (
-        <section className="rounded-2xl border border-slate-200 bg-white p-6">
-          <h2 className="text-xl font-semibold text-slate-900">
-            Add an independent land site
-          </h2>
+        <div className="grid gap-5 lg:grid-cols-2">
+          <section className="rounded-2xl border border-slate-200 bg-white p-6">
+            <h2 className="text-xl font-semibold text-slate-900">
+              Add a land agrivoltaic site
+            </h2>
+            <p className="mt-2 text-sm text-slate-600">
+              Starts from the current land
+              dashboard configuration.
+            </p>
 
-          <p className="mt-2 text-slate-600">
-            The new site starts from the current
-            dashboard configuration, receives a new
-            identity and is preserved as its own
-            immutable site version.
-          </p>
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+              <input
+                value={newLandSiteName}
+                onChange={(event) =>
+                  setNewLandSiteName(
+                    event.target.value,
+                  )
+                }
+                maxLength={200}
+                className="flex-1 rounded-xl border border-slate-300 px-3 py-2"
+                aria-label="New land site name"
+              />
+              <button
+                type="button"
+                disabled={busyKey !== null}
+                onClick={() =>
+                  runOperation(
+                    "create-land",
+                    {
+                      action: "create",
+                      projectId:
+                        activeProject.id,
+                      name: newLandSiteName,
+                      siteProfile:
+                        activeLandSite,
+                    },
+                    {
+                      loadResult: true,
+                    },
+                  )
+                }
+                className="rounded-xl bg-emerald-700 px-4 py-2 font-medium text-white disabled:opacity-60"
+              >
+                {busyKey === "create-land"
+                  ? "Creating…"
+                  : "Create land site"}
+              </button>
+            </div>
+          </section>
 
-          <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-            <input
-              value={newSiteName}
-              onChange={(event) =>
-                setNewSiteName(
-                  event.target.value,
-                )
-              }
-              maxLength={200}
-              className="flex-1 rounded-xl border border-slate-300 px-3 py-2"
-              aria-label="New site name"
-            />
+          <section className="rounded-2xl border border-amber-200 bg-white p-6">
+            <h2 className="text-xl font-semibold text-slate-900">
+              Add a flat-roof PV site
+            </h2>
+            <p className="mt-2 text-sm text-slate-600">
+              Creates an independent rooftop
+              profile and immutable version.
+            </p>
 
-            <button
-              type="button"
-              disabled={busyKey !== null}
-              onClick={() =>
-                runOperation(
-                  "create",
-                  {
-                    action: "create",
-                    projectId:
-                      activeProject.id,
-                    name: newSiteName,
-                    siteProfile: activeSite,
-                  },
-                  {
-                    loadResult: true,
-                  },
-                )
-              }
-              className="rounded-xl bg-emerald-700 px-4 py-2 font-medium text-white disabled:opacity-60"
-            >
-              {busyKey === "create"
-                ? "Creating…"
-                : "Create land site"}
-            </button>
-          </div>
-        </section>
+            <div className="mt-4 space-y-3">
+              <input
+                value={newRoofName}
+                onChange={(event) =>
+                  setNewRoofName(
+                    event.target.value,
+                  )
+                }
+                maxLength={200}
+                className="w-full rounded-xl border border-slate-300 px-3 py-2"
+                aria-label="New flat-roof site name"
+              />
+
+              <div className="grid grid-cols-3 gap-3">
+                <label className="text-sm">
+                  <span>Length (m)</span>
+                  <input
+                    type="number"
+                    min={1}
+                    value={roofLengthM}
+                    onChange={(event) =>
+                      setRoofLengthM(
+                        Number(
+                          event.target.value,
+                        ),
+                      )
+                    }
+                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+                  />
+                </label>
+                <label className="text-sm">
+                  <span>Width (m)</span>
+                  <input
+                    type="number"
+                    min={1}
+                    value={roofWidthM}
+                    onChange={(event) =>
+                      setRoofWidthM(
+                        Number(
+                          event.target.value,
+                        ),
+                      )
+                    }
+                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+                  />
+                </label>
+                <label className="text-sm">
+                  <span>Height (m)</span>
+                  <input
+                    type="number"
+                    min={0}
+                    value={buildingHeightM}
+                    onChange={(event) =>
+                      setBuildingHeightM(
+                        Number(
+                          event.target.value,
+                        ),
+                      )
+                    }
+                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+                  />
+                </label>
+              </div>
+
+              <button
+                type="button"
+                disabled={busyKey !== null}
+                onClick={() =>
+                  runOperation(
+                    "create-flat-roof",
+                    {
+                      action:
+                        "create-flat-roof",
+                      projectId:
+                        activeProject.id,
+                      name: newRoofName,
+                      siteProfile:
+                        createRooftopProfile(),
+                    },
+                    {
+                      loadResult: true,
+                      goDashboard: true,
+                    },
+                  )
+                }
+                className="w-full rounded-xl bg-amber-600 px-4 py-2 font-medium text-white disabled:opacity-60"
+              >
+                {busyKey ===
+                "create-flat-roof"
+                  ? "Creating…"
+                  : "Create and open rooftop"}
+              </button>
+            </div>
+          </section>
+        </div>
       ) : null}
 
       {projects.map((project) => {
@@ -190,7 +336,6 @@ export default function SiteRegistryManager({
             (site) =>
               site.status === "active",
           );
-
         const archivedSites =
           project.sites.filter(
             (site) =>
@@ -205,7 +350,6 @@ export default function SiteRegistryManager({
             <h2 className="text-xl font-semibold text-slate-900">
               {project.name}
             </h2>
-
             <p className="mt-1 text-sm text-slate-500">
               Project ID: {project.id}
             </p>
@@ -227,14 +371,12 @@ export default function SiteRegistryManager({
                           <h3 className="font-medium text-slate-900">
                             {site.name}
                           </h3>
-
                           {isActive ? (
                             <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs text-emerald-800">
                               Active
                             </span>
                           ) : null}
                         </div>
-
                         <p className="mt-1 text-sm text-slate-500">
                           {site.siteType.replaceAll(
                             "_",
@@ -249,8 +391,7 @@ export default function SiteRegistryManager({
                         <button
                           type="button"
                           disabled={
-                            busyKey !== null ||
-                            isActive
+                            busyKey !== null
                           }
                           onClick={() =>
                             runOperation(
@@ -270,7 +411,10 @@ export default function SiteRegistryManager({
                           }
                           className="rounded-lg border border-slate-300 px-3 py-2 text-sm disabled:opacity-50"
                         >
-                          Open in dashboard
+                          {site.siteType ===
+                          "flat_roof"
+                            ? "Open rooftop"
+                            : "Open land dashboard"}
                         </button>
 
                         <button
@@ -284,7 +428,6 @@ export default function SiteRegistryManager({
                                 "Name for the duplicate site:",
                                 `${site.name} copy`,
                               );
-
                             if (name) {
                               void runOperation(
                                 `duplicate-${site.id}`,
@@ -314,7 +457,6 @@ export default function SiteRegistryManager({
                                 "New site name:",
                                 site.name,
                               );
-
                             if (
                               name &&
                               name !== site.name
@@ -322,7 +464,8 @@ export default function SiteRegistryManager({
                               void runOperation(
                                 `rename-${site.id}`,
                                 {
-                                  action: "rename",
+                                  action:
+                                    "rename",
                                   siteId:
                                     site.id,
                                   name,
@@ -348,7 +491,8 @@ export default function SiteRegistryManager({
                               {
                                 action:
                                   "archive",
-                                siteId: site.id,
+                                siteId:
+                                  site.id,
                               },
                             )
                           }
@@ -368,7 +512,6 @@ export default function SiteRegistryManager({
                 <h3 className="font-medium text-slate-800">
                   Archived sites
                 </h3>
-
                 <div className="mt-3 space-y-2">
                   {archivedSites.map(
                     (site) => (
@@ -376,10 +519,7 @@ export default function SiteRegistryManager({
                         key={site.id}
                         className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-slate-50 p-3"
                       >
-                        <span>
-                          {site.name}
-                        </span>
-
+                        <span>{site.name}</span>
                         <button
                           type="button"
                           disabled={
