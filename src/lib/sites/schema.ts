@@ -26,19 +26,66 @@ export interface LandAgrivoltaicGeometry {
   fieldWidthM: number;
 }
 
-export interface LandAgrivoltaicSiteProfile {
+export interface FlatRoofParapet {
+  enabled: boolean;
+  heightM: number;
+  widthM: number;
+}
+
+export interface FlatRoofSetbacks {
+  northM: number;
+  southM: number;
+  eastM: number;
+  westM: number;
+}
+
+export type ModuleOrientation = "portrait" | "landscape";
+
+export interface FlatRoofArrayConfiguration {
+  rackHeightM: number;
+  tiltDeg: number;
+  azimuthDeg: number;
+  rowSpacingM: number;
+  orientation: ModuleOrientation;
+}
+
+export interface FlatRoofGeometry {
+  kind: "flat_roof";
+  buildingHeightM: number;
+  roofLengthM: number;
+  roofWidthM: number;
+  roofAzimuthDeg: number;
+  roofSlopeDeg: number;
+  parapet: FlatRoofParapet;
+  setbacks: FlatRoofSetbacks;
+  array: FlatRoofArrayConfiguration;
+  surfaceAlbedo: number;
+}
+
+interface SiteProfileBase {
   schemaVersion: typeof SITE_PROFILE_SCHEMA_VERSION;
   id: string;
   name: string;
-  siteType: "land_agrivoltaic";
   dataMode: DataMode;
   location: SiteLocation;
-  siteGeometry: LandAgrivoltaicGeometry;
   pvConfiguration: PVConfiguration;
-  cropConfiguration: { cropId: CropId };
   simulationDate: string;
   createdAt: string;
   updatedAt: string;
 }
 
-export type SiteProfile = LandAgrivoltaicSiteProfile;
+export interface LandAgrivoltaicSiteProfile extends SiteProfileBase {
+  siteType: "land_agrivoltaic";
+  siteGeometry: LandAgrivoltaicGeometry;
+  cropConfiguration: { cropId: CropId };
+}
+
+export interface FlatRoofSiteProfile extends SiteProfileBase {
+  siteType: "flat_roof";
+  siteGeometry: FlatRoofGeometry;
+  cropConfiguration?: never;
+}
+
+export type SiteProfile =
+  | LandAgrivoltaicSiteProfile
+  | FlatRoofSiteProfile;
