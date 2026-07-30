@@ -34,6 +34,7 @@ interface SimulationStore {
   setModuleProfile: (profileId: string) => void;
   setSimulationDate: (date: string) => void;
   setDataMode: (dataMode: LandAgrivoltaicSiteProfile["dataMode"]) => void;
+  replaceActiveSite: (site: LandAgrivoltaicSiteProfile) => void;
   resetConfiguration: () => void;
 }
 
@@ -171,6 +172,12 @@ export const useSimulationStore = create<SimulationStore>()(
           });
 
           return synchronizedSiteState(nextSite);
+        }),
+
+      replaceActiveSite: (site) =>
+        set({
+          ...synchronizedSiteState(site),
+          selectedHour: 12,
         }),
 
       resetConfiguration: () => {
