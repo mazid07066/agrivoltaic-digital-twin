@@ -9,12 +9,18 @@ import {
   createSiteProfileSnapshot,
   parseSiteProfileSnapshot,
 } from "@/lib/projects/siteSnapshot";
+import {
+  parseSiteVersionHistory,
+  parseSiteVersionOperationResult,
+} from "@/lib/projects/versionPayload";
 import type {
   BootstrapFirstProjectInput,
   BootstrapFirstProjectResult,
   ProjectSiteSummary,
   ProjectSummary,
   SiteOperationResult,
+  SiteVersionHistoryEntry,
+  SiteVersionOperationResult,
   SiteVersionSnapshot,
   WorkspaceSelection,
 } from "@/lib/projects/types";
@@ -347,5 +353,71 @@ export class SupabaseProjectRepository
     }
 
     return parseSiteOperationResult(data);
+  }
+
+  async saveSiteVersion(
+    siteId: string,
+    expectedActiveVersionId: string,
+    siteProfile: SiteProfile,
+    changeSummary: string,
+  ): Promise<SiteVersionOperationResult> {
+    const { supabase } = await this.createAuthenticatedClient();
+    const snapshot = createSiteProfileSnapshot(siteProfile);
+    const { data, error } = await supabase.rpc("save_site_version", {
+      p_site_id: ensureRequiredId(siteId, "Site ID"),
+      p_expected_active_version_id: ensureRequiredId(
+        expectedActiveVersionId,
+        "Expected active-version ID",
+      ),
+      p_schema_version: snapshot.schemaVersion,
+      p_configuration: snapshot as unknown as Json,
+      p_change_summary: changeSummary,
+    });
+
+    if (error) {
+      throw new Error(`Unable to save the site version: ${error.message}`);
+    }
+
+    return parseSiteVersionOperationResult(data);
+  }
+
+  async listSiteVersions(siteId: string): Promise<SiteVersionHistoryEntry[]> {
+    const { supabase } = await this.createAuthenticatedClient();
+    const { data, error } = await supabase.rpc("list_site_versions", {
+      p_site_id: ensureRequiredId(siteId, "Site ID"),
+    });
+
+    if (error) {
+      throw new Error(`Unable to load version history: ${error.message}`);
+    }
+
+    return parseSiteVersionHistory(data);
+  }
+
+  async restoreSiteVersion(
+    siteId: string,
+    sourceVersionId: string,
+    expectedActiveVersionId: string,
+    changeSummary: string,
+  ): Promise<SiteVersionOperationResult> {
+    const { supabase } = await this.createAuthenticatedClient();
+    const { data, error } = await supabase.rpc("restore_site_version", {
+      p_site_id: ensureRequiredId(siteId, "Site ID"),
+      p_source_version_id: ensureRequiredId(
+        sourceVersionId,
+        "Source version ID",
+      ),
+      p_expected_active_version_id: ensureRequiredId(
+        expectedActiveVersionId,
+        "Expected active-version ID",
+      ),
+      p_change_summary: changeSummary,
+    });
+
+    if (error) {
+      throw new Error(`Unable to restore the site version: ${error.message}`);
+    }
+
+    return parseSiteVersionOperationResult(data);
   }
 }

@@ -13,7 +13,10 @@ type RegistryAction =
   | "duplicate"
   | "rename"
   | "archive"
-  | "restore";
+  | "restore"
+  | "save-version"
+  | "list-versions"
+  | "restore-version";
 
 interface RegistryRequest {
   action?: RegistryAction;
@@ -21,6 +24,9 @@ interface RegistryRequest {
   siteId?: string;
   name?: string;
   siteProfile?: unknown;
+  expectedActiveVersionId?: string;
+  sourceVersionId?: string;
+  changeSummary?: string;
 }
 
 export async function POST(request: Request) {
@@ -107,6 +113,35 @@ export async function POST(request: Request) {
 
       case "restore": {
         const result = await repository.restoreSite(body.siteId ?? "");
+        return NextResponse.json({ ok: true, result });
+      }
+
+      case "save-version": {
+        if (!isFlatRoofSiteProfile(body.siteProfile)) {
+          throw new Error("A valid flat-roof SiteProfile is required.");
+        }
+
+        const result = await repository.saveSiteVersion(
+          body.siteId ?? "",
+          body.expectedActiveVersionId ?? "",
+          body.siteProfile,
+          body.changeSummary ?? "",
+        );
+        return NextResponse.json({ ok: true, result });
+      }
+
+      case "list-versions": {
+        const result = await repository.listSiteVersions(body.siteId ?? "");
+        return NextResponse.json({ ok: true, result });
+      }
+
+      case "restore-version": {
+        const result = await repository.restoreSiteVersion(
+          body.siteId ?? "",
+          body.sourceVersionId ?? "",
+          body.expectedActiveVersionId ?? "",
+          body.changeSummary ?? "",
+        );
         return NextResponse.json({ ok: true, result });
       }
 

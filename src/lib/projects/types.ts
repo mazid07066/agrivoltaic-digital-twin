@@ -65,6 +65,27 @@ export interface SiteOperationResult {
   siteProfile: SiteProfile;
 }
 
+export interface SiteVersionOperationResult extends SiteOperationResult {
+  activeVersionId: string;
+  activeVersionNumber: number;
+  configurationHash: string;
+  changeSummary: string;
+  createdAt: string;
+}
+
+export interface SiteVersionHistoryEntry {
+  versionId: string;
+  siteId: string;
+  versionNumber: number;
+  schemaVersion: number;
+  configurationHash: string | null;
+  changeSummary: string | null;
+  createdBy: string | null;
+  creatorDisplayName: string | null;
+  createdAt: string;
+  isActive: boolean;
+}
+
 export interface SiteVersionSnapshot {
   id: string;
   siteId: string;

@@ -3,6 +3,8 @@ import type {
   BootstrapFirstProjectResult,
   ProjectSummary,
   SiteOperationResult,
+  SiteVersionHistoryEntry,
+  SiteVersionOperationResult,
   SiteVersionSnapshot,
   WorkspaceSelection,
 } from "@/lib/projects/types";
@@ -51,4 +53,20 @@ export interface ProjectRepository {
   archiveSite(siteId: string): Promise<void>;
 
   restoreSite(siteId: string): Promise<SiteOperationResult>;
+
+  saveSiteVersion(
+    siteId: string,
+    expectedActiveVersionId: string,
+    siteProfile: SiteProfile,
+    changeSummary: string,
+  ): Promise<SiteVersionOperationResult>;
+
+  listSiteVersions(siteId: string): Promise<SiteVersionHistoryEntry[]>;
+
+  restoreSiteVersion(
+    siteId: string,
+    sourceVersionId: string,
+    expectedActiveVersionId: string,
+    changeSummary: string,
+  ): Promise<SiteVersionOperationResult>;
 }
