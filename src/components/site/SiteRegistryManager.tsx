@@ -110,7 +110,10 @@ export default function SiteRegistryManager({
         } else if (
           isFlatRoofSiteProfile(returnedSite)
         ) {
-          replaceRooftopSite(returnedSite);
+          replaceRooftopSite(returnedSite, {
+            databaseSiteId: data.result.siteId,
+            activeVersionId: data.result.siteVersionId,
+          });
           targetPath = "/rooftop";
         } else {
           throw new Error(

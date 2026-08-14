@@ -1,24 +1,45 @@
 "use client";
 
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
 
 import { getPVModuleProfile } from "@/lib/pv/moduleProfiles";
+import type { SiteVersionOperationResult } from "@/lib/projects/types";
 import { createDefaultFlatRoofSiteProfile } from "@/lib/sites/defaults";
 import { isFlatRoofSiteProfile } from "@/lib/sites/migrations";
 import type {
   FlatRoofGeometry,
   FlatRoofSiteProfile,
+  SiteProfile,
 } from "@/lib/sites/schema";
 import type { PVConfiguration } from "@/types/simulation";
 
 interface RooftopStore {
   activeSite: FlatRoofSiteProfile;
+  databaseSiteId: string | null;
+  activeVersionId: string | null;
+  activeVersionNumber: number | null;
+  lastSavedHash: string | null;
+  isDirty: boolean;
   selectedHour: number;
   setSelectedHour: (hour: number) => void;
   replaceActiveSite: (
-    site: FlatRoofSiteProfile,
+    site: SiteProfile,
+    context?: {
+      databaseSiteId: string;
+      activeVersionId: string;
+      activeVersionNumber?: number | null;
+      lastSavedHash?: string | null;
+    },
   ) => void;
+  setDatabaseContext: (context: {
+    databaseSiteId: string;
+    activeVersionId: string;
+    activeVersionNumber?: number | null;
+    lastSavedHash?: string | null;
+  }) => void;
+  markSaved: (result: SiteVersionOperationResult) => void;
+  markDirty: () => void;
   updateIdentity: (
     values: Partial<{
       name: string;
@@ -67,19 +88,61 @@ export const useRooftopStore =
       (set) => ({
         activeSite:
           createDefaultFlatRoofSiteProfile(),
+        databaseSiteId: null,
+        activeVersionId: null,
+        activeVersionNumber: null,
+        lastSavedHash: null,
+        isDirty: false,
         selectedHour: 12,
 
         setSelectedHour: (selectedHour) =>
           set({ selectedHour }),
 
-        replaceActiveSite: (activeSite) =>
+        replaceActiveSite: (site, context) => {
+          if (!isFlatRoofSiteProfile(site)) {
+            throw new Error("The rooftop store only accepts flat-roof profiles.");
+          }
+
           set({
-            activeSite,
+            activeSite: site,
             selectedHour: 12,
+            databaseSiteId: context?.databaseSiteId ?? null,
+            activeVersionId: context?.activeVersionId ?? null,
+            activeVersionNumber: context?.activeVersionNumber ?? null,
+            lastSavedHash: context?.lastSavedHash ?? null,
+            isDirty: false,
+          });
+        },
+
+        setDatabaseContext: (context) =>
+          set({
+            databaseSiteId: context.databaseSiteId,
+            activeVersionId: context.activeVersionId,
+            activeVersionNumber: context.activeVersionNumber ?? null,
+            lastSavedHash: context.lastSavedHash ?? null,
+            isDirty: false,
           }),
+
+        markSaved: (result) => {
+          if (!isFlatRoofSiteProfile(result.siteProfile)) {
+            throw new Error("The rooftop store only accepts flat-roof profiles.");
+          }
+
+          set({
+            activeSite: result.siteProfile,
+            databaseSiteId: result.siteId,
+            activeVersionId: result.activeVersionId,
+            activeVersionNumber: result.activeVersionNumber,
+            lastSavedHash: result.configurationHash,
+            isDirty: false,
+          });
+        },
+
+        markDirty: () => set({ isDirty: true }),
 
         updateIdentity: (values) =>
           set((state) => ({
+            isDirty: true,
             activeSite: touch({
               ...state.activeSite,
               name:
@@ -108,6 +171,7 @@ export const useRooftopStore =
 
         updateGeometry: (values) =>
           set((state) => ({
+            isDirty: true,
             activeSite: touch({
               ...state.activeSite,
               siteGeometry: {
@@ -119,6 +183,7 @@ export const useRooftopStore =
 
         updateParapet: (values) =>
           set((state) => ({
+            isDirty: true,
             activeSite: touch({
               ...state.activeSite,
               siteGeometry: {
@@ -134,6 +199,7 @@ export const useRooftopStore =
 
         updateSetbacks: (values) =>
           set((state) => ({
+            isDirty: true,
             activeSite: touch({
               ...state.activeSite,
               siteGeometry: {
@@ -149,6 +215,7 @@ export const useRooftopStore =
 
         updateArray: (values) =>
           set((state) => ({
+            isDirty: true,
             activeSite: touch({
               ...state.activeSite,
               siteGeometry: {
@@ -183,6 +250,7 @@ export const useRooftopStore =
 
         updatePV: (values) =>
           set((state) => ({
+            isDirty: true,
             activeSite: touch({
               ...state.activeSite,
               pvConfiguration: {
@@ -198,6 +266,7 @@ export const useRooftopStore =
               getPVModuleProfile(profileId);
 
             return {
+              isDirty: true,
               activeSite: touch({
                 ...state.activeSite,
                 pvConfiguration: {
@@ -229,14 +298,33 @@ export const useRooftopStore =
           set({
             activeSite:
               createDefaultFlatRoofSiteProfile(),
+            databaseSiteId: null,
+            activeVersionId: null,
+            activeVersionNumber: null,
+            lastSavedHash: null,
+            isDirty: false,
             selectedHour: 12,
           }),
       }),
       {
         name: "agritwin-flat-roof-profile",
-        version: 1,
+        version: 2,
+        storage: createJSONStorage(() =>
+          typeof window === "undefined"
+            ? {
+                getItem: () => null,
+                setItem: () => undefined,
+                removeItem: () => undefined,
+              }
+            : window.localStorage,
+        ),
         partialize: (state) => ({
           activeSite: state.activeSite,
+          databaseSiteId: state.databaseSiteId,
+          activeVersionId: state.activeVersionId,
+          activeVersionNumber: state.activeVersionNumber,
+          lastSavedHash: state.lastSavedHash,
+          isDirty: state.isDirty,
           selectedHour: state.selectedHour,
         }),
         migrate: (persisted) => {
@@ -244,6 +332,11 @@ export const useRooftopStore =
             persisted as {
               activeSite?: unknown;
               selectedHour?: unknown;
+              databaseSiteId?: unknown;
+              activeVersionId?: unknown;
+              activeVersionNumber?: unknown;
+              lastSavedHash?: unknown;
+              isDirty?: unknown;
             } | null
           )?.activeSite;
 
@@ -264,6 +357,29 @@ export const useRooftopStore =
                     }
                   ).selectedHour
                 : 12,
+            databaseSiteId:
+              typeof (persisted as { databaseSiteId?: unknown } | null)
+                ?.databaseSiteId === "string"
+                ? (persisted as { databaseSiteId: string }).databaseSiteId
+                : null,
+            activeVersionId:
+              typeof (persisted as { activeVersionId?: unknown } | null)
+                ?.activeVersionId === "string"
+                ? (persisted as { activeVersionId: string }).activeVersionId
+                : null,
+            activeVersionNumber:
+              typeof (persisted as { activeVersionNumber?: unknown } | null)
+                ?.activeVersionNumber === "number"
+                ? (persisted as { activeVersionNumber: number })
+                    .activeVersionNumber
+                : null,
+            lastSavedHash:
+              typeof (persisted as { lastSavedHash?: unknown } | null)
+                ?.lastSavedHash === "string"
+                ? (persisted as { lastSavedHash: string }).lastSavedHash
+                : null,
+            isDirty:
+              (persisted as { isDirty?: unknown } | null)?.isDirty === true,
           };
         },
       },
