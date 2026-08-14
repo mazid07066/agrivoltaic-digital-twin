@@ -40,6 +40,21 @@ describe("Phase 8C-3A rooftop version state", () => {
     expect(useRooftopStore.getState().isDirty).toBe(false);
   });
 
+  it("refreshes version metadata without clearing dirty state", () => {
+    useRooftopStore.getState().updateGeometry({ roofLengthM: 40 });
+    useRooftopStore.getState().updateVersionMetadata({
+      activeVersionNumber: 3,
+      lastSavedHash: "hash-3",
+      lastSavedAt: "2026-08-14T10:00:00.000Z",
+    });
+
+    const state = useRooftopStore.getState();
+    expect(state.activeVersionNumber).toBe(3);
+    expect(state.lastSavedHash).toBe("hash-3");
+    expect(state.lastSavedAt).toBe("2026-08-14T10:00:00.000Z");
+    expect(state.isDirty).toBe(true);
+  });
+
   it("marks a successfully saved version clean", () => {
     const profile = createDefaultFlatRoofSiteProfile();
     useRooftopStore.getState().updateGeometry({ roofLengthM: 40 });
@@ -60,6 +75,7 @@ describe("Phase 8C-3A rooftop version state", () => {
     expect(state.activeVersionId).toBe("version-2");
     expect(state.activeVersionNumber).toBe(2);
     expect(state.lastSavedHash).toBe("hash-2");
+    expect(state.lastSavedAt).toBe("2026-08-14T10:00:00.000Z");
     expect(state.isDirty).toBe(false);
   });
 

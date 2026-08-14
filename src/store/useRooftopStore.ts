@@ -20,6 +20,7 @@ interface RooftopStore {
   activeVersionId: string | null;
   activeVersionNumber: number | null;
   lastSavedHash: string | null;
+  lastSavedAt: string | null;
   isDirty: boolean;
   selectedHour: number;
   setSelectedHour: (hour: number) => void;
@@ -40,6 +41,11 @@ interface RooftopStore {
   }) => void;
   markSaved: (result: SiteVersionOperationResult) => void;
   markDirty: () => void;
+  updateVersionMetadata: (values: {
+    activeVersionNumber: number;
+    lastSavedHash: string | null;
+    lastSavedAt: string;
+  }) => void;
   updateIdentity: (
     values: Partial<{
       name: string;
@@ -92,6 +98,7 @@ export const useRooftopStore =
         activeVersionId: null,
         activeVersionNumber: null,
         lastSavedHash: null,
+        lastSavedAt: null,
         isDirty: false,
         selectedHour: 12,
 
@@ -110,6 +117,7 @@ export const useRooftopStore =
             activeVersionId: context?.activeVersionId ?? null,
             activeVersionNumber: context?.activeVersionNumber ?? null,
             lastSavedHash: context?.lastSavedHash ?? null,
+            lastSavedAt: null,
             isDirty: false,
           });
         },
@@ -120,6 +128,7 @@ export const useRooftopStore =
             activeVersionId: context.activeVersionId,
             activeVersionNumber: context.activeVersionNumber ?? null,
             lastSavedHash: context.lastSavedHash ?? null,
+            lastSavedAt: null,
             isDirty: false,
           }),
 
@@ -134,11 +143,19 @@ export const useRooftopStore =
             activeVersionId: result.activeVersionId,
             activeVersionNumber: result.activeVersionNumber,
             lastSavedHash: result.configurationHash,
+            lastSavedAt: result.createdAt,
             isDirty: false,
           });
         },
 
         markDirty: () => set({ isDirty: true }),
+
+        updateVersionMetadata: (values) =>
+          set({
+            activeVersionNumber: values.activeVersionNumber,
+            lastSavedHash: values.lastSavedHash,
+            lastSavedAt: values.lastSavedAt,
+          }),
 
         updateIdentity: (values) =>
           set((state) => ({
@@ -302,6 +319,7 @@ export const useRooftopStore =
             activeVersionId: null,
             activeVersionNumber: null,
             lastSavedHash: null,
+            lastSavedAt: null,
             isDirty: false,
             selectedHour: 12,
           }),
@@ -324,6 +342,7 @@ export const useRooftopStore =
           activeVersionId: state.activeVersionId,
           activeVersionNumber: state.activeVersionNumber,
           lastSavedHash: state.lastSavedHash,
+          lastSavedAt: state.lastSavedAt,
           isDirty: state.isDirty,
           selectedHour: state.selectedHour,
         }),
@@ -336,6 +355,7 @@ export const useRooftopStore =
               activeVersionId?: unknown;
               activeVersionNumber?: unknown;
               lastSavedHash?: unknown;
+              lastSavedAt?: unknown;
               isDirty?: unknown;
             } | null
           )?.activeSite;
@@ -377,6 +397,11 @@ export const useRooftopStore =
               typeof (persisted as { lastSavedHash?: unknown } | null)
                 ?.lastSavedHash === "string"
                 ? (persisted as { lastSavedHash: string }).lastSavedHash
+                : null,
+            lastSavedAt:
+              typeof (persisted as { lastSavedAt?: unknown } | null)
+                ?.lastSavedAt === "string"
+                ? (persisted as { lastSavedAt: string }).lastSavedAt
                 : null,
             isDirty:
               (persisted as { isDirty?: unknown } | null)?.isDirty === true,

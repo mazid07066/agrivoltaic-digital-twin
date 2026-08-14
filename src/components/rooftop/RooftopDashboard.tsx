@@ -2,15 +2,17 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   Building2,
   CloudSun,
   Gauge,
   Grid3X3,
   LayoutDashboard,
+  History,
   PanelTop,
   RefreshCcw,
+  Save,
   Ruler,
   Sun,
   ThermometerSun,
@@ -18,6 +20,10 @@ import {
 } from "lucide-react";
 
 import { solveRectangularRoofLayout } from "@/lib/geometry/rectangularRoof";
+import type {
+  SiteVersionHistoryEntry,
+  SiteVersionOperationResult,
+} from "@/lib/projects/types";
 import {
   getPVModuleProfile,
   PV_MODULE_MANUFACTURERS,
@@ -29,6 +35,8 @@ import {
 import { runFlatRoofSimulation } from "@/lib/rooftop/simulation";
 import { useWeather } from "@/lib/weather/useWeather";
 import { useRooftopStore } from "@/store/useRooftopStore";
+
+import VersionHistory from "./VersionHistory";
 
 const RooftopScene = dynamic(
   () => import("./RooftopScene"),
@@ -154,6 +162,108 @@ export default function RooftopDashboard() {
   const reset = useRooftopStore(
     (state) => state.reset,
   );
+  const databaseSiteId = useRooftopStore(
+    (state) => state.databaseSiteId,
+  );
+  const activeVersionId = useRooftopStore(
+    (state) => state.activeVersionId,
+  );
+  const activeVersionNumber = useRooftopStore(
+    (state) => state.activeVersionNumber,
+  );
+  const lastSavedAt = useRooftopStore(
+    (state) => state.lastSavedAt,
+  );
+  const isDirty = useRooftopStore(
+    (state) => state.isDirty,
+  );
+  const markSaved = useRooftopStore(
+    (state) => state.markSaved,
+  );
+  const updateVersionMetadata = useRooftopStore(
+    (state) => state.updateVersionMetadata,
+  );
+  const [changeSummary, setChangeSummary] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [versionMessage, setVersionMessage] = useState("");
+  const [showHistory, setShowHistory] = useState(false);
+  const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
+
+  const handleActiveMetadata = useCallback(
+    (entry: SiteVersionHistoryEntry) => {
+      updateVersionMetadata({
+        activeVersionNumber: entry.versionNumber,
+        lastSavedHash: entry.configurationHash,
+        lastSavedAt: entry.createdAt,
+      });
+    },
+    [updateVersionMetadata],
+  );
+
+  const handleVersionResult = useCallback(
+    (result: SiteVersionOperationResult) => {
+      markSaved(result);
+      setChangeSummary("");
+      setVersionMessage(`Version ${result.activeVersionNumber} is now active.`);
+      setHistoryRefreshKey((value) => value + 1);
+    },
+    [markSaved],
+  );
+
+  async function saveNewVersion() {
+    const summary = changeSummary.trim();
+
+    if (!databaseSiteId || !activeVersionId) {
+      setVersionMessage("Open a database-backed rooftop site from Projects first.");
+      return;
+    }
+
+    if (!summary) {
+      setVersionMessage("A change summary is required.");
+      return;
+    }
+
+    if (summary.length > 500) {
+      setVersionMessage("The change summary must not exceed 500 characters.");
+      return;
+    }
+
+    setSaving(true);
+    setVersionMessage("");
+
+    try {
+      const response = await fetch("/api/site-registry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "save-version",
+          siteId: databaseSiteId,
+          expectedActiveVersionId: activeVersionId,
+          siteProfile: site,
+          changeSummary: summary,
+        }),
+      });
+      const data = (await response.json()) as {
+        ok: boolean;
+        error?: string;
+        result?: SiteVersionOperationResult;
+      };
+
+      if (!response.ok || !data.ok || !data.result) {
+        throw new Error(data.error ?? "Unable to save the new version.");
+      }
+
+      handleVersionResult(data.result);
+    } catch (caught) {
+      setVersionMessage(
+        caught instanceof Error
+          ? caught.message
+          : "Unable to save the new version.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
 
   const {
     weather,
@@ -231,6 +341,92 @@ export default function RooftopDashboard() {
           </nav>
         </div>
       </header>
+
+      <section className="mx-auto max-w-[1600px] px-5 pt-5">
+        <div className="rounded-2xl border border-amber-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="font-semibold text-slate-900">
+                  {activeVersionNumber
+                    ? `Version ${activeVersionNumber}`
+                    : "Version metadata loading"}
+                </h2>
+                <span
+                  className={
+                    isDirty
+                      ? "rounded-full bg-amber-100 px-2 py-1 text-xs text-amber-800"
+                      : "rounded-full bg-emerald-100 px-2 py-1 text-xs text-emerald-800"
+                  }
+                >
+                  {isDirty ? "Unsaved changes" : "Saved"}
+                </span>
+              </div>
+              <p className="mt-1 text-sm text-slate-500">
+                {databaseSiteId
+                  ? lastSavedAt
+                    ? `Last saved: ${new Date(lastSavedAt).toLocaleString()}`
+                    : "Database-backed rooftop design"
+                  : "Local rooftop draft — open a site from Projects to save versions."}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowHistory((value) => !value)}
+              disabled={!databaseSiteId || !activeVersionId}
+              className="flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm disabled:opacity-50"
+            >
+              <History size={16} />
+              {showHistory ? "Hide history" : "Version history"}
+            </button>
+          </div>
+
+          <div className="mt-4 flex flex-col gap-3 lg:flex-row">
+            <input
+              value={changeSummary}
+              onChange={(event) => setChangeSummary(event.target.value)}
+              maxLength={500}
+              placeholder="Describe the design changes in this version"
+              className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm"
+            />
+            <button
+              type="button"
+              onClick={() => void saveNewVersion()}
+              disabled={
+                saving ||
+                !isDirty ||
+                !changeSummary.trim() ||
+                !databaseSiteId ||
+                !activeVersionId
+              }
+              className="flex items-center justify-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+            >
+              <Save size={16} />
+              {saving ? "Saving…" : "Save new version"}
+            </button>
+          </div>
+
+          {versionMessage ? (
+            <p className="mt-3 rounded-lg bg-slate-50 p-3 text-sm text-slate-700" role="status">
+              {versionMessage}
+            </p>
+          ) : null}
+        </div>
+
+        {showHistory && databaseSiteId && activeVersionId ? (
+          <div className="mt-5">
+            <VersionHistory
+              siteId={databaseSiteId}
+              activeVersionId={activeVersionId}
+              refreshKey={historyRefreshKey}
+              hasUnsavedChanges={isDirty}
+              onActiveMetadata={handleActiveMetadata}
+              onRestored={handleVersionResult}
+            />
+          </div>
+        ) : null}
+      </section>
 
       <div className="mx-auto grid max-w-[1600px] gap-6 p-5 xl:grid-cols-[360px_1fr]">
         <aside className="space-y-5">
