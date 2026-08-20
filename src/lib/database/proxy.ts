@@ -13,6 +13,7 @@ const PROTECTED_PATHS = [
   "/land",
   "/rooftop",
   "/scenarios",
+  "/simulation-runs",
 ];
 
 function isProtectedPath(

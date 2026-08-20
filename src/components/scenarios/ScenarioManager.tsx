@@ -5,6 +5,8 @@ import {
 } from "react";
 
 import ScenarioEnvironmentPreview from "./ScenarioEnvironmentPreview";
+import ScenarioSimulationRuns from "./ScenarioSimulationRuns";
+
 
 import {
   useRouter,
@@ -1487,6 +1489,12 @@ export default function ScenarioManager({
                 />
 
                 <ScenarioEnvironmentPreview
+                  scenario={
+                    scenario
+                  }
+                />
+
+                <ScenarioSimulationRuns
                   scenario={
                     scenario
                   }

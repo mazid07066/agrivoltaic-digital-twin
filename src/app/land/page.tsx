@@ -18,7 +18,6 @@ import {
   Sun,
 } from "lucide-react";
 
-import LogoutButton from "@/components/auth/LogoutButton";
 import IrradianceChart from "@/components/charts/IrradianceChart";
 import SpatialDLIHeatmap from "@/components/charts/SpatialDLIHeatmap";
 import WeatherConnectionCard from "@/components/dashboard/WeatherConnectionCard";
