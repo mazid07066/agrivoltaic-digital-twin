@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -244,42 +244,82 @@ export type Database = {
       }
       scenarios: {
         Row: {
+          agricultural_config: Json
+          archived_at: string | null
           configuration: Json
           created_at: string
           created_by: string | null
           description: string | null
+          economic_config: Json
           id: string
+          is_baseline: boolean
+          metadata: Json
           name: string
+          parent_scenario_id: string | null
+          policy_config: Json
           project_id: string
+          scenario_type: string
+          scenario_version: number
           site_id: string
           status: string
+          technical_config: Json
           updated_at: string
+          weather_config: Json
         }
         Insert: {
+          agricultural_config?: Json
+          archived_at?: string | null
           configuration?: Json
           created_at?: string
           created_by?: string | null
           description?: string | null
+          economic_config?: Json
           id?: string
+          is_baseline?: boolean
+          metadata?: Json
           name: string
+          parent_scenario_id?: string | null
+          policy_config?: Json
           project_id: string
+          scenario_type?: string
+          scenario_version?: number
           site_id: string
           status?: string
+          technical_config?: Json
           updated_at?: string
+          weather_config?: Json
         }
         Update: {
+          agricultural_config?: Json
+          archived_at?: string | null
           configuration?: Json
           created_at?: string
           created_by?: string | null
           description?: string | null
+          economic_config?: Json
           id?: string
+          is_baseline?: boolean
+          metadata?: Json
           name?: string
+          parent_scenario_id?: string | null
+          policy_config?: Json
           project_id?: string
+          scenario_type?: string
+          scenario_version?: number
           site_id?: string
           status?: string
+          technical_config?: Json
           updated_at?: string
+          weather_config?: Json
         }
         Relationships: [
+          {
+            foreignKeyName: "scenarios_parent_scenario_id_fkey"
+            columns: ["parent_scenario_id"]
+            isOneToOne: false
+            referencedRelation: "scenarios"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "scenarios_project_id_fkey"
             columns: ["project_id"]

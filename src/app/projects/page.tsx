@@ -48,12 +48,21 @@ export default async function ProjectsPage({
             </p>
           </div>
 
-          <Link
-            href="/"
-            className="rounded-xl border border-slate-300 bg-white px-4 py-2 font-medium text-slate-800"
-          >
-            Return to dashboard
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/scenarios"
+              className="rounded-xl bg-blue-600 px-4 py-2 font-medium text-white"
+            >
+              Scenario Lab
+            </Link>
+
+            <Link
+              href="/"
+              className="rounded-xl border border-slate-300 bg-white px-4 py-2 font-medium text-slate-800"
+            >
+              Return to dashboard
+            </Link>
+          </div>
         </div>
 
         {parameters.migration === "complete" ? (
