@@ -42,3 +42,7 @@ Thumbs.db
 AGRIVOLTAIC_PROJECT_DUMP.txt
 
 phase-8a-backup-*/
+
+# AgriTwin private/local environmental datasets
+/data/environment/*
+!/data/environment/.gitkeep

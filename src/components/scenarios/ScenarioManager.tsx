@@ -4,6 +4,8 @@ import {
   useState,
 } from "react";
 
+import ScenarioEnvironmentPreview from "./ScenarioEnvironmentPreview";
+
 import {
   useRouter,
 } from "next/navigation";
@@ -60,6 +62,11 @@ interface FormState {
     | "sensor";
 
   weatherYear: string;
+
+  weatherStartDate: string;
+  weatherEndDate: string;
+
+  weatherDatasetId: string;
 
   maximumGcrPercent: string;
 
@@ -118,6 +125,15 @@ const EMPTY_FORM: FormState = {
     new Date()
       .getFullYear()
       .toString(),
+
+  weatherStartDate:
+    "",
+
+  weatherEndDate:
+    "",
+
+  weatherDatasetId:
+    "",
 
   maximumGcrPercent:
     "40",
@@ -373,6 +389,24 @@ export default function ScenarioManager({
             .year,
         ),
 
+      weatherStartDate:
+        scenario
+          .weatherConfig
+          .startDate ??
+        "",
+
+      weatherEndDate:
+        scenario
+          .weatherConfig
+          .endDate ??
+        "",
+
+      weatherDatasetId:
+        scenario
+          .weatherConfig
+          .datasetId ??
+        "",
+
       maximumGcrPercent:
         percentOrEmpty(
           scenario
@@ -518,6 +552,23 @@ export default function ScenarioManager({
           optionalNumber(
             form.weatherYear,
           ),
+
+        startDate:
+          form.weatherStartDate.trim() ||
+          null,
+
+        endDate:
+          form.weatherEndDate.trim() ||
+          null,
+
+        datasetId:
+          form.weatherSource ===
+            "uploaded_dataset"
+            ? (
+                form.weatherDatasetId.trim() ||
+                null
+              )
+            : null,
       };
 
       const policyConfig = {
@@ -1108,13 +1159,43 @@ export default function ScenarioManager({
                     value={
                       form.weatherSource
                     }
-                    onChange={(event) =>
-                      updateField(
-                        "weatherSource",
+                    onChange={(event) => {
+                      const source =
                         event.target
-                          .value as FormState["weatherSource"],
-                      )
-                    }
+                          .value as FormState["weatherSource"];
+
+                      setForm(
+                        (current) => ({
+                          ...current,
+
+                          weatherSource:
+                            source,
+
+                          weatherMode:
+                            source ===
+                            "uploaded_dataset"
+                              ? "dataset"
+                              : source ===
+                                  "sensor"
+                                ? "sensor"
+                                : current.weatherMode ===
+                                      "dataset" ||
+                                    current.weatherMode ===
+                                      "sensor"
+                                  ? "historical"
+                                  : current.weatherMode,
+
+                          weatherDatasetId:
+                            source ===
+                            "uploaded_dataset"
+                              ? (
+                                  current.weatherDatasetId ||
+                                  "solar-mem-data-v1"
+                                )
+                              : "",
+                        }),
+                      );
+                    }}
                     className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2"
                   >
                     <option value="open_meteo">
@@ -1198,6 +1279,76 @@ export default function ScenarioManager({
                     className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2"
                   />
                 </label>
+
+                <label>
+                  <span className="text-sm font-medium text-slate-700">
+                    Start date
+                  </span>
+
+                  <input
+                    type="date"
+                    value={
+                      form.weatherStartDate
+                    }
+                    onChange={(event) =>
+                      updateField(
+                        "weatherStartDate",
+                        event.target.value,
+                      )
+                    }
+                    className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2"
+                  />
+                </label>
+
+                <label>
+                  <span className="text-sm font-medium text-slate-700">
+                    End date
+                  </span>
+
+                  <input
+                    type="date"
+                    value={
+                      form.weatherEndDate
+                    }
+                    onChange={(event) =>
+                      updateField(
+                        "weatherEndDate",
+                        event.target.value,
+                      )
+                    }
+                    className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2"
+                  />
+                </label>
+
+                {form.weatherSource ===
+                "uploaded_dataset" ? (
+                  <label className="sm:col-span-2">
+                    <span className="text-sm font-medium text-slate-700">
+                      Environmental dataset
+                    </span>
+
+                    <select
+                      value={
+                        form.weatherDatasetId
+                      }
+                      onChange={(event) =>
+                        updateField(
+                          "weatherDatasetId",
+                          event.target.value,
+                        )
+                      }
+                      className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2"
+                    >
+                      <option value="solar-mem-data-v1">
+                        Solar-MEM Measurement Dataset
+                      </option>
+                    </select>
+
+                    <p className="mt-1 text-xs text-slate-500">
+                      Local 1-minute measurement data are streamed and normalized to hourly AgriTwin environmental records.
+                    </p>
+                  </label>
+                ) : null}
               </div>
             </div>
 
@@ -1330,6 +1481,12 @@ export default function ScenarioManager({
                 key={scenario.id}
               >
                 <ScenarioCard
+                  scenario={
+                    scenario
+                  }
+                />
+
+                <ScenarioEnvironmentPreview
                   scenario={
                     scenario
                   }
