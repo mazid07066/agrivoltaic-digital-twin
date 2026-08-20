@@ -10,7 +10,9 @@ const PROTECTED_PATHS = [
   "/",
   "/account",
   "/projects",
+  "/land",
   "/rooftop",
+  "/scenarios",
 ];
 
 function isProtectedPath(

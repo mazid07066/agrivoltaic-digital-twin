@@ -16,7 +16,8 @@ export async function GET(request: NextRequest) {
     ) as EmailOtpType | null;
 
   const next =
-    requestUrl.searchParams.get("next") ?? "/";
+    requestUrl.searchParams.get("next") ??
+    "/projects";
 
   if (tokenHash && type) {
     const supabase =
@@ -29,7 +30,11 @@ export async function GET(request: NextRequest) {
       });
 
     if (!error) {
-      redirect(next.startsWith("/") ? next : "/");
+      redirect(
+        next.startsWith("/")
+          ? next
+          : "/projects",
+      );
     }
   }
 

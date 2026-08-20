@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import LogoutButton from "@/components/auth/LogoutButton";
 import ScenarioManager from "@/components/scenarios/ScenarioManager";
 import ScenarioSummary from "@/components/scenarios/ScenarioSummary";
 

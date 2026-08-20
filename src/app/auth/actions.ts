@@ -70,7 +70,8 @@ export async function signInAction(
   }
 
   revalidatePath("/", "layout");
-  redirect("/");
+  revalidatePath("/projects");
+  redirect("/projects");
 }
 
 export async function signUpAction(
@@ -140,7 +141,8 @@ export async function signUpAction(
 
     if (data.session) {
       revalidatePath("/", "layout");
-      redirect("/");
+      revalidatePath("/projects");
+      redirect("/projects");
     }
 
     return {

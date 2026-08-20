@@ -93,7 +93,7 @@ export default function SiteRegistryManager({
         );
       }
 
-      let targetPath: "/" | "/rooftop" | null =
+      let targetPath: "/land" | "/rooftop" | null =
         null;
 
       if (options?.loadResult && data.result) {
@@ -106,7 +106,7 @@ export default function SiteRegistryManager({
           )
         ) {
           replaceLandSite(returnedSite);
-          targetPath = "/";
+          targetPath = "/land";
         } else if (
           isFlatRoofSiteProfile(returnedSite)
         ) {

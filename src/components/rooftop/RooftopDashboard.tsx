@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import LogoutButton from "@/components/auth/LogoutButton";
 import { useCallback, useMemo, useState } from "react";
 import {
   Building2,
