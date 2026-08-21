@@ -242,6 +242,14 @@ export default function Home() {
       </Link>
 
       <Link
+        href="/analytics"
+        className="topbar-nav-link"
+      >
+        <ChartNoAxesCombined size={15} />
+        <span>Analytics</span>
+      </Link>
+
+      <Link
         href="/weather-test"
         className="topbar-nav-link"
       >

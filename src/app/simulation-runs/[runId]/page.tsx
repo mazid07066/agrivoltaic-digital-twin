@@ -179,6 +179,13 @@ export default async function SimulationRunPage({
               Projects
             </Link>
 
+            <Link
+              href="/analytics"
+              className="rounded-xl border border-indigo-300 bg-white px-4 py-2 font-medium text-indigo-700"
+            >
+              Analytics
+            </Link>
+
             <LogoutButton className="rounded-xl border border-slate-300 bg-white px-4 py-2 font-medium text-slate-800 hover:bg-slate-50 disabled:opacity-50" />
           </div>
         </header>

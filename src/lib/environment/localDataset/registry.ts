@@ -5,6 +5,129 @@ import type {
 export const LOCAL_ENVIRONMENT_DATASETS:
   LocalEnvironmentalDatasetDefinition[] =
   [
+
+    {
+      id:
+        "phase9d-rice-study-20260820",
+
+      name:
+        "Phase 9D Rice AV Frozen Weather — 20 August 2026",
+
+      description:
+        "Frozen 24-hour environmental evidence derived from the corrected Phase 9D reference execution for controlled scenario comparison, MCDA, Pareto, sensitivity, and reproducibility verification.",
+
+      filename:
+        "phase9d-rice-study-20260820.csv",
+
+      format:
+        "csv",
+
+      parser:
+        "standard_csv",
+
+      timezone:
+        "Asia/Dhaka",
+
+      mode:
+        "dataset",
+
+      columnMap: {
+        timestamp:
+          "timestamp",
+
+        ghi:
+          "ghi_wm2",
+
+        dni:
+          "dni_wm2",
+
+        dhi:
+          "dhi_wm2",
+
+        temperature:
+          "temperature_c",
+
+        relativeHumidity:
+          "relative_humidity_pct",
+
+        cloudCover:
+          "cloud_cover_pct",
+
+        windSpeed:
+          "wind_speed_ms",
+
+        windDirection:
+          "wind_direction_deg",
+
+        precipitation:
+          "precipitation_mm",
+
+        pressure:
+          "pressure_hpa",
+
+        et0:
+          "et0_mm",
+      },
+
+      units: {
+        ghi:
+          "W/m2",
+
+        dni:
+          "W/m2",
+
+        dhi:
+          "W/m2",
+
+        temperature:
+          "C",
+
+        relativeHumidity:
+          "%",
+
+        cloudCover:
+          "%",
+
+        windSpeed:
+          "m/s",
+
+        windDirection:
+          "degree",
+
+        precipitation:
+          "mm",
+
+        pressure:
+          "hPa",
+
+        et0:
+          "mm",
+      },
+
+      metadata: {
+        temporalResolution:
+          "1 hour",
+
+        normalizedResolution:
+          "1 hour",
+
+        frozenEvidence:
+          true,
+
+        referenceRunId:
+          "6cb8ccd5-3738-4f94-b3d4-5f617da0a9ba",
+
+        originalSource:
+          "open_meteo",
+
+        studyDate:
+          "2026-08-20",
+
+        localOnly:
+          true,
+      },
+    },
+
     {
       id:
         "solar-mem-data-v1",

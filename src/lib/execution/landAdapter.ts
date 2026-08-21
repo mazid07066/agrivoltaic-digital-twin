@@ -2,6 +2,10 @@ import {
   environmentalDatasetToWeatherResponse,
 } from "./environmentWeatherBridge";
 
+import {
+  applyLandScenarioOverrides,
+} from "./scenarioOverrides";
+
 import type {
   CanonicalHourlySimulationPoint,
   CanonicalSimulationSummary,
@@ -66,18 +70,26 @@ function runtimeSite(
   }
 
   /*
-   * Never mutate the immutable database-backed
-   * site-version snapshot.
+   * The persisted site version remains immutable.
    *
-   * The environmental resolver determines the
-   * actual execution date. A detached runtime
-   * profile receives that date before entering
-   * the existing Phase 7B engine.
+   * Scenario-level technical and agricultural
+   * settings are applied only to this detached
+   * execution-time profile.
+   */
+  const runtime =
+    applyLandScenarioOverrides(
+      structuredClone(
+        stored,
+      ),
+      input.scenario,
+    );
+
+  /*
+   * Environmental resolution determines the
+   * actual simulation date.
    */
   return {
-    ...structuredClone(
-      stored,
-    ),
+    ...runtime,
 
     simulationDate:
       input.inputSnapshot

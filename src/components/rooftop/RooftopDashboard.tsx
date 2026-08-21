@@ -330,6 +330,20 @@ export default function RooftopDashboard() {
             >
               Projects
             </Link>
+
+            <Link
+              href="/scenarios"
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+            >
+              Scenario Lab
+            </Link>
+
+            <Link
+              href="/analytics"
+              className="rounded-lg border border-indigo-300 px-3 py-2 text-sm text-indigo-700"
+            >
+              Analytics
+            </Link>
             <button
               type="button"
               onClick={reset}

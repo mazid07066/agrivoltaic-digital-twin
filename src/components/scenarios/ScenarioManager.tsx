@@ -1341,13 +1341,20 @@ export default function ScenarioManager({
                       }
                       className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2"
                     >
+                      <option value="phase9d-rice-study-20260820">
+                        Phase 9D Rice AV Frozen Weather — 20 August 2026
+                      </option>
+
                       <option value="solar-mem-data-v1">
                         Solar-MEM Measurement Dataset
                       </option>
                     </select>
 
                     <p className="mt-1 text-xs text-slate-500">
-                      Local 1-minute measurement data are streamed and normalized to hourly AgriTwin environmental records.
+                      {form.weatherDatasetId ===
+                      "phase9d-rice-study-20260820"
+                        ? "Frozen 24-hour environmental evidence for controlled Phase 9D scenario comparison, MCDA, Pareto and sensitivity analysis."
+                        : "Local 1-minute measurement data are streamed and normalized to hourly AgriTwin environmental records."}
                     </p>
                   </label>
                 ) : null}
