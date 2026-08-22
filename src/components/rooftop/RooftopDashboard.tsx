@@ -33,10 +33,16 @@ import {
   FLAT_ROOF_STRUCTURAL_DISCLAIMER,
 } from "@/lib/sites/adapters/flatRoof";
 import { runFlatRoofSimulation } from "@/lib/rooftop/simulation";
+
+import {
+  simulateDemonstrationElectricalTimestep,
+} from "@/lib/electrical/demonstration";
 import { useWeather } from "@/lib/weather/useWeather";
 import { useRooftopStore } from "@/store/useRooftopStore";
 
 import VersionHistory from "./VersionHistory";
+
+import ElectricalStatusPanel from "@/components/twin/electrical/ElectricalStatusPanel";
 
 const RooftopScene = dynamic(
   () => import("./RooftopScene"),
@@ -297,6 +303,31 @@ export default function RooftopDashboard() {
 
   const selectedPoint =
     results.hourly[selectedHour];
+
+  const electrical =
+    useMemo(
+      () =>
+        simulateDemonstrationElectricalTimestep({
+          timestamp:
+            `${site.simulationDate}T${String(
+              selectedHour,
+            ).padStart(
+              2,
+              "0",
+            )}:00:00`,
+
+          pvPowerKw:
+            selectedPoint
+              ?.dcPowerKW ??
+            0,
+        }),
+      [
+        selectedHour,
+        selectedPoint,
+        site.simulationDate,
+      ],
+    );
+
   const selectedModule = getPVModuleProfile(
     site.pvConfiguration.moduleProfileId,
   );
@@ -840,7 +871,39 @@ export default function RooftopDashboard() {
             </p>
           </section>
 
-          <RooftopScene site={site} />
+          <div className="rooftop-electrical-twin">
+            <RooftopScene
+              site={site}
+              electrical={electrical}
+            />
+
+            <section className="rooftop-electrical-section">
+              <div className="rooftop-electrical-section-heading">
+                <div>
+                  <span>
+                    Phase 9E Electrical Balance-of-System
+                  </span>
+
+                  <h2>
+                    Inverter & AC Distribution
+                  </h2>
+
+                  <p>
+                    Selected-hour electrical state synchronized with the rooftop PV simulation.
+                  </p>
+                </div>
+
+                <div className="rooftop-electrical-mode">
+                  Grid connected
+                </div>
+              </div>
+
+              <ElectricalStatusPanel
+                data={electrical}
+                embedded
+              />
+            </section>
+          </div>
 
           <section className="grid gap-4 lg:grid-cols-3">
             <article className="rounded-2xl border border-slate-200 bg-white p-5">

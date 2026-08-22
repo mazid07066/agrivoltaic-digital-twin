@@ -339,6 +339,7 @@ export type Database = {
       simulation_hourly_results: {
         Row: {
           additional_values: Json
+          electrical_values: Json
           crop_dli_increment_mol_m2: number | null
           ghi_wm2: number | null
           hour_index: number
@@ -356,6 +357,7 @@ export type Database = {
         }
         Insert: {
           additional_values?: Json
+          electrical_values?: Json
           crop_dli_increment_mol_m2?: number | null
           ghi_wm2?: number | null
           hour_index: number
@@ -373,6 +375,7 @@ export type Database = {
         }
         Update: {
           additional_values?: Json
+          electrical_values?: Json
           crop_dli_increment_mol_m2?: number | null
           ghi_wm2?: number | null
           hour_index?: number
@@ -403,6 +406,9 @@ export type Database = {
           completed_at: string | null
           controller_version: string | null
           created_at: string
+          electrical_operating_mode: string | null
+          electrical_provenance: Json | null
+          electrical_summary: Json | null
           engine_version: string
           error_message: string | null
           id: string
@@ -426,6 +432,9 @@ export type Database = {
           completed_at?: string | null
           controller_version?: string | null
           created_at?: string
+          electrical_operating_mode?: string | null
+          electrical_provenance?: Json | null
+          electrical_summary?: Json | null
           engine_version: string
           error_message?: string | null
           id?: string
@@ -449,6 +458,9 @@ export type Database = {
           completed_at?: string | null
           controller_version?: string | null
           created_at?: string
+          electrical_operating_mode?: string | null
+          electrical_provenance?: Json | null
+          electrical_summary?: Json | null
           engine_version?: string
           error_message?: string | null
           id?: string

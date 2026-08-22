@@ -344,7 +344,17 @@ export function createHourlyResultInserts(
     string,
 ): HourlyInsert[] {
   return result.hourly.map(
-    (point) => ({
+    (point) => {
+      const electricalPoint =
+        result.electrical
+          ?.hourly
+          .find(
+            (candidate) =>
+              candidate.hourIndex ===
+              point.hourIndex,
+          );
+
+      return {
       simulation_run_id:
         simulationRunId,
 
@@ -396,7 +406,24 @@ export function createHourlyResultInserts(
               point.timestamp,
           },
         ),
-    }),
+
+      electrical_values:
+        asJson(
+          electricalPoint
+            ? {
+                timestamp:
+                  electricalPoint.timestamp,
+
+                inverter:
+                  electricalPoint.inverter,
+
+                distribution:
+                  electricalPoint.distribution,
+              }
+            : {},
+        ),
+      };
+    },
   );
 }
 

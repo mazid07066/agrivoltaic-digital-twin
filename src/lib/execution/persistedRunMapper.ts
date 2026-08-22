@@ -1,4 +1,11 @@
 import type {
+  ElectricalHourlyResult,
+  ElectricalSimulationProvenance,
+  ElectricalSimulationResult,
+  ElectricalSimulationSummary,
+} from "@/lib/electrical/types";
+
+import type {
   Database,
   Json,
 } from "@/lib/database/database.types";
@@ -163,6 +170,99 @@ export function mapSimulationSpatialRow(
   };
 }
 
+function mapElectricalResult(
+  run:
+    SimulationRunRow,
+
+  hourly:
+    HourlyRow[],
+): ElectricalSimulationResult | null {
+  if (
+    !run.electrical_summary ||
+    !run.electrical_provenance ||
+    !run.electrical_operating_mode
+  ) {
+    return null;
+  }
+
+  const summary =
+    run.electrical_summary as unknown as
+      ElectricalSimulationSummary;
+
+  const provenance =
+    run.electrical_provenance as unknown as
+      ElectricalSimulationProvenance;
+
+  const electricalHourly =
+    [...hourly]
+      .sort(
+        (
+          first,
+          second,
+        ) =>
+          first.hour_index -
+          second.hour_index,
+      )
+      .flatMap(
+        (
+          row,
+        ): ElectricalHourlyResult[] => {
+          const values =
+            asRecord(
+              row.electrical_values,
+            );
+
+          if (
+            !isRecord(
+              values.inverter,
+            ) ||
+            !isRecord(
+              values.distribution,
+            )
+          ) {
+            return [];
+          }
+
+          return [
+            {
+              hourIndex:
+                row.hour_index,
+
+              timestamp:
+                typeof values.timestamp ===
+                "string"
+                  ? values.timestamp
+                  : row.timestamp_utc,
+
+              inverter:
+                values.inverter as unknown as
+                  ElectricalHourlyResult["inverter"],
+
+              distribution:
+                values.distribution as unknown as
+                  ElectricalHourlyResult["distribution"],
+            },
+          ];
+        },
+      );
+
+  return {
+    schema:
+      "agritwin-electrical-result-v1",
+
+    operatingMode:
+      run.electrical_operating_mode as
+        ElectricalSimulationResult["operatingMode"],
+
+    provenance,
+
+    summary,
+
+    hourly:
+      electricalHourly,
+  };
+}
+
 export function mapPersistedSimulationRun(
   run:
     SimulationRunRow,
@@ -221,6 +321,12 @@ export function mapPersistedSimulationRun(
 
     resultSummary:
       run.result_summary,
+
+    electrical:
+      mapElectricalResult(
+        run,
+        hourly,
+      ),
 
     warnings:
       run.warnings,

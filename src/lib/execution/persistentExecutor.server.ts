@@ -177,6 +177,23 @@ export async function executeAndPersistScenarioSimulation(
           result_summary:
             result.summary as unknown as Json,
 
+          electrical_summary:
+            result.electrical
+              ? result.electrical
+                  .summary as unknown as Json
+              : null,
+
+          electrical_provenance:
+            result.electrical
+              ? result.electrical
+                  .provenance as unknown as Json
+              : null,
+
+          electrical_operating_mode:
+            result.electrical
+              ?.operatingMode ??
+            null,
+
           warnings:
             result.warnings as unknown as Json,
 

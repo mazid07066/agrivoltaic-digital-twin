@@ -1,4 +1,8 @@
 import type {
+  ElectricalSimulationResult,
+} from "@/lib/electrical/types";
+
+import type {
   CanonicalHourlySimulationPoint,
   CanonicalSpatialSimulationResult,
   SimulationExecutionInputSnapshot,
@@ -35,6 +39,14 @@ export interface PersistedSimulationRun {
 
   resultSummary:
     unknown | null;
+
+  /**
+   * Optional Phase 9E electrical result.
+   *
+   * Historical runs created before Phase 9E return null.
+   */
+  electrical?:
+    ElectricalSimulationResult | null;
 
   warnings:
     unknown;

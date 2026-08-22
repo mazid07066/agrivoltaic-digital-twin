@@ -1,0 +1,121 @@
+{
+  "inverters": [
+    {
+      "id": "sma-sunny-tripower-core1-stp50-40",
+      "manufacturer": "SMA Solar Technology",
+      "series": "Sunny Tripower CORE1",
+      "model": "STP 50-40",
+      "inverterType": "Three-phase string inverter",
+      "topology": "Transformerless",
+
+      "dc": {
+        "maxGeneratorPowerW": 75000,
+        "maxInputVoltageV": 1000,
+        "mppVoltageMinV": 500,
+        "mppVoltageMaxV": 800,
+        "ratedInputVoltageV": 670,
+        "minInputVoltageV": 150,
+        "startInputVoltageV": 188,
+        "maxOperatingInputCurrentA": 120,
+        "maxOperatingCurrentPerMpptA": 20,
+        "maxShortCircuitCurrentPerMpptA": 30,
+        "maxShortCircuitCurrentPerStringA": 30,
+        "independentMpptInputs": 6,
+        "stringsPerMppt": 2
+      },
+
+      "ac": {
+        "ratedActivePowerW": 50000,
+        "maxApparentPowerVa": 50000,
+
+        "supportedNominalVoltages": [
+          {
+            "lineNeutralV": 220,
+            "lineLineV": 380
+          },
+          {
+            "lineNeutralV": 230,
+            "lineLineV": 400
+          },
+          {
+            "lineNeutralV": 240,
+            "lineLineV": 415
+          }
+        ],
+
+        "acVoltageMinV": 202,
+        "acVoltageMaxV": 305,
+
+        "supportedGridFrequenciesHz": [
+          50,
+          60
+        ],
+
+        "frequencyRangesHz": [
+          {
+            "nominalHz": 50,
+            "minHz": 44,
+            "maxHz": 55
+          },
+          {
+            "nominalHz": 60,
+            "minHz": 54,
+            "maxHz": 65
+          }
+        ],
+
+        "ratedPowerFrequencyHz": 50,
+        "ratedGridVoltageV": 230,
+        "maxOutputCurrentA": 72.5,
+        "ratedOutputCurrentA": 72.5,
+        "outputPhases": 3,
+        "acConnection": "3-(N)-PE",
+        "ratedPowerFactor": 1,
+        "maxThdPercent": 3
+      },
+
+      "efficiency": {
+        "maximumEfficiency": 0.981,
+        "europeanEfficiency": 0.978,
+        "curveAvailable": true,
+        "curveDigitized": false
+      },
+
+      "general": {
+        "widthMm": 569,
+        "heightMm": 733,
+        "depthMm": 621,
+        "weightKg": 84,
+        "operatingTemperatureMinC": -25,
+        "operatingTemperatureMaxC": 60,
+        "noiseDbA": 65,
+        "nightSelfConsumptionW": 4.8,
+        "coolingConcept": "OptiCool",
+        "protectionDegree": "IP65"
+      },
+
+      "communications": {
+        "ethernet": true,
+        "wifi": true,
+        "rs485Optional": true,
+        "smaModbus": true,
+        "sunSpecModbus": true,
+        "speedwireWebconnect": true
+      },
+
+      "features": {
+        "integratedDcDisconnector": true,
+        "groundFaultMonitoring": true,
+        "gridMonitoring": true,
+        "dcReversePolarityProtection": true,
+        "residualCurrentMonitoring": true,
+        "shadeManagement": "SMA ShadeFix",
+        "offGridCapable": true
+      },
+
+      "source": "SMA Sunny Tripower CORE1 STP 50-40 datasheet",
+      "sourceFile": "STP50-40-DS-en-30 (1).pdf",
+      "datasheetStatus": "02/2020"
+    }
+  ]
+}

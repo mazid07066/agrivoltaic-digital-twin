@@ -1,4 +1,8 @@
 import {
+  createElectricalSimulationResult,
+} from "@/lib/electrical/adapters/executionElectricalAdapter";
+
+import {
   executeLandSimulation,
 } from "./landAdapter";
 
@@ -20,18 +24,25 @@ export function executeResolvedSimulation(
       .engine
       .engineKind;
 
+  let scientificResult:
+    SimulationExecutionResult;
+
   switch (
     engineKind
   ) {
     case "land":
-      return executeLandSimulation(
-        input,
-      );
+      scientificResult =
+        executeLandSimulation(
+          input,
+        );
+      break;
 
     case "rooftop":
-      return executeRooftopSimulation(
-        input,
-      );
+      scientificResult =
+        executeRooftopSimulation(
+          input,
+        );
+      break;
 
     default: {
       const exhaustiveCheck:
@@ -45,4 +56,20 @@ export function executeResolvedSimulation(
       );
     }
   }
+
+  /*
+   * Phase 9E electrical processing is deliberately
+   * downstream of the verified scientific PV engines.
+   *
+   * Neither the Phase 7B land engine nor the Phase 8C
+   * rooftop engine is modified by the electrical model.
+   */
+  return {
+    ...scientificResult,
+
+    electrical:
+      createElectricalSimulationResult(
+        scientificResult,
+      ),
+  };
 }

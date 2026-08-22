@@ -1,4 +1,8 @@
 import type {
+  ElectricalSimulationResult,
+} from "@/lib/electrical/types";
+
+import type {
   EnvironmentalDataset,
   EnvironmentalMode,
   EnvironmentalSource,
@@ -331,6 +335,15 @@ export interface SimulationExecutionResult {
 
   spatial:
     CanonicalSpatialSimulationResult[];
+
+  /**
+   * Optional Phase 9E downstream electrical result.
+   *
+   * Historical Phase 9C/9D runs do not contain this field
+   * and remain valid.
+   */
+  electrical?:
+    ElectricalSimulationResult;
 
   warnings:
     string[];

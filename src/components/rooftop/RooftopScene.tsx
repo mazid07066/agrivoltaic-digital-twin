@@ -22,8 +22,17 @@ import type {
   FlatRoofSiteProfile,
 } from "@/lib/sites/schema";
 
+import type {
+  DemonstrationElectricalTimestep,
+} from "@/lib/electrical/demonstration";
+
+import ElectricalBosScene from "@/components/twin/electrical/ElectricalBosScene";
+
 interface RooftopSceneProps {
   site: FlatRoofSiteProfile;
+
+  electrical?:
+    DemonstrationElectricalTimestep;
 }
 
 function RooftopModel({
@@ -393,6 +402,7 @@ function SceneFallback() {
 
 export default function RooftopScene({
   site,
+  electrical,
 }: RooftopSceneProps) {
   const geometry = site.siteGeometry;
 
@@ -492,6 +502,52 @@ export default function RooftopScene({
           fallback={<SceneFallback />}
         >
           <RooftopModel site={site} />
+
+          {electrical ? (
+            <ElectricalBosScene
+              data={electrical}
+              position={[
+                (
+                  site.siteGeometry
+                    .roofWidthM /
+                  2
+                ) +
+                  6 -
+                  15.5 *
+                    Math.max(
+                      0.62,
+                      Math.min(
+                        maximumDimensionM /
+                          42,
+                        0.82,
+                      ),
+                    ),
+
+                0,
+
+                -4.5 *
+                  Math.max(
+                    0.62,
+                    Math.min(
+                      maximumDimensionM /
+                        42,
+                      0.82,
+                    ),
+                  ),
+              ]}
+              scale={
+                Math.max(
+                  0.62,
+                  Math.min(
+                    maximumDimensionM /
+                      42,
+                    0.82,
+                  ),
+                )
+              }
+              rotationY={0}
+            />
+          ) : null}
         </Suspense>
 
         <OrbitControls

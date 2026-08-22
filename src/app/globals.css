@@ -1523,3 +1523,348 @@ button {
     justify-content: center;
   }
 }
+
+/* =========================================================
+   Phase 9E Electrical Balance-of-System visualization
+   ========================================================= */
+
+.electrical-3d-label {
+  min-width: 92px;
+  padding: 5px 7px;
+  display: grid;
+  gap: 1px;
+  color: #f8fafc;
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 7px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.22);
+  font-size: 9px;
+  line-height: 1.25;
+  text-align: center;
+  white-space: nowrap;
+  pointer-events: none;
+  backdrop-filter: blur(6px);
+}
+
+.electrical-3d-label strong {
+  font-size: 10px;
+}
+
+.electrical-3d-label span {
+  color: #cbd5e1;
+}
+
+.electrical-3d-label.compact {
+  min-width: 64px;
+}
+
+.electrical-status-panel {
+  position: absolute;
+  z-index: 8;
+  top: 14px;
+  right: 14px;
+  width: min(310px, calc(100% - 28px));
+  padding: 13px;
+  color: #e2e8f0;
+  background: rgba(15, 23, 42, 0.91);
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 13px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.24);
+  backdrop-filter: blur(10px);
+}
+
+.electrical-status-heading {
+  margin-bottom: 11px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.electrical-status-heading div {
+  display: grid;
+  gap: 2px;
+}
+
+.electrical-status-heading span {
+  color: #94a3b8;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.electrical-status-heading strong {
+  color: #86efac;
+  font-size: 0.92rem;
+}
+
+.electrical-status-heading small {
+  padding: 4px 6px;
+  color: #bfdbfe;
+  background: rgba(30, 64, 175, 0.25);
+  border-radius: 6px;
+  font-size: 0.63rem;
+}
+
+.electrical-status-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.electrical-status-grid > div {
+  padding: 7px 8px;
+  display: grid;
+  gap: 2px;
+  background: rgba(30, 41, 59, 0.74);
+  border-radius: 7px;
+}
+
+.electrical-status-grid span {
+  color: #94a3b8;
+  font-size: 0.61rem;
+}
+
+.electrical-status-grid strong {
+  color: #f8fafc;
+  font-size: 0.78rem;
+}
+
+.electrical-mppt-strip {
+  margin-top: 9px;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.electrical-mppt-strip div {
+  padding: 5px 2px;
+  display: grid;
+  gap: 1px;
+  text-align: center;
+  background: rgba(20, 83, 45, 0.48);
+  border: 1px solid rgba(74, 222, 128, 0.16);
+  border-radius: 5px;
+}
+
+.electrical-mppt-strip span {
+  color: #86efac;
+  font-size: 0.55rem;
+}
+
+.electrical-mppt-strip strong {
+  font-size: 0.66rem;
+}
+
+.electrical-balance-row {
+  margin-top: 9px;
+  padding-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #94a3b8;
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
+  font-size: 0.64rem;
+}
+
+.electrical-balance-row strong {
+  color: #86efac;
+}
+
+@media (max-width: 760px) {
+  .electrical-status-panel {
+    top: 52px;
+    width: min(270px, calc(100% - 28px));
+  }
+
+  .electrical-status-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .electrical-status-panel {
+    display: none;
+  }
+}
+
+/* Phase 9E scene overlay coordination */
+
+.electrical-status-panel {
+  max-height: calc(100% - 28px);
+  overflow-y: auto;
+}
+
+.electrical-scene-card .time-control {
+  right: 344px;
+  z-index: 9;
+}
+
+/*
+ * At narrower desktop/tablet widths there is not enough
+ * horizontal room for both overlays on the same side.
+ * Move the time controller to the lower-left instead.
+ */
+@media (max-width: 1050px) {
+  .electrical-scene-card .time-control {
+    right: auto;
+    left: 17px;
+  }
+}
+
+/*
+ * Keep the existing mobile behaviour compact.
+ */
+@media (max-width: 560px) {
+  .electrical-scene-card .time-control {
+    right: 17px;
+    left: auto;
+  }
+}
+
+/* Phase 9E semantic electrical telemetry colours */
+
+.electrical-status-grid > div:nth-child(1),
+.electrical-status-grid > div:nth-child(2),
+.electrical-status-grid > div:nth-child(3) {
+  border-left: 3px solid #e39a26;
+}
+
+.electrical-status-grid > div:nth-child(4),
+.electrical-status-grid > div:nth-child(5),
+.electrical-status-grid > div:nth-child(6) {
+  border-left: 3px solid #3182a8;
+}
+
+.electrical-status-grid > div:nth-child(7) {
+  border-left: 3px solid #b7791f;
+}
+
+.electrical-status-grid > div:nth-child(8) {
+  border-left: 3px solid #6d5cae;
+}
+
+.electrical-mppt-strip div {
+  background: rgba(15, 118, 110, 0.27);
+  border-color: rgba(45, 212, 191, 0.28);
+}
+
+.electrical-mppt-strip span {
+  color: #99f6e4;
+}
+
+.electrical-mppt-strip strong {
+  color: #f0fdfa;
+}
+
+/* =========================================================
+   Phase 9E Rooftop electrical digital-twin presentation
+   ========================================================= */
+
+.rooftop-electrical-twin {
+  display: grid;
+  gap: 14px;
+}
+
+.rooftop-electrical-section {
+  padding: 18px;
+  background: linear-gradient(
+    135deg,
+    #f8fafc,
+    #eef6f5
+  );
+  border: 1px solid #d5e2e0;
+  border-radius: 16px;
+  box-shadow:
+    0 8px 24px
+    rgba(15, 23, 42, 0.055);
+}
+
+.rooftop-electrical-section-heading {
+  margin-bottom: 14px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.rooftop-electrical-section-heading span {
+  color: #0f766e;
+  font-size: 0.69rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.rooftop-electrical-section-heading h2 {
+  margin-top: 3px;
+  color: #0f172a;
+  font-size: 1.05rem;
+  font-weight: 750;
+}
+
+.rooftop-electrical-section-heading p {
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 0.78rem;
+}
+
+.rooftop-electrical-mode {
+  flex: 0 0 auto;
+  padding: 7px 10px;
+  color: #14532d;
+  background: #dcfce7;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  font-size: 0.69rem;
+  font-weight: 700;
+}
+
+.electrical-status-panel-embedded {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  max-height: none;
+  overflow: visible;
+  padding: 16px;
+  box-shadow:
+    0 7px 20px
+    rgba(15, 23, 42, 0.13);
+}
+
+.electrical-status-panel-embedded
+.electrical-status-grid {
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+}
+
+.electrical-status-panel-embedded
+.electrical-mppt-strip {
+  grid-template-columns:
+    repeat(6, minmax(0, 1fr));
+}
+
+@media (max-width: 900px) {
+  .electrical-status-panel-embedded
+  .electrical-status-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .rooftop-electrical-section-heading {
+    display: grid;
+  }
+
+  .electrical-status-panel-embedded {
+    display: block;
+  }
+
+  .electrical-status-panel-embedded
+  .electrical-mppt-strip {
+    grid-template-columns:
+      repeat(3, minmax(0, 1fr));
+  }
+}

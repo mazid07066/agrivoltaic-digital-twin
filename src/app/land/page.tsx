@@ -26,6 +26,10 @@ import { runLandAgrivoltaicSimulation, toLandSimulationConfiguration } from "@/l
 import { getPVModuleProfile, PV_MODULE_MANUFACTURERS, PV_MODULE_PROFILES } from "@/lib/pv/moduleProfiles";
 import { useWeather } from "@/lib/weather/useWeather";
 import { useSimulationStore } from "@/store/useSimulationStore";
+
+import {
+  simulateDemonstrationElectricalTimestep,
+} from "@/lib/electrical/demonstration";
 import {
   CropId,
   TrackingMode,
@@ -37,7 +41,7 @@ const AgrivoltaicScene = dynamic(
     ssr: false,
     loading: () => (
       <div className="scene-loading">
-        Preparing the three-dimensional farmâ€¦
+        Preparing the three-dimensional farm…
       </div>
     ),
   },
@@ -197,6 +201,31 @@ export default function Home() {
 
   const currentWeatherPoint =
     weather?.hourly[selectedHour] ?? null;
+
+  const electrical =
+    useMemo(
+      () =>
+        simulateDemonstrationElectricalTimestep({
+          timestamp:
+            `${configuration.simulationDate}T${String(
+              selectedHour,
+            ).padStart(
+              2,
+              "0",
+            )}:00:00`,
+
+          pvPowerKw:
+            results.hourly[
+              selectedHour
+            ]?.pvPower ??
+            0,
+        }),
+      [
+        configuration.simulationDate,
+        results.hourly,
+        selectedHour,
+      ],
+    );
 
   return (
     <main>
@@ -377,7 +406,7 @@ export default function Home() {
                   <optgroup key={manufacturer} label={manufacturer}>
                     {PV_MODULE_PROFILES.filter((profile) => profile.manufacturer === manufacturer).map((profile) => (
                       <option key={profile.id} value={profile.id}>
-                        {profile.model} Â· {profile.pmaxW} W Â· {profile.moduleType}
+                        {profile.model} · {profile.pmaxW} W · {profile.moduleType}
                       </option>
                     ))}
                   </optgroup>
@@ -390,13 +419,13 @@ export default function Home() {
               <span>{selectedModule.series}</span>
               <div className="module-profile-grid">
                 <span><b>{selectedModule.pmaxW} W</b> Pmax</span>
-                <span><b>{selectedModule.efficiencyPercent ?? "â€”"}%</b> efficiency</span>
+                <span><b>{selectedModule.efficiencyPercent ?? "—"}%</b> efficiency</span>
                 <span><b>{selectedModule.cellTechnology}</b> cell</span>
                 <span><b>{selectedModule.moduleType}</b> module</span>
-                <span><b>{selectedModule.lengthM.toFixed(3)} Ã— {selectedModule.widthM.toFixed(3)} m</b> size</span>
-                <span><b>{selectedModule.noctC}Â°C</b> NOCT/NMOT</span>
-                <span><b>{selectedModule.tempCoeffPmaxPercentPerC}%/Â°C</b> Pmax coefficient</span>
-                <span><b>{selectedModule.vmppV?.toFixed(2) ?? "â€”"} V / {selectedModule.imppA?.toFixed(2) ?? "â€”"} A</b> MPP</span>
+                <span><b>{selectedModule.lengthM.toFixed(3)} × {selectedModule.widthM.toFixed(3)} m</b> size</span>
+                <span><b>{selectedModule.noctC}°C</b> NOCT/NMOT</span>
+                <span><b>{selectedModule.tempCoeffPmaxPercentPerC}%/°C</b> Pmax coefficient</span>
+                <span><b>{selectedModule.vmppV?.toFixed(2) ?? "—"} V / {selectedModule.imppA?.toFixed(2) ?? "—"} A</b> MPP</span>
               </div>
             </div>
 
@@ -450,7 +479,7 @@ export default function Home() {
                 value={configuration.pv.tilt}
                 min={0}
                 max={80}
-                unit="Â°"
+                unit="°"
                 onChange={(tilt) =>
                   updatePV({ tilt })
                 }
@@ -461,7 +490,7 @@ export default function Home() {
                 value={configuration.pv.azimuth}
                 min={0}
                 max={360}
-                unit="Â°"
+                unit="°"
                 onChange={(azimuth) =>
                   updatePV({ azimuth })
                 }
@@ -512,7 +541,7 @@ export default function Home() {
                 min={10}
                 max={90}
                 step={5}
-                unit="Â°"
+                unit="°"
                 onChange={(maximumTrackerAngle) => updatePV({ maximumTrackerAngle })}
               />
             </div>
@@ -584,12 +613,12 @@ export default function Home() {
 
               <span>
                 Minimum DLI:{" "}
-                {selectedCrop.minimumDLI} mol/mÂ²/day
+                {selectedCrop.minimumDLI} mol/m²/day
               </span>
 
               <span>
                 Optimum DLI:{" "}
-                {selectedCrop.optimumDLI} mol/mÂ²/day
+                {selectedCrop.optimumDLI} mol/m²/day
               </span>
 
               <span>
@@ -610,8 +639,8 @@ export default function Home() {
               <h2>{configuration.site.name}</h2>
 
               <p>
-                {configuration.site.latitude.toFixed(4)}Â°,{" "}
-                {configuration.site.longitude.toFixed(4)}Â°
+                {configuration.site.latitude.toFixed(4)}°,{" "}
+                {configuration.site.longitude.toFixed(4)}°
               </p>
             </div>
 
@@ -629,8 +658,17 @@ export default function Home() {
             onRefresh={reloadWeather}
           />
 
-          <div className="scene-card">
-            <AgrivoltaicScene trackerAngle={results.hourly[selectedHour]?.trackerAngle} />
+          <div className="scene-card electrical-scene-card">
+            <AgrivoltaicScene
+              trackerAngle={
+                results.hourly[
+                  selectedHour
+                ]?.trackerAngle
+              }
+              electrical={
+                electrical
+              }
+            />
 
             <div className="time-control">
               <div>
@@ -667,14 +705,14 @@ export default function Home() {
                     {
                       currentWeatherPoint.shortwaveRadiation
                     }{" "}
-                    W/mÂ²
+                    W/m²
                   </span>
 
                   <strong>
                     {currentWeatherPoint.temperature.toFixed(
                       1,
                     )}
-                    Â°C
+                    °C
                   </strong>
                 </div>
               )}
@@ -698,7 +736,7 @@ export default function Home() {
 
             <MetricCard
               title="Crop-level DLI"
-              value={`${results.cropDLI} mol/mÂ²/day`}
+              value={`${results.cropDLI} mol/m²/day`}
               description={`Minimum target: ${selectedCrop.minimumDLI}`}
               icon={<Leaf size={21} />}
               status={dliStatus}
@@ -775,7 +813,7 @@ export default function Home() {
 
                   <dd>
                     {results.openFieldDLI}{" "}
-                    mol/mÂ²/day
+                    mol/m²/day
                   </dd>
                 </div>
 
@@ -804,7 +842,7 @@ export default function Home() {
                         {weather.summary.dailyGHI.toFixed(
                           2,
                         )}{" "}
-                        kWh/mÂ²
+                        kWh/m²
                       </dd>
                     </div>
 
@@ -857,8 +895,8 @@ export default function Home() {
                 <div><span className="eyebrow">Phase 7B protected-zone DLI controller</span>
                   <h3>{results.adaptiveController.targetSatisfied ? "Crop-light target protected" : "Crop-light deficit remains"}</h3></div>
                 <dl>
-                  <div><dt>Target DLI</dt><dd>{results.adaptiveController.targetDLI} mol/mÂ²/day</dd></div>
-                  <div><dt>Beneath-panel DLI</dt><dd>{results.adaptiveController.protectedZoneDLI} mol/mÂ²/day</dd></div>
+                  <div><dt>Target DLI</dt><dd>{results.adaptiveController.targetDLI} mol/m²/day</dd></div>
+                  <div><dt>Beneath-panel DLI</dt><dd>{results.adaptiveController.protectedZoneDLI} mol/m²/day</dd></div>
                   <div><dt>Standard tracking</dt><dd>{results.adaptiveController.standardTrackingHours} h</dd></div>
                   <div><dt>Reverse tracking</dt><dd>{results.adaptiveController.reverseTrackingHours} h</dd></div>
                 </dl>
@@ -879,10 +917,10 @@ export default function Home() {
                 <tbody>
                   {results.hourly.map((point) => (
                     <tr key={point.hour} className={Number(point.hour.slice(0, 2)) === selectedHour ? "selected" : ""}>
-                      <td>{point.hour}</td><td>{point.operatingMode === "standard" ? "ST" : point.operatingMode === "reverse" ? "RT" : "Fixed"}</td><td>{point.solarAltitude}Â°</td><td>{point.solarAzimuth}Â°</td>
-                      <td>{point.trackerAngle}Â°</td><td>{point.angleOfIncidence}Â°</td>
-                      <td>{point.poaIrradiance} W/mÂ²</td><td>{point.moduleTemperature}Â°C</td><td>{point.pvPower} kW</td>
-                      <td>{point.cropIrradiance} W/mÂ²</td><td>{point.shadePercentage}%</td>
+                      <td>{point.hour}</td><td>{point.operatingMode === "standard" ? "ST" : point.operatingMode === "reverse" ? "RT" : "Fixed"}</td><td>{point.solarAltitude}°</td><td>{point.solarAzimuth}°</td>
+                      <td>{point.trackerAngle}°</td><td>{point.angleOfIncidence}°</td>
+                      <td>{point.poaIrradiance} W/m²</td><td>{point.moduleTemperature}°C</td><td>{point.pvPower} kW</td>
+                      <td>{point.cropIrradiance} W/m²</td><td>{point.shadePercentage}%</td>
                     </tr>
                   ))}
                 </tbody>
@@ -900,9 +938,9 @@ export default function Home() {
             <div className="spatial-light-layout">
               <SpatialDLIHeatmap data={results.spatialLight} selectedHour={selectedHour} />
               <dl className="spatial-statistics">
-                <div><dt>Minimum DLI</dt><dd>{results.spatialLight.minimumDLI} mol/mÂ²/day</dd></div>
-                <div><dt>Mean DLI</dt><dd>{results.spatialLight.meanDLI} mol/mÂ²/day</dd></div>
-                <div><dt>Maximum DLI</dt><dd>{results.spatialLight.maximumDLI} mol/mÂ²/day</dd></div>
+                <div><dt>Minimum DLI</dt><dd>{results.spatialLight.minimumDLI} mol/m²/day</dd></div>
+                <div><dt>Mean DLI</dt><dd>{results.spatialLight.meanDLI} mol/m²/day</dd></div>
+                <div><dt>Maximum DLI</dt><dd>{results.spatialLight.maximumDLI} mol/m²/day</dd></div>
                 <div><dt>Spatial CV</dt><dd>{results.spatialLight.coefficientOfVariation}%</dd></div>
               </dl>
             </div>
@@ -910,8 +948,8 @@ export default function Home() {
               {results.spatialLight.zoneSummaries.map((zone) => (
                 <article key={zone.zone}>
                   <strong>{zone.label}</strong>
-                  <span>{zone.meanDLI} mol/mÂ²/day</span>
-                  <small>{zone.meanRelativeDLI}% of open field â€¢ {zone.cellCount} cells</small>
+                  <span>{zone.meanDLI} mol/m²/day</span>
+                  <small>{zone.meanRelativeDLI}% of open field • {zone.cellCount} cells</small>
                 </article>
               ))}
             </div>

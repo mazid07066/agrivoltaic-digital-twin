@@ -12,6 +12,13 @@ import { Suspense, useMemo } from "react";
 import * as THREE from "three";
 import { useSimulationStore } from "@/store/useSimulationStore";
 
+import ElectricalBosScene from "./electrical/ElectricalBosScene";
+import ElectricalStatusPanel from "./electrical/ElectricalStatusPanel";
+
+import type {
+  DemonstrationElectricalTimestep,
+} from "@/lib/electrical/demonstration";
+
 function PanelRow({
   rowIndex,
   rowPosition,
@@ -220,7 +227,13 @@ function Farm({ trackerAngleOverride }: { trackerAngleOverride?: number }) {
   );
 }
 
-export default function AgrivoltaicScene({ trackerAngle }: { trackerAngle?: number }) {
+export default function AgrivoltaicScene({
+  trackerAngle,
+  electrical,
+}: {
+  trackerAngle?: number;
+  electrical?: DemonstrationElectricalTimestep;
+}) {
   const configuration = useSimulationStore((state) => state.configuration);
   const selectedHour = useSimulationStore((state) => state.selectedHour);
   const solar = useMemo(() => getSolarPosition(
@@ -241,6 +254,13 @@ export default function AgrivoltaicScene({ trackerAngle }: { trackerAngle?: numb
       >
         <Suspense fallback={null}>
           <Farm trackerAngleOverride={trackerAngle} />
+
+          {electrical ? (
+            <ElectricalBosScene
+              data={electrical}
+            />
+          ) : null}
+
           <OrbitControls
             makeDefault
             enableDamping
@@ -252,6 +272,12 @@ export default function AgrivoltaicScene({ trackerAngle }: { trackerAngle?: numb
           />
         </Suspense>
       </Canvas>
+
+      {electrical ? (
+        <ElectricalStatusPanel
+          data={electrical}
+        />
+      ) : null}
 
       <div className="scene-help">
         Drag to rotate • Scroll to zoom • Right-drag to move
