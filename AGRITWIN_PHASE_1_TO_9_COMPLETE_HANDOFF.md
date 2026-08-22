@@ -12,11 +12,16 @@ Development branch:
 
 `feature/phase-9-mcda-data-analytics`
 
-Phase 9 release predecessor:
+Phase 9 release chain:
 
-`1098fc0 — feat: complete Phase 9 scenario execution and decision analytics`
+- `1098fc0 — feat: complete Phase 9 scenario execution and decision analytics`
+- `9e08550 — feat: complete Phase 9E electrical balance-of-system`
+- `eb84334 — docs: record complete AgriTwin Phase 1 to 9 handoff`
+- `dfa023e — feat: complete Phase 9 equipment selection and compatibility`
 
-The final Phase 9E release commit should be recorded here after successful verification and push.
+Final verified Phase 9 code checkpoint:
+
+`dfa023ec771a9ae70b9a0d5bafeb3e9b294d60c1`
 
 ---
 
@@ -810,6 +815,8 @@ Historical runs remain readable.
 Electrical provenance records modelling assumptions such as:
 
 - inverter specification ID
+- selected PV module profile ID for new runs
+- optional persisted PV/inverter compatibility report
 - electrical provider
 - inverter model version
 - distribution model version
@@ -929,7 +936,7 @@ This makes future inverter addition easier and prevents duplication of the elect
 
 The final Phase 9 equipment-design layer compares the selected PV module with the selected inverter.
 
-Checks should include:
+Implemented checks include:
 
 - array STC power versus inverter generator limit
 - string Vmpp versus MPP range
@@ -939,7 +946,7 @@ Checks should include:
 - string Isc versus string-current limit
 - string count versus MPPT/string capacity
 
-Compatibility states should distinguish:
+Implemented compatibility states:
 
 - pass
 - warning
@@ -968,16 +975,16 @@ Phase 9D release commit:
 
 `feat: complete Phase 9 scenario execution and decision analytics`
 
-During Phase 9E development, verification later reached:
+Final Phase 9 verification reached:
 
-- 47 test files
-- 203 tests
+- 48 test files
+- 215 tests
 - typecheck passed
 - lint passed
 - production build passed
 - `git diff --check` passed
 
-The final Phase 9E release should record its final commit hash here after completion.
+Final Phase 9 equipment-selection and compatibility commit: `dfa023e`.
 
 ---
 
@@ -1115,6 +1122,8 @@ IMMUTABLE EXECUTION INPUT
 LAND / ROOFTOP DIGITAL TWIN
      ↓
 PV
+     ↓
+PV / INVERTER COMPATIBILITY
      ↓
 ELECTRICAL BOS
      ↓
@@ -1444,7 +1453,7 @@ Do not:
 
 # 48. Phase 9 Completion Definition
 
-Phase 9 can be considered complete when:
+Phase 9 is complete. Final criteria:
 
 - scenario architecture works
 - environmental resolution works
@@ -1469,7 +1478,7 @@ Phase 9 can be considered complete when:
 - full verification succeeds
 - release commit is pushed
 
-At that point development should move to Phase 9F physical/model validation.
+Development now moves to Phase 9F physical/model validation.
 
 ---
 
