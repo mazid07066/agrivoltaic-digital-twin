@@ -34,7 +34,16 @@ export type TrackingMode =
 
 export interface ScenarioTechnicalConfig {
   moduleId?: string | null;
+  inverterId?: string | null;
+
   modulePowerW?: number | null;
+
+  /**
+   * Electrical string design; independent of physical row layout.
+   */
+  modulesPerString?: number | null;
+  stringsPerMppt?: number | null;
+  minimumDesignTemperatureC?: number | null;
 
   panelHeightM?: number | null;
   rowSpacingM?: number | null;

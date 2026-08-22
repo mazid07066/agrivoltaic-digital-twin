@@ -34,6 +34,21 @@ export interface SiteConfiguration {
 
 export interface PVConfiguration {
   moduleProfileId: string;
+
+  /**
+   * Optional for backward compatibility with site versions
+   * saved before final Phase 9 equipment wiring.
+   */
+  inverterProfileId?: string;
+
+  /**
+   * Explicit electrical string design. These must not be
+   * inferred from physical modulesPerRow.
+   */
+  modulesPerString?: number | null;
+  stringsPerMppt?: number | null;
+  minimumDesignTemperatureC?: number | null;
+
   numberOfRows: number;
   modulesPerRow: number;
   moduleWidth: number;

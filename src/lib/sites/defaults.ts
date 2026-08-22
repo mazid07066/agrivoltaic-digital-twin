@@ -1,5 +1,9 @@
 import { getPVModuleProfile } from "@/lib/pv/moduleProfiles";
 
+import {
+  DEFAULT_INVERTER_PROFILE_ID,
+} from "@/lib/electrical/inverter/catalogue";
+
 import type {
   FlatRoofSiteProfile,
   LandAgrivoltaicSiteProfile,
@@ -10,6 +14,10 @@ function createDefaultPVConfiguration() {
 
   return {
     moduleProfileId: pvModule.id,
+    inverterProfileId: DEFAULT_INVERTER_PROFILE_ID,
+    modulesPerString: null,
+    stringsPerMppt: null,
+    minimumDesignTemperatureC: null,
     numberOfRows: 6,
     modulesPerRow: 10,
     moduleWidth: pvModule.widthM,

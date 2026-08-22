@@ -5,14 +5,24 @@ import {
 } from "vitest";
 
 import {
+  createDefaultFlatRoofSiteProfile,
   createDefaultLandSiteProfile,
 } from "@/lib/sites/defaults";
+
+import {
+  PV_MODULE_PROFILES,
+} from "@/lib/pv/moduleProfiles";
+
+import {
+  DEFAULT_INVERTER_PROFILE_ID,
+} from "@/lib/electrical/inverter/catalogue";
 
 import type {
   Scenario,
 } from "@/lib/scenarios/types";
 
 import {
+  applyEquipmentScenarioOverrides,
   applyLandScenarioOverrides,
 } from "../scenarioOverrides";
 
@@ -383,5 +393,156 @@ describe(
         );
       },
     );
+    it(
+      "applies catalogue equipment and string design without mutating the saved site",
+      () => {
+        const site =
+          createDefaultLandSiteProfile();
+
+        const original =
+          structuredClone(site);
+
+        const alternateModule =
+          PV_MODULE_PROFILES.find(
+            (profile) =>
+              profile.id !==
+              site.pvConfiguration
+                .moduleProfileId,
+          );
+
+        expect(alternateModule).toBeDefined();
+
+        const scenario =
+          createScenario();
+
+        scenario.technicalConfig = {
+          ...scenario.technicalConfig,
+
+          moduleId:
+            alternateModule!.id,
+
+          inverterId:
+            DEFAULT_INVERTER_PROFILE_ID,
+
+          modulesPerString:
+            13,
+
+          stringsPerMppt:
+            1,
+
+          minimumDesignTemperatureC:
+            -5,
+        };
+
+        const result =
+          applyLandScenarioOverrides(
+            site,
+            scenario,
+          );
+
+        expect(
+          result.pvConfiguration
+            .moduleProfileId,
+        ).toBe(alternateModule!.id);
+
+        expect(
+          result.pvConfiguration
+            .modulePower,
+        ).toBe(alternateModule!.pmaxW);
+
+        expect(
+          result.pvConfiguration
+            .inverterProfileId,
+        ).toBe(
+          DEFAULT_INVERTER_PROFILE_ID,
+        );
+
+        expect(
+          result.pvConfiguration
+            .modulesPerString,
+        ).toBe(13);
+
+        expect(
+          result.pvConfiguration
+            .stringsPerMppt,
+        ).toBe(1);
+
+        expect(
+          result.pvConfiguration
+            .minimumDesignTemperatureC,
+        ).toBe(-5);
+
+        expect(site).toEqual(original);
+      },
+    );
+
+    it(
+      "applies the shared equipment bridge to rooftop profiles",
+      () => {
+        const site =
+          createDefaultFlatRoofSiteProfile();
+
+        const original =
+          structuredClone(site);
+
+        const scenario =
+          createScenario();
+
+        scenario.technicalConfig = {
+          inverterId:
+            DEFAULT_INVERTER_PROFILE_ID,
+
+          modulesPerString:
+            12,
+
+          stringsPerMppt:
+            1,
+        };
+
+        const result =
+          applyEquipmentScenarioOverrides(
+            site,
+            scenario,
+          );
+
+        expect(
+          result.pvConfiguration
+            .inverterProfileId,
+        ).toBe(
+          DEFAULT_INVERTER_PROFILE_ID,
+        );
+
+        expect(
+          result.pvConfiguration
+            .modulesPerString,
+        ).toBe(12);
+
+        expect(site).toEqual(original);
+      },
+    );
+
+    it(
+      "rejects an unknown inverter instead of silently using the default",
+      () => {
+        const scenario =
+          createScenario();
+
+        scenario.technicalConfig = {
+          inverterId:
+            "unknown-inverter-profile",
+        };
+
+        expect(
+          () =>
+            applyLandScenarioOverrides(
+              createDefaultLandSiteProfile(),
+              scenario,
+            ),
+        ).toThrow(
+          /Unknown inverter catalogue profile/,
+        );
+      },
+    );
+
   },
 );

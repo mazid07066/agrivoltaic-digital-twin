@@ -31,8 +31,25 @@ const optionalNonNegativeNumber = z
 
 export const technicalConfigSchema = z.object({
   moduleId: z.string().nullable().optional(),
+  inverterId: z.string().nullable().optional(),
 
   modulePowerW: optionalNonNegativeNumber,
+
+  modulesPerString: z
+    .number()
+    .int()
+    .positive()
+    .nullable()
+    .optional(),
+
+  stringsPerMppt: z
+    .number()
+    .int()
+    .positive()
+    .nullable()
+    .optional(),
+
+  minimumDesignTemperatureC: optionalFiniteNumber,
 
   panelHeightM: optionalNonNegativeNumber,
 

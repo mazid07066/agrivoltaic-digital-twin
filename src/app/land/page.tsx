@@ -21,6 +21,7 @@ import {
 import IrradianceChart from "@/components/charts/IrradianceChart";
 import SpatialDLIHeatmap from "@/components/charts/SpatialDLIHeatmap";
 import WeatherConnectionCard from "@/components/dashboard/WeatherConnectionCard";
+import PVInverterCompatibilityPanel from "@/components/twin/electrical/PVInverterCompatibilityPanel";
 import { CROP_PROFILES } from "@/lib/simulation/crops";
 import { runLandAgrivoltaicSimulation, toLandSimulationConfiguration } from "@/lib/sites/adapters/landAgrivoltaic";
 import { getPVModuleProfile, PV_MODULE_MANUFACTURERS, PV_MODULE_PROFILES } from "@/lib/pv/moduleProfiles";
@@ -30,6 +31,13 @@ import { useSimulationStore } from "@/store/useSimulationStore";
 import {
   simulateDemonstrationElectricalTimestep,
 } from "@/lib/electrical/demonstration";
+
+import {
+  DEFAULT_INVERTER_PROFILE_ID,
+  getInverterProfile,
+  INVERTER_MANUFACTURERS,
+  INVERTER_PROFILES,
+} from "@/lib/electrical/inverter/catalogue";
 import {
   CropId,
   TrackingMode,
@@ -182,7 +190,16 @@ export default function Home() {
     CROP_PROFILES.find(
       (crop) => crop.id === configuration.cropId,
     ) ?? CROP_PROFILES[0];
-  const selectedModule = getPVModuleProfile(configuration.pv.moduleProfileId);
+  const selectedModule =
+    getPVModuleProfile(
+      configuration.pv.moduleProfileId,
+    );
+
+  const selectedInverter =
+    getInverterProfile(
+      configuration.pv.inverterProfileId ??
+        DEFAULT_INVERTER_PROFILE_ID,
+    );
 
   const dliStatus: "good" | "warning" =
     results.cropDLI >= selectedCrop.minimumDLI
@@ -219,11 +236,15 @@ export default function Home() {
               selectedHour
             ]?.pvPower ??
             0,
+
+          inverterProfileId:
+            selectedInverter.id,
         }),
       [
         configuration.simulationDate,
         results.hourly,
         selectedHour,
+        selectedInverter.id,
       ],
     );
 
@@ -428,6 +449,124 @@ export default function Home() {
                 <span><b>{selectedModule.vmppV?.toFixed(2) ?? "—"} V / {selectedModule.imppA?.toFixed(2) ?? "—"} A</b> MPP</span>
               </div>
             </div>
+
+            <label className="field">
+              <span>Inverter profile</span>
+              <select
+                value={selectedInverter.id}
+                onChange={(event) =>
+                  updatePV({
+                    inverterProfileId:
+                      event.target.value,
+                  })
+                }
+              >
+                {INVERTER_MANUFACTURERS.map(
+                  (manufacturer) => (
+                    <optgroup
+                      key={manufacturer}
+                      label={manufacturer}
+                    >
+                      {INVERTER_PROFILES.filter(
+                        (profile) =>
+                          profile.manufacturer ===
+                          manufacturer,
+                      ).map((profile) => (
+                        <option
+                          key={profile.id}
+                          value={profile.id}
+                        >
+                          {profile.model} ·{" "}
+                          {profile.ac.ratedActivePowerW /
+                            1000}{" "}
+                          kW
+                        </option>
+                      ))}
+                    </optgroup>
+                  ),
+                )}
+              </select>
+            </label>
+
+            <div className="module-profile-card">
+              <strong>
+                {selectedInverter.manufacturer}{" "}
+                {selectedInverter.model}
+              </strong>
+              <span>{selectedInverter.series}</span>
+
+              <div className="module-profile-grid">
+                <span>
+                  <b>
+                    {selectedInverter.dc.maxGeneratorPowerW /
+                      1000}{" "}
+                    kWp
+                  </b>
+                  max PV generator
+                </span>
+                <span>
+                  <b>
+                    {selectedInverter.dc.maxInputVoltageV} V
+                  </b>
+                  max DC voltage
+                </span>
+                <span>
+                  <b>
+                    {selectedInverter.dc.mppVoltageMinV}–
+                    {selectedInverter.dc.mppVoltageMaxV} V
+                  </b>
+                  MPP range
+                </span>
+                <span>
+                  <b>
+                    {selectedInverter.dc.independentMpptInputs} ×{" "}
+                    {selectedInverter.dc.stringsPerMppt}
+                  </b>
+                  MPPT × strings
+                </span>
+                <span>
+                  <b>
+                    {selectedInverter.ac.ratedActivePowerW /
+                      1000}{" "}
+                    kW
+                  </b>
+                  rated AC power
+                </span>
+                <span>
+                  <b>
+                    {(
+                      selectedInverter.ac.maximumEfficiency *
+                      100
+                    ).toFixed(1)}
+                    %
+                  </b>
+                  maximum efficiency
+                </span>
+              </div>
+            </div>
+
+            <PVInverterCompatibilityPanel
+              module={selectedModule}
+              inverter={selectedInverter}
+              moduleCount={
+                configuration.pv.numberOfRows *
+                configuration.pv.modulesPerRow
+              }
+              modulesPerString={
+                configuration.pv.modulesPerString ??
+                null
+              }
+              stringsPerMppt={
+                configuration.pv.stringsPerMppt ??
+                null
+              }
+              minimumDesignTemperatureC={
+                configuration.pv
+                  .minimumDesignTemperatureC ??
+                null
+              }
+              onChange={updatePV}
+            />
 
             <div className="form-grid">
               <NumericInput

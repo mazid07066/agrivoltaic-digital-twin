@@ -37,12 +37,20 @@ import { runFlatRoofSimulation } from "@/lib/rooftop/simulation";
 import {
   simulateDemonstrationElectricalTimestep,
 } from "@/lib/electrical/demonstration";
+
+import {
+  DEFAULT_INVERTER_PROFILE_ID,
+  getInverterProfile,
+  INVERTER_MANUFACTURERS,
+  INVERTER_PROFILES,
+} from "@/lib/electrical/inverter/catalogue";
 import { useWeather } from "@/lib/weather/useWeather";
 import { useRooftopStore } from "@/store/useRooftopStore";
 
 import VersionHistory from "./VersionHistory";
 
 import ElectricalStatusPanel from "@/components/twin/electrical/ElectricalStatusPanel";
+import PVInverterCompatibilityPanel from "@/components/twin/electrical/PVInverterCompatibilityPanel";
 
 const RooftopScene = dynamic(
   () => import("./RooftopScene"),
@@ -161,6 +169,9 @@ export default function RooftopDashboard() {
   );
   const updateArray = useRooftopStore(
     (state) => state.updateArray,
+  );
+  const updatePV = useRooftopStore(
+    (state) => state.updatePV,
   );
   const setModuleProfile = useRooftopStore(
     (state) => state.setModuleProfile,
@@ -304,6 +315,13 @@ export default function RooftopDashboard() {
   const selectedPoint =
     results.hourly[selectedHour];
 
+  const selectedInverter =
+    getInverterProfile(
+      site.pvConfiguration
+        .inverterProfileId ??
+        DEFAULT_INVERTER_PROFILE_ID,
+    );
+
   const electrical =
     useMemo(
       () =>
@@ -320,17 +338,22 @@ export default function RooftopDashboard() {
             selectedPoint
               ?.dcPowerKW ??
             0,
+
+          inverterProfileId:
+            selectedInverter.id,
         }),
       [
         selectedHour,
         selectedPoint,
         site.simulationDate,
+        selectedInverter.id,
       ],
     );
 
   const selectedModule = getPVModuleProfile(
     site.pvConfiguration.moduleProfileId,
   );
+
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -736,6 +759,114 @@ export default function RooftopDashboard() {
                 )}{" "}
                 m
               </p>
+
+              <label className="space-y-1 text-sm">
+                <span className="font-medium text-slate-700">
+                  Inverter profile
+                </span>
+
+                <select
+                  value={selectedInverter.id}
+                  onChange={(event) =>
+                    updatePV({
+                      inverterProfileId:
+                        event.target.value,
+                    })
+                  }
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                >
+                  {INVERTER_MANUFACTURERS.map(
+                    (manufacturer) => (
+                      <optgroup
+                        key={manufacturer}
+                        label={manufacturer}
+                      >
+                        {INVERTER_PROFILES.filter(
+                          (profile) =>
+                            profile.manufacturer ===
+                            manufacturer,
+                        ).map((profile) => (
+                          <option
+                            key={profile.id}
+                            value={profile.id}
+                          >
+                            {profile.model} ·{" "}
+                            {profile.ac.ratedActivePowerW /
+                              1000}{" "}
+                            kW
+                          </option>
+                        ))}
+                      </optgroup>
+                    ),
+                  )}
+                </select>
+              </label>
+
+              <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-xs text-slate-700">
+                <strong className="block text-sm text-slate-900">
+                  {selectedInverter.manufacturer}{" "}
+                  {selectedInverter.model}
+                </strong>
+
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <span>
+                    Max PV:{" "}
+                    {selectedInverter.dc.maxGeneratorPowerW /
+                      1000}{" "}
+                    kWp
+                  </span>
+                  <span>
+                    Max DC:{" "}
+                    {selectedInverter.dc.maxInputVoltageV} V
+                  </span>
+                  <span>
+                    MPP:{" "}
+                    {selectedInverter.dc.mppVoltageMinV}–
+                    {selectedInverter.dc.mppVoltageMaxV} V
+                  </span>
+                  <span>
+                    Topology:{" "}
+                    {selectedInverter.dc.independentMpptInputs} ×{" "}
+                    {selectedInverter.dc.stringsPerMppt}
+                  </span>
+                  <span>
+                    Rated AC:{" "}
+                    {selectedInverter.ac.ratedActivePowerW /
+                      1000}{" "}
+                    kW
+                  </span>
+                  <span>
+                    Max efficiency:{" "}
+                    {(
+                      selectedInverter.ac.maximumEfficiency *
+                      100
+                    ).toFixed(1)}
+                    %
+                  </span>
+                </div>
+              </div>
+
+              <PVInverterCompatibilityPanel
+                module={selectedModule}
+                inverter={selectedInverter}
+                moduleCount={layout.moduleCount}
+                modulesPerString={
+                  site.pvConfiguration
+                    .modulesPerString ??
+                  null
+                }
+                stringsPerMppt={
+                  site.pvConfiguration
+                    .stringsPerMppt ??
+                  null
+                }
+                minimumDesignTemperatureC={
+                  site.pvConfiguration
+                    .minimumDesignTemperatureC ??
+                  null
+                }
+                onChange={updatePV}
+              />
 
               <div className="grid grid-cols-2 gap-3">
                 <NumberField

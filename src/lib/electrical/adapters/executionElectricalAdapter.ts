@@ -31,6 +31,10 @@ import type {
 } from "../types";
 
 import type {
+  PVInverterCompatibilityReport,
+} from "../compatibility";
+
+import type {
   SimulationExecutionResult,
 } from "@/lib/execution/types";
 
@@ -168,6 +172,12 @@ function createDemonstrationFeeders(
 export function createElectricalSimulationResult(
   result:
     SimulationExecutionResult,
+
+  specification =
+    PHASE_9E_DEMONSTRATION_INVERTER,
+
+  compatibility?:
+    PVInverterCompatibilityReport,
 ): ElectricalSimulationResult {
   const feeders =
     createDemonstrationFeeders(
@@ -189,7 +199,7 @@ export function createElectricalSimulationResult(
             {
               availablePowerKw,
             },
-            PHASE_9E_DEMONSTRATION_INVERTER,
+            specification,
           );
 
         const inverter =
@@ -201,7 +211,7 @@ export function createElectricalSimulationResult(
               dcInput,
 
               specification:
-                PHASE_9E_DEMONSTRATION_INVERTER,
+                specification,
 
               efficiencyMode:
                 "legacy_power_passthrough",
@@ -287,8 +297,16 @@ export function createElectricalSimulationResult(
         "simulation",
 
       inverterSpecificationId:
-        PHASE_9E_DEMONSTRATION_INVERTER
+        specification
           .id,
+
+      ...(compatibility
+        ? {
+            pvModuleProfileId:
+              compatibility
+                .moduleProfileId,
+          }
+        : {}),
 
       inverterModelVersion:
         "phase-9e-2-v1",
@@ -306,13 +324,13 @@ export function createElectricalSimulationResult(
         "legacy_power_passthrough",
 
       efficiencyAssumption:
-        "Upstream Phase 7B/8C pvPowerKw already contains the historical systemEfficiency factor. No additional 98.1% inverter efficiency multiplication is applied in compatibility mode.",
+        `Upstream Phase 7B/8C pvPowerKw already contains the historical systemEfficiency factor. No additional ${(specification.ac.maximumEfficiency * 100).toFixed(1)}% inverter efficiency multiplication is applied in compatibility mode.`,
 
       dcVoltageAssumption:
-        "When PV power is positive, the demonstration DC operating voltage is assumed to be the supplied inverter rated input voltage of 670 V. At zero PV power the demonstration voltage is set to 0 V.",
+        `When PV power is positive, the demonstration DC operating voltage is assumed to be the selected inverter rated input voltage of ${specification.dc.ratedInputVoltageV} V. At zero PV power the demonstration voltage is set to 0 V.`,
 
       mpptAllocationAssumption:
-        "Aggregate PV power is equally allocated across 6 MPPT inputs and 2 strings per MPPT. This is a demonstration allocation, not measured string telemetry. Isc values remain unavailable.",
+        `Aggregate PV power is equally allocated across ${specification.dc.independentMpptInputs} MPPT inputs and ${specification.dc.stringsPerMppt} strings per MPPT. This is a demonstration allocation, not measured string telemetry. Isc values remain unavailable.`,
 
       loadProfileAssumption:
         "Three assumed demonstration feeders are used at constant 10 kW, 8 kW and 6 kW demand respectively. These values are not measured site loads.",
@@ -320,6 +338,12 @@ export function createElectricalSimulationResult(
       distributionLossAssumption:
         "Distribution loss is fixed at 0 kW because cable, transformer and impedance data have not been supplied.",
     },
+
+    ...(compatibility
+      ? {
+          compatibility,
+        }
+      : {}),
 
     summary: {
       inverter:

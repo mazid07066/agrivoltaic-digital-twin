@@ -2,6 +2,10 @@ import {
   environmentalDatasetToWeatherResponse,
 } from "./environmentWeatherBridge";
 
+import {
+  applyEquipmentScenarioOverrides,
+} from "./scenarioOverrides";
+
 import type {
   CanonicalHourlySimulationPoint,
   CanonicalSimulationSummary,
@@ -46,10 +50,14 @@ function runtimeSite(
    * Phase 9C execution uses the environmental
    * dataset date as the runtime simulation date.
    */
-  return {
-    ...structuredClone(
+  const runtime =
+    applyEquipmentScenarioOverrides(
       stored,
-    ),
+      input.scenario,
+    );
+
+  return {
+    ...runtime,
 
     simulationDate:
       input.inputSnapshot

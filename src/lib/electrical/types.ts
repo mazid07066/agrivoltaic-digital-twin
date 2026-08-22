@@ -1,4 +1,8 @@
 import type {
+  PVInverterCompatibilityReport,
+} from "./compatibility";
+
+import type {
   ElectricalDistributionSummary,
   ElectricalDispatchResult,
   ElectricalOperatingMode,
@@ -26,6 +30,13 @@ export interface ElectricalSimulationProvenance {
     ElectricalTelemetryProviderKind;
 
   inverterSpecificationId:
+    string;
+
+  /**
+   * Optional for historical Phase 9E runs created before
+   * final equipment-selection wiring.
+   */
+  pvModuleProfileId?:
     string;
 
   inverterModelVersion:
@@ -91,6 +102,12 @@ export interface ElectricalSimulationResult {
 
   provenance:
     ElectricalSimulationProvenance;
+
+  /**
+   * Optional so historical electrical results remain readable.
+   */
+  compatibility?:
+    PVInverterCompatibilityReport;
 
   summary:
     ElectricalSimulationSummary;

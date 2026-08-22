@@ -16,8 +16,9 @@ import {
 } from "./inverter/mppt";
 
 import {
-  PHASE_9E_DEMONSTRATION_INVERTER,
-} from "./inverter/specification";
+  DEFAULT_INVERTER_PROFILE_ID,
+  getInverterProfile,
+} from "./inverter/catalogue";
 
 import type {
   InverterTimestepResult,
@@ -93,10 +94,18 @@ function demonstrationFeeders(
 export function simulateDemonstrationElectricalTimestep({
   timestamp,
   pvPowerKw,
+  inverterProfileId,
 }: {
   timestamp: string;
   pvPowerKw: number;
+  inverterProfileId?: string;
 }): DemonstrationElectricalTimestep {
+  const specification =
+    getInverterProfile(
+      inverterProfileId ??
+        DEFAULT_INVERTER_PROFILE_ID,
+    );
+
   const availablePowerKw =
     Number.isFinite(pvPowerKw)
       ? Math.max(0, pvPowerKw)
@@ -107,7 +116,7 @@ export function simulateDemonstrationElectricalTimestep({
       {
         availablePowerKw,
       },
-      PHASE_9E_DEMONSTRATION_INVERTER,
+      specification,
     );
 
   const inverter =
@@ -117,7 +126,7 @@ export function simulateDemonstrationElectricalTimestep({
       dcInput,
 
       specification:
-        PHASE_9E_DEMONSTRATION_INVERTER,
+        specification,
 
       efficiencyMode:
         "legacy_power_passthrough",

@@ -29,6 +29,10 @@ import {
   executeResolvedSimulation,
 } from "../executeResolved";
 
+import {
+  DEFAULT_INVERTER_PROFILE_ID,
+} from "@/lib/electrical/inverter/catalogue";
+
 import type {
   ResolvedSimulationExecutionInput,
 } from "../types";
@@ -440,5 +444,154 @@ describe(
         );
       },
     );
+    it(
+      "records the explicitly selected inverter in electrical provenance",
+      () => {
+        const input =
+          createResolvedInput(
+            "land",
+          );
+
+        input.scenario.technicalConfig = {
+          ...input.scenario
+            .technicalConfig,
+
+          inverterId:
+            DEFAULT_INVERTER_PROFILE_ID,
+        };
+
+        input.inputSnapshot =
+          createSimulationExecutionInputSnapshot(
+            input.scenario,
+            input.siteVersion,
+            input.environment,
+          );
+
+        const result =
+          executeResolvedSimulation(
+            input,
+          );
+
+        expect(
+          result.electrical
+            ?.provenance
+            .inverterSpecificationId,
+        ).toBe(
+          DEFAULT_INVERTER_PROFILE_ID,
+        );
+      },
+    );
+
+    it(
+      "rejects an unknown execution inverter instead of using the fallback",
+      () => {
+        const input =
+          createResolvedInput(
+            "rooftop",
+          );
+
+        input.scenario.technicalConfig = {
+          ...input.scenario
+            .technicalConfig,
+
+          inverterId:
+            "unknown-inverter-profile",
+        };
+
+        input.inputSnapshot =
+          createSimulationExecutionInputSnapshot(
+            input.scenario,
+            input.siteVersion,
+            input.environment,
+          );
+
+        expect(
+          () =>
+            executeResolvedSimulation(
+              input,
+            ),
+        ).toThrow(
+          /Unknown inverter catalogue profile/,
+        );
+      },
+    );
+
+    it(
+      "persists selected equipment compatibility and module provenance",
+      () => {
+        const input =
+          createResolvedInput(
+            "land",
+          );
+
+        input.scenario.technicalConfig = {
+          ...input.scenario
+            .technicalConfig,
+
+          inverterId:
+            DEFAULT_INVERTER_PROFILE_ID,
+
+          modulesPerString:
+            13,
+
+          stringsPerMppt:
+            1,
+
+          minimumDesignTemperatureC:
+            -5,
+        };
+
+        input.inputSnapshot =
+          createSimulationExecutionInputSnapshot(
+            input.scenario,
+            input.siteVersion,
+            input.environment,
+          );
+
+        const result =
+          executeResolvedSimulation(
+            input,
+          );
+
+        expect(
+          result.electrical
+            ?.compatibility
+            ?.schema,
+        ).toBe(
+          "agritwin-pv-inverter-compatibility-v1",
+        );
+
+        expect(
+          result.electrical
+            ?.compatibility
+            ?.inverterSpecificationId,
+        ).toBe(
+          DEFAULT_INVERTER_PROFILE_ID,
+        );
+
+        expect(
+          result.electrical
+            ?.compatibility
+            ?.moduleProfileId,
+        ).toBe(
+          input.siteVersion
+            .configuration
+            .pvConfiguration
+            .moduleProfileId,
+        );
+
+        expect(
+          result.electrical
+            ?.provenance
+            .pvModuleProfileId,
+        ).toBe(
+          input.siteVersion
+            .configuration
+            .pvConfiguration
+            .moduleProfileId,
+        );
+      },
+    );
+
   },
 );

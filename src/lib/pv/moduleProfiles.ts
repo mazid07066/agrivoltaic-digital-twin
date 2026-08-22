@@ -33,8 +33,18 @@ export interface PVModuleProfile {
 
 export const PV_MODULE_PROFILES = catalogue.modules as PVModuleProfile[];
 
+export function findPVModuleProfile(
+  id: string,
+): PVModuleProfile | null {
+  return (
+    PV_MODULE_PROFILES.find(
+      (profile) => profile.id === id,
+    ) ?? null
+  );
+}
+
 export function getPVModuleProfile(id: string): PVModuleProfile {
-  return PV_MODULE_PROFILES.find((profile) => profile.id === id) ?? PV_MODULE_PROFILES[0];
+  return findPVModuleProfile(id) ?? PV_MODULE_PROFILES[0];
 }
 
 export const PV_MODULE_MANUFACTURERS = [...new Set(

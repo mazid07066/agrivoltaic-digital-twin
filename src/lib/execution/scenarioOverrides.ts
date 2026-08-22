@@ -8,7 +8,16 @@ import type {
 
 import type {
   LandAgrivoltaicSiteProfile,
+  SiteProfile,
 } from "@/lib/sites/schema";
+
+import {
+  findPVModuleProfile,
+} from "@/lib/pv/moduleProfiles";
+
+import {
+  getInverterProfile,
+} from "@/lib/electrical/inverter/catalogue";
 
 function finiteNumber(
   value:
@@ -93,6 +102,173 @@ function boundedNumber(
   return number;
 }
 
+export function applyEquipmentScenarioOverrides<
+  T extends SiteProfile,
+>(
+  stored: T,
+  scenario: Scenario,
+): T {
+  /*
+   * Equipment overrides always operate on a detached copy.
+   * The immutable stored site version is never mutated.
+   */
+  const runtime =
+    structuredClone(
+      stored,
+    );
+
+  const technical =
+    scenario.technicalConfig ??
+    {};
+
+  const moduleId =
+    technical.moduleId
+      ?.trim();
+
+  if (moduleId) {
+    const moduleProfile =
+      findPVModuleProfile(
+        moduleId,
+      );
+
+    if (!moduleProfile) {
+      throw new Error(
+        `Unknown PV module catalogue profile: ${moduleId}`,
+      );
+    }
+
+    runtime.pvConfiguration = {
+      ...runtime.pvConfiguration,
+
+      moduleProfileId:
+        moduleProfile.id,
+
+      modulePower:
+        moduleProfile.pmaxW,
+
+      moduleWidth:
+        moduleProfile.widthM,
+
+      moduleLength:
+        moduleProfile.lengthM,
+
+      moduleEfficiency:
+        moduleProfile.efficiencyPercent ??
+        runtime.pvConfiguration
+          .moduleEfficiency,
+
+      moduleNOCT:
+        moduleProfile.noctC,
+
+      temperatureCoefficientPmax:
+        moduleProfile
+          .tempCoeffPmaxPercentPerC,
+
+      moduleVoc:
+        moduleProfile.vocV,
+
+      moduleVmpp:
+        moduleProfile.vmppV,
+
+      moduleIsc:
+        moduleProfile.iscA,
+
+      moduleImpp:
+        moduleProfile.imppA,
+    };
+  }
+
+  const modulePower =
+    positiveNumber(
+      technical.modulePowerW,
+      "Module power",
+    );
+
+  if (modulePower !== null) {
+    runtime
+      .pvConfiguration
+      .modulePower =
+      modulePower;
+  }
+
+  const inverterId =
+    technical.inverterId
+      ?.trim();
+
+  if (inverterId) {
+    /*
+     * Validate the selected ID against the catalogue.
+     * This prevents a displayed selection from silently
+     * executing the default inverter.
+     */
+    const inverter =
+      getInverterProfile(
+        inverterId,
+      );
+
+    runtime
+      .pvConfiguration
+      .inverterProfileId =
+      inverter.id;
+  }
+
+  const modulesPerString =
+    positiveNumber(
+      technical.modulesPerString,
+      "Modules per string",
+    );
+
+  if (modulesPerString !== null) {
+    if (!Number.isInteger(modulesPerString)) {
+      throw new Error(
+        "Modules per string must be an integer.",
+      );
+    }
+
+    runtime
+      .pvConfiguration
+      .modulesPerString =
+      modulesPerString;
+  }
+
+  const stringsPerMppt =
+    positiveNumber(
+      technical.stringsPerMppt,
+      "Strings per MPPT",
+    );
+
+  if (stringsPerMppt !== null) {
+    if (!Number.isInteger(stringsPerMppt)) {
+      throw new Error(
+        "Strings per MPPT must be an integer.",
+      );
+    }
+
+    runtime
+      .pvConfiguration
+      .stringsPerMppt =
+      stringsPerMppt;
+  }
+
+  const minimumDesignTemperatureC =
+    finiteNumber(
+      technical
+        .minimumDesignTemperatureC,
+    );
+
+  if (
+    minimumDesignTemperatureC !==
+    null
+  ) {
+    runtime
+      .pvConfiguration
+      .minimumDesignTemperatureC =
+      minimumDesignTemperatureC;
+  }
+
+  return runtime;
+}
+
 export function applyLandScenarioOverrides(
   stored:
     LandAgrivoltaicSiteProfile,
@@ -105,8 +281,9 @@ export function applyLandScenarioOverrides(
    * persisted site-version snapshot.
    */
   const runtime =
-    structuredClone(
+    applyEquipmentScenarioOverrides(
       stored,
+      scenario,
     );
 
   const technical =

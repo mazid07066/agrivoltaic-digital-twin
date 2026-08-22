@@ -9,7 +9,13 @@ import type {
 
 export const DEFAULT_TECHNICAL_CONFIG: ScenarioTechnicalConfig = {
   moduleId: null,
+  inverterId: null,
+
   modulePowerW: null,
+
+  modulesPerString: null,
+  stringsPerMppt: null,
+  minimumDesignTemperatureC: null,
 
   panelHeightM: null,
   rowSpacingM: null,

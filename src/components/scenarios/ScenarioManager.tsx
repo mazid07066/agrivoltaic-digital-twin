@@ -21,6 +21,16 @@ import type {
   TrackingMode,
 } from "@/lib/scenarios/types";
 
+import {
+  PV_MODULE_MANUFACTURERS,
+  PV_MODULE_PROFILES,
+} from "@/lib/pv/moduleProfiles";
+
+import {
+  INVERTER_MANUFACTURERS,
+  INVERTER_PROFILES,
+} from "@/lib/electrical/inverter/catalogue";
+
 interface ScenarioManagerProps {
   projectId: string;
   siteId: string;
@@ -36,6 +46,12 @@ interface FormState {
   status: ScenarioStatus;
 
   isBaseline: boolean;
+
+  moduleId: string;
+  inverterId: string;
+  modulesPerString: string;
+  stringsPerMppt: string;
+  minimumDesignTemperatureC: string;
 
   panelHeightM: string;
   rowSpacingM: string;
@@ -89,6 +105,21 @@ const EMPTY_FORM: FormState = {
 
   isBaseline:
     false,
+
+  moduleId:
+    "",
+
+  inverterId:
+    "",
+
+  modulesPerString:
+    "",
+
+  stringsPerMppt:
+    "",
+
+  minimumDesignTemperatureC:
+    "",
 
   panelHeightM:
     "",
@@ -312,6 +343,39 @@ export default function ScenarioManager({
       isBaseline:
         scenario.isBaseline,
 
+      moduleId:
+        scenario
+          .technicalConfig
+          .moduleId ??
+        "",
+
+      inverterId:
+        scenario
+          .technicalConfig
+          .inverterId ??
+        "",
+
+      modulesPerString:
+        valueOrEmpty(
+          scenario
+            .technicalConfig
+            .modulesPerString,
+        ),
+
+      stringsPerMppt:
+        valueOrEmpty(
+          scenario
+            .technicalConfig
+            .stringsPerMppt,
+        ),
+
+      minimumDesignTemperatureC:
+        valueOrEmpty(
+          scenario
+            .technicalConfig
+            .minimumDesignTemperatureC,
+        ),
+
       panelHeightM:
         valueOrEmpty(
           scenario
@@ -499,6 +563,29 @@ export default function ScenarioManager({
 
     try {
       const technicalConfig = {
+        moduleId:
+          form.moduleId.trim() ||
+          null,
+
+        inverterId:
+          form.inverterId.trim() ||
+          null,
+
+        modulesPerString:
+          optionalNumber(
+            form.modulesPerString,
+          ),
+
+        stringsPerMppt:
+          optionalNumber(
+            form.stringsPerMppt,
+          ),
+
+        minimumDesignTemperatureC:
+          optionalNumber(
+            form.minimumDesignTemperatureC,
+          ),
+
         panelHeightM:
           optionalNumber(
             form.panelHeightM,
@@ -993,7 +1080,109 @@ export default function ScenarioManager({
               </h4>
 
               <div className="grid gap-3 sm:grid-cols-2">
+                <label>
+                  <span className="text-sm font-medium text-slate-700">
+                    PV module
+                  </span>
+
+                  <select
+                    value={form.moduleId}
+                    onChange={(event) =>
+                      updateField(
+                        "moduleId",
+                        event.target.value,
+                      )
+                    }
+                    className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2"
+                  >
+                    <option value="">
+                      Inherit saved site module
+                    </option>
+
+                    {PV_MODULE_MANUFACTURERS.map(
+                      (manufacturer) => (
+                        <optgroup
+                          key={manufacturer}
+                          label={manufacturer}
+                        >
+                          {PV_MODULE_PROFILES.filter(
+                            (profile) =>
+                              profile.manufacturer ===
+                              manufacturer,
+                          ).map((profile) => (
+                            <option
+                              key={profile.id}
+                              value={profile.id}
+                            >
+                              {profile.model} ·{" "}
+                              {profile.pmaxW} W
+                            </option>
+                          ))}
+                        </optgroup>
+                      ),
+                    )}
+                  </select>
+                </label>
+
+                <label>
+                  <span className="text-sm font-medium text-slate-700">
+                    Inverter
+                  </span>
+
+                  <select
+                    value={form.inverterId}
+                    onChange={(event) =>
+                      updateField(
+                        "inverterId",
+                        event.target.value,
+                      )
+                    }
+                    className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2"
+                  >
+                    <option value="">
+                      Inherit saved site inverter
+                    </option>
+
+                    {INVERTER_MANUFACTURERS.map(
+                      (manufacturer) => (
+                        <optgroup
+                          key={manufacturer}
+                          label={manufacturer}
+                        >
+                          {INVERTER_PROFILES.filter(
+                            (profile) =>
+                              profile.manufacturer ===
+                              manufacturer,
+                          ).map((profile) => (
+                            <option
+                              key={profile.id}
+                              value={profile.id}
+                            >
+                              {profile.model} ·{" "}
+                              {profile.ac.ratedActivePowerW /
+                                1000}{" "}
+                              kW
+                            </option>
+                          ))}
+                        </optgroup>
+                      ),
+                    )}
+                  </select>
+                </label>
+
                 {[
+                  [
+                    "modulesPerString",
+                    "Modules per string",
+                  ],
+                  [
+                    "stringsPerMppt",
+                    "Strings per MPPT",
+                  ],
+                  [
+                    "minimumDesignTemperatureC",
+                    "Minimum design temperature (°C)",
+                  ],
                   [
                     "panelHeightM",
                     "Panel height (m)",
