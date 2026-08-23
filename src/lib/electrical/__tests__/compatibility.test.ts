@@ -62,19 +62,25 @@ describe(
           assessPVInverterCompatibility({
             module: moduleProfile,
             inverter,
-            moduleCount: 65,
-            modulesPerString: 13,
+            moduleCount: 112,
+            modulesPerString: 14,
             stringsPerMppt: 1,
             minimumDesignTemperatureC: -10,
+            maximumDesignCellTemperatureC: 70,
+            bifacialCurrentFactor: 1,
+            inverterCount: 1,
           });
 
         expect(report.status).toBe("PASS");
         expect(
           report.calculations.stringVmppV,
-        ).toBeCloseTo(539.5);
+        ).toBeCloseTo(581);
         expect(
           report.calculations.stringVocStcV,
-        ).toBeCloseTo(643.5);
+        ).toBeCloseTo(693);
+        expect(
+          report.calculations.inverterLoadingRatio,
+        ).toBeCloseTo(1.232);
         expect(
           report.checks.some(
             (check) => check.status === "FAIL",

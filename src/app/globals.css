@@ -1868,3 +1868,221 @@ button {
       repeat(3, minmax(0, 1fr));
   }
 }
+
+
+/* Land electrical scene: keep BOS telemetry below the 3D canvas. */
+.land-scene-stack {
+  display: grid;
+  min-width: 0;
+  gap: 16px;
+}
+
+.land-scene-stack > .scene-container {
+  width: 100%;
+}
+
+
+/* Phase 9E Land presentation: unobstructed scene and contained controls. */
+.electrical-scene-card {
+  display: grid;
+  height: auto;
+  min-height: 0;
+  gap: 14px;
+  background: transparent;
+  overflow: visible;
+}
+
+.electrical-scene-card .land-scene-stack {
+  display: contents;
+}
+
+.electrical-scene-card .scene-container {
+  order: 1;
+  width: 100%;
+  min-height: 430px;
+  overflow: hidden;
+  border: 1px solid #d8e2dc;
+  border-radius: 16px;
+  background: #f5f8f6;
+}
+
+.electrical-scene-card .time-control {
+  position: relative;
+  order: 2;
+  inset: auto;
+  z-index: auto;
+  width: min(100%, 1100px);
+  margin: 0 auto;
+  padding: 14px 18px;
+  display: grid;
+  grid-template-columns:
+    minmax(160px, auto)
+    minmax(260px, 1fr)
+    minmax(180px, auto);
+  align-items: center;
+  gap: 18px;
+  background: #ffffff;
+  border: 1px solid #d8e2dc;
+  border-radius: 14px;
+  box-shadow: 0 7px 20px rgba(20, 56, 35, 0.06);
+  backdrop-filter: none;
+}
+
+.electrical-scene-card .time-control div {
+  margin-bottom: 0;
+}
+
+.electrical-scene-card
+.electrical-status-panel-embedded {
+  order: 3;
+  width: min(100%, 1100px);
+  margin: 0 auto;
+  padding: 18px;
+  border-radius: 16px;
+  box-shadow:
+    0 8px 24px
+    rgba(15, 23, 42, 0.11);
+}
+
+.electrical-scene-card
+.electrical-status-panel-embedded
+.electrical-status-grid {
+  gap: 10px;
+}
+
+.electrical-scene-card
+.electrical-status-panel-embedded
+.electrical-status-grid > div {
+  min-height: 62px;
+  padding: 10px 12px;
+  align-content: center;
+}
+
+.electrical-scene-card
+.electrical-status-panel-embedded
+.electrical-mppt-strip {
+  gap: 8px;
+}
+
+.electrical-scene-card
+.electrical-status-panel-embedded
+.electrical-mppt-strip div {
+  min-height: 48px;
+  align-content: center;
+}
+
+@media (max-width: 900px) {
+  .electrical-scene-card .time-control {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .electrical-scene-card
+  .electrical-status-panel-embedded
+  .electrical-status-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .electrical-scene-card .scene-container {
+    min-height: 360px;
+  }
+
+  .electrical-scene-card
+  .electrical-status-panel-embedded {
+    display: block;
+  }
+
+  .electrical-scene-card
+  .electrical-status-panel-embedded
+  .electrical-mppt-strip {
+    grid-template-columns:
+      repeat(3, minmax(0, 1fr));
+  }
+}
+
+
+/* Phase 9E Land sizing refinement. */
+.electrical-scene-card .scene-container {
+  height: clamp(560px, 64vh, 740px);
+  min-height: 560px;
+}
+
+.electrical-scene-card .time-control {
+  width: min(100%, 900px);
+}
+
+.electrical-scene-card
+.electrical-status-panel-embedded {
+  width: min(100%, 900px);
+}
+
+@media (max-width: 900px) {
+  .electrical-scene-card .scene-container {
+    height: 520px;
+    min-height: 520px;
+  }
+
+  .electrical-scene-card .time-control,
+  .electrical-scene-card
+  .electrical-status-panel-embedded {
+    width: 100%;
+  }
+}
+
+@media (max-width: 560px) {
+  .electrical-scene-card .scene-container {
+    height: 400px;
+    min-height: 400px;
+  }
+}
+
+
+/* Keep compatibility values readable inside the narrow site sidebar. */
+.pv-inverter-compatibility-panel {
+  min-width: 0;
+}
+
+.pv-inverter-compatibility-panel label,
+.pv-inverter-compatibility-panel dl > div {
+  min-width: 0;
+}
+
+.pv-inverter-compatibility-panel input {
+  width: 100%;
+  min-width: 0;
+}
+
+.pv-inverter-compatibility-panel dd {
+  overflow-wrap: anywhere;
+}
+
+.electrical-topology-summary {
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 12px;
+  color: #cbd5e1;
+  background: rgba(15, 118, 110, 0.14);
+  border: 1px solid rgba(45, 212, 191, 0.2);
+  border-radius: 8px;
+  font-size: 0.65rem;
+}
+
+.electrical-topology-summary strong {
+  color: #99f6e4;
+}
+
+.electrical-mppt-strip div.inactive {
+  opacity: 0.48;
+  background: rgba(51, 65, 85, 0.55);
+  border-color: rgba(148, 163, 184, 0.2);
+}
+
+.electrical-mppt-strip div.inactive span,
+.electrical-mppt-strip div.inactive strong {
+  color: #94a3b8;
+}

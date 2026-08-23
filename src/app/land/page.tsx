@@ -237,6 +237,31 @@ export default function Home() {
             ]?.pvPower ??
             0,
 
+          moduleCount:
+            configuration.pv.numberOfRows *
+            configuration.pv.modulesPerRow,
+
+          moduleProfileId:
+            selectedModule.id,
+
+          modulesPerString:
+            configuration.pv.modulesPerString ??
+            null,
+
+          stringsPerMppt:
+            configuration.pv.stringsPerMppt ??
+            null,
+
+          inverterCount:
+            configuration.pv.inverterCount ??
+            1,
+
+          moduleTemperatureC:
+            results.hourly[
+              selectedHour
+            ]?.moduleTemperature ??
+            null,
+
           inverterProfileId:
             selectedInverter.id,
         }),
@@ -245,6 +270,12 @@ export default function Home() {
         results.hourly,
         selectedHour,
         selectedInverter.id,
+        configuration.pv.numberOfRows,
+        configuration.pv.modulesPerRow,
+        configuration.pv.modulesPerString,
+        configuration.pv.stringsPerMppt,
+        configuration.pv.inverterCount,
+        selectedModule.id,
       ],
     );
 
@@ -552,8 +583,16 @@ export default function Home() {
                 configuration.pv.numberOfRows *
                 configuration.pv.modulesPerRow
               }
+              inverterCount={
+                configuration.pv.inverterCount ??
+                1
+              }
               modulesPerString={
                 configuration.pv.modulesPerString ??
+                null
+              }
+              stringsPerInverter={
+                configuration.pv.stringsPerInverter ??
                 null
               }
               stringsPerMppt={
@@ -563,6 +602,16 @@ export default function Home() {
               minimumDesignTemperatureC={
                 configuration.pv
                   .minimumDesignTemperatureC ??
+                null
+              }
+              maximumDesignCellTemperatureC={
+                configuration.pv
+                  .maximumDesignCellTemperatureC ??
+                null
+              }
+              bifacialCurrentFactor={
+                configuration.pv
+                  .bifacialCurrentFactor ??
                 null
               }
               onChange={updatePV}

@@ -242,7 +242,8 @@ export default function AgrivoltaicScene({
     configuration.site.timezone,
   ), [configuration, selectedHour]);
   return (
-    <div className="scene-container">
+    <div className="land-scene-stack">
+      <div className="scene-container">
       <Canvas
         shadows
         camera={{
@@ -273,12 +274,6 @@ export default function AgrivoltaicScene({
         </Suspense>
       </Canvas>
 
-      {electrical ? (
-        <ElectricalStatusPanel
-          data={electrical}
-        />
-      ) : null}
-
       <div className="scene-help">
         Drag to rotate • Scroll to zoom • Right-drag to move
       </div>
@@ -289,6 +284,14 @@ export default function AgrivoltaicScene({
           <span>Azimuth: {solar.azimuthDegrees.toFixed(1)}° • {solar.isAboveHorizon ? "Above horizon" : "Below horizon"}</span>
         </div>
       </div>
+      </div>
+
+      {electrical ? (
+        <ElectricalStatusPanel
+          data={electrical}
+          embedded
+        />
+      ) : null}
     </div>
   );
 }

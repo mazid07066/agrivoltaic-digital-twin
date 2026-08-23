@@ -15,9 +15,13 @@ function createDefaultPVConfiguration() {
   return {
     moduleProfileId: pvModule.id,
     inverterProfileId: DEFAULT_INVERTER_PROFILE_ID,
+    inverterCount: 1,
     modulesPerString: null,
+    stringsPerInverter: null,
     stringsPerMppt: null,
     minimumDesignTemperatureC: null,
+    maximumDesignCellTemperatureC: null,
+    bifacialCurrentFactor: null,
     numberOfRows: 6,
     modulesPerRow: 10,
     moduleWidth: pvModule.widthM,

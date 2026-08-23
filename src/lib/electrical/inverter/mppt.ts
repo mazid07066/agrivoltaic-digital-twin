@@ -360,3 +360,423 @@ export function createDemonstrationDcInput(
     mppts,
   };
 }
+
+export interface DesignedDcTopologyInput {
+  availablePowerKw: number;
+  moduleCount: number;
+  modulesPerString: number;
+  stringsPerMppt: number;
+  inverterCount: number;
+  moduleVmppV: number;
+  moduleTemperatureC: number;
+  voltageTemperatureCoefficientPercentPerC: number;
+}
+
+function requirePositiveInteger(
+  value: number,
+  label: string,
+): void {
+  if (
+    !Number.isInteger(value) ||
+    value < 1
+  ) {
+    throw new Error(
+      `${label} must be a positive integer.`,
+    );
+  }
+}
+
+/**
+ * Creates a DC input from an accepted physical string design.
+ *
+ * Aggregate simulated PV power is distributed according to
+ * the actual number of complete strings assigned across the
+ * available inverter MPPT channels.
+ *
+ * String voltage is derived from selected-module Vmpp and
+ * the hourly simulated module temperature. Because the
+ * catalogue currently has no separate Vmpp temperature
+ * coefficient, the documented voltage coefficient is used
+ * as the bounded engineering approximation.
+ *
+ * Short-circuit current remains null here: hourly Isc cannot
+ * be recovered accurately from aggregate PV power. Design
+ * Isc is evaluated separately by compatibility.ts.
+ */
+export function createDesignedDcInput(
+  input: DesignedDcTopologyInput,
+  specification: InverterSpecification,
+): InverterDcInput {
+  requireNonNegativeFinite(
+    input.availablePowerKw,
+    "Available DC power",
+  );
+
+  requirePositiveInteger(
+    input.moduleCount,
+    "Module count",
+  );
+
+  requirePositiveInteger(
+    input.modulesPerString,
+    "Modules per string",
+  );
+
+  requirePositiveInteger(
+    input.stringsPerMppt,
+    "Strings per MPPT",
+  );
+
+  requirePositiveInteger(
+    input.inverterCount,
+    "Inverter count",
+  );
+
+  requirePositiveFinite(
+    input.moduleVmppV,
+    "Module Vmpp",
+  );
+
+  if (
+    !Number.isFinite(
+      input.moduleTemperatureC,
+    )
+  ) {
+    throw new Error(
+      "Module temperature must be finite.",
+    );
+  }
+
+  if (
+    !Number.isFinite(
+      input.voltageTemperatureCoefficientPercentPerC,
+    )
+  ) {
+    throw new Error(
+      "Voltage temperature coefficient must be finite.",
+    );
+  }
+
+  if (
+    input.stringsPerMppt >
+    specification.dc.stringsPerMppt
+  ) {
+    throw new Error(
+      `Strings per MPPT exceeds the inverter limit of ${specification.dc.stringsPerMppt}.`,
+    );
+  }
+
+  const totalStringCount =
+    Math.floor(
+      input.moduleCount /
+      input.modulesPerString,
+    );
+
+  if (totalStringCount < 1) {
+    throw new Error(
+      "The design does not contain a complete string.",
+    );
+  }
+
+  const assignedModuleCount =
+    totalStringCount *
+    input.modulesPerString;
+
+  const plantMpptCount =
+    input.inverterCount *
+    specification.dc.independentMpptInputs;
+
+  const maximumStringCapacity =
+    plantMpptCount *
+    input.stringsPerMppt;
+
+  if (
+    totalStringCount >
+    maximumStringCapacity
+  ) {
+    throw new Error(
+      `The design requires ${totalStringCount} strings but the configured plant supports ${maximumStringCapacity}.`,
+    );
+  }
+
+  const voltageFactor =
+    1 +
+    (
+      input
+        .voltageTemperatureCoefficientPercentPerC /
+      100
+    ) *
+    (
+      input.moduleTemperatureC -
+      25
+    );
+
+  const operatingStringVoltageV =
+    input.modulesPerString *
+    input.moduleVmppV *
+    voltageFactor;
+
+  if (
+    input.availablePowerKw > 0 &&
+    (
+      !Number.isFinite(
+        operatingStringVoltageV,
+      ) ||
+      operatingStringVoltageV <= 0
+    )
+  ) {
+    throw new Error(
+      "Calculated operating string voltage must be positive.",
+    );
+  }
+
+  /*
+   * Modules outside complete strings are electrically
+   * unassigned and therefore cannot contribute to the
+   * designed inverter input.
+   */
+  const assignedPowerFraction =
+    assignedModuleCount /
+    input.moduleCount;
+
+  const designedAvailablePowerKw =
+    input.availablePowerKw *
+    assignedPowerFraction;
+
+  const powerPerStringKw =
+    designedAvailablePowerKw /
+    totalStringCount;
+
+  const currentPerStringA =
+    designedAvailablePowerKw > 0
+      ? (
+          powerPerStringKw *
+          1000
+        ) /
+        operatingStringVoltageV
+      : 0;
+
+  const baseStringsPerChannel =
+    Math.floor(
+      totalStringCount /
+      plantMpptCount,
+    );
+
+  const additionalStringChannels =
+    totalStringCount %
+    plantMpptCount;
+
+  const mppts: InverterMpptInput[] =
+    Array.from(
+      {
+        length:
+          plantMpptCount,
+      },
+      (
+        _,
+        mpptIndexZeroBased,
+      ) => {
+        const assignedStrings =
+          baseStringsPerChannel +
+          (
+            mpptIndexZeroBased <
+            additionalStringChannels
+              ? 1
+              : 0
+          );
+
+        if (
+          assignedStrings >
+          input.stringsPerMppt
+        ) {
+          throw new Error(
+            "Balanced MPPT assignment exceeds the accepted strings-per-MPPT design.",
+          );
+        }
+
+        const strings:
+          InverterStringInput[] =
+          Array.from(
+            {
+              length:
+                assignedStrings,
+            },
+            (
+              __,
+              stringIndexZeroBased,
+            ) => ({
+              stringIndex:
+                stringIndexZeroBased +
+                1,
+
+              currentA: {
+                value:
+                  currentPerStringA,
+
+                provenance:
+                  "derived",
+
+                note:
+                  "Derived from assigned aggregate PV power and temperature-adjusted string Vmpp; not measured telemetry.",
+              },
+
+              shortCircuitCurrentA: {
+                value:
+                  null,
+
+                provenance:
+                  "derived",
+
+                note:
+                  "Hourly string Isc is intentionally unavailable; design Isc is evaluated by the compatibility engine.",
+              },
+
+              powerKw: {
+                value:
+                  powerPerStringKw,
+
+                provenance:
+                  "derived",
+
+                note:
+                  "Aggregate simulated PV power allocated equally across complete physical strings.",
+              },
+            }),
+          );
+
+        const mpptPowerKw =
+          assignedStrings *
+          powerPerStringKw;
+
+        const mpptCurrentA =
+          assignedStrings *
+          currentPerStringA;
+
+        const operating =
+          assignedStrings > 0 &&
+          designedAvailablePowerKw > 0;
+
+        return {
+          mpptIndex:
+            mpptIndexZeroBased +
+            1,
+
+          voltageV: {
+            value:
+              operating
+                ? operatingStringVoltageV
+                : null,
+
+            provenance:
+              "calculated",
+
+            note:
+              assignedStrings > 0
+                ? "Calculated from modules per string, module Vmpp and hourly module temperature."
+                : "No string is assigned to this MPPT channel.",
+          },
+
+          currentA: {
+            value:
+              mpptCurrentA,
+
+            provenance:
+              "derived",
+
+            note:
+              assignedStrings > 0
+                ? `Sum of ${assignedStrings} assigned string current(s).`
+                : "No string is assigned to this MPPT channel.",
+          },
+
+          shortCircuitCurrentA: {
+            value:
+              null,
+
+            provenance:
+              "derived",
+
+            note:
+              "Operational Isc is not inferred from aggregate PV power.",
+          },
+
+          powerKw: {
+            value:
+              mpptPowerKw,
+
+            provenance:
+              "derived",
+
+            note:
+              assignedStrings > 0
+                ? `Power from ${assignedStrings} assigned string(s).`
+                : "No string is assigned to this MPPT channel.",
+          },
+
+          strings,
+        };
+      },
+    );
+
+  const totalCurrentA =
+    designedAvailablePowerKw > 0
+      ? (
+          designedAvailablePowerKw *
+          1000
+        ) /
+        operatingStringVoltageV
+      : 0;
+
+  return {
+    availablePowerKw: {
+      value:
+        designedAvailablePowerKw,
+
+      provenance:
+        "calculated",
+
+      note:
+        assignedModuleCount ===
+        input.moduleCount
+          ? "All configured modules are assigned to complete strings."
+          : `${input.moduleCount - assignedModuleCount} module(s) are excluded because they do not form a complete string.`,
+    },
+
+    requestedPowerKw: {
+      value:
+        designedAvailablePowerKw,
+
+      provenance:
+        "derived",
+
+      note:
+        "Requested power from modules assigned to the accepted string design.",
+    },
+
+    voltageV: {
+      value:
+        designedAvailablePowerKw > 0
+          ? operatingStringVoltageV
+          : 0,
+
+      provenance:
+        "calculated",
+
+      note:
+        "Temperature-adjusted operating string Vmpp; no inverter rated-voltage assumption is used.",
+    },
+
+    currentA: {
+      value:
+        totalCurrentA,
+
+      provenance:
+        "derived",
+
+      note:
+        "Total designed DC power divided by calculated operating string voltage.",
+    },
+
+    mppts,
+  };
+}

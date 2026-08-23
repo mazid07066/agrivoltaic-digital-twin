@@ -52,9 +52,42 @@ export default function ElectricalStatusPanel({
         </div>
 
         <small>
-          Phase 9E
+          {
+            data.equipment
+              ?.topologyMode ===
+            "designed"
+              ? "Designed topology"
+              : "Assumed topology"
+          }
         </small>
       </div>
+
+      {data.equipment ? (
+        <div className="electrical-topology-summary">
+          <strong>
+            {data.equipment.inverterCount} inverter
+            {data.equipment.inverterCount === 1
+              ? ""
+              : "s"}
+          </strong>
+
+          <span>
+            {data.equipment.totalStringCount ??
+              "—"}{" "}
+            strings
+          </span>
+
+          <span>
+            {data.equipment.modulesPerString ??
+              "—"}{" "}
+            modules/string
+          </span>
+
+          <span>
+            {data.equipment.activeMpptCount} active MPPT
+          </span>
+        </div>
+      ) : null}
 
       <div className="electrical-status-grid">
         <div>
@@ -209,6 +242,11 @@ export default function ElectricalStatusPanel({
                   key={
                     mppt.mpptIndex
                   }
+                  className={
+                    mppt.strings.length > 0
+                      ? "assigned"
+                      : "inactive"
+                  }
                 >
                   <span>
                     M{
@@ -218,14 +256,16 @@ export default function ElectricalStatusPanel({
 
                   <strong>
                     {
-                      (
-                        mppt
-                          .powerKw
-                          .value ??
-                        0
-                      ).toFixed(
-                        1,
-                      )
+                      mppt.strings.length === 0
+                        ? "OFF"
+                        : (
+                            mppt
+                              .powerKw
+                              .value ??
+                            0
+                          ).toFixed(
+                            1,
+                          )
                     }
                   </strong>
                 </div>

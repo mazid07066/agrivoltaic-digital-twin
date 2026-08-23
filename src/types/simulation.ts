@@ -42,12 +42,42 @@ export interface PVConfiguration {
   inverterProfileId?: string;
 
   /**
+   * Number of identical inverter units assigned to the
+   * PV array.
+   */
+  inverterCount?: number | null;
+
+  /**
    * Explicit electrical string design. These must not be
    * inferred from physical modulesPerRow.
    */
   modulesPerString?: number | null;
+
+  /**
+   * Total strings assigned to each identical inverter unit.
+   */
+  stringsPerInverter?: number | null;
+
+  /**
+   * Derived maximum number of parallel strings assigned to
+   * any one MPPT input.
+   */
   stringsPerMppt?: number | null;
+
   minimumDesignTemperatureC?: number | null;
+
+  /**
+   * Maximum expected PV cell temperature used for the
+   * hot-side MPPT voltage-floor calculation.
+   */
+  maximumDesignCellTemperatureC?: number | null;
+
+  /**
+   * Multiplier applied to design current. Use 1 for
+   * monofacial modules and a documented value above 1
+   * for bifacial rear-side gain.
+   */
+  bifacialCurrentFactor?: number | null;
 
   numberOfRows: number;
   modulesPerRow: number;

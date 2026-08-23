@@ -339,6 +339,32 @@ export default function RooftopDashboard() {
               ?.dcPowerKW ??
             0,
 
+          moduleCount:
+            layout.moduleCount,
+
+          moduleProfileId:
+            site.pvConfiguration.moduleProfileId,
+
+          modulesPerString:
+            site.pvConfiguration
+              .modulesPerString ??
+            null,
+
+          stringsPerMppt:
+            site.pvConfiguration
+              .stringsPerMppt ??
+            null,
+
+          inverterCount:
+            site.pvConfiguration
+              .inverterCount ??
+            1,
+
+          moduleTemperatureC:
+            selectedPoint
+              ?.moduleTemperatureC ??
+            null,
+
           inverterProfileId:
             selectedInverter.id,
         }),
@@ -347,6 +373,11 @@ export default function RooftopDashboard() {
         selectedPoint,
         site.simulationDate,
         selectedInverter.id,
+        layout.moduleCount,
+        site.pvConfiguration.moduleProfileId,
+        site.pvConfiguration.modulesPerString,
+        site.pvConfiguration.stringsPerMppt,
+        site.pvConfiguration.inverterCount,
       ],
     );
 
@@ -850,9 +881,19 @@ export default function RooftopDashboard() {
                 module={selectedModule}
                 inverter={selectedInverter}
                 moduleCount={layout.moduleCount}
+                inverterCount={
+                  site.pvConfiguration
+                    .inverterCount ??
+                  1
+                }
                 modulesPerString={
                   site.pvConfiguration
                     .modulesPerString ??
+                  null
+                }
+                stringsPerInverter={
+                  site.pvConfiguration
+                    .stringsPerInverter ??
                   null
                 }
                 stringsPerMppt={
@@ -863,6 +904,16 @@ export default function RooftopDashboard() {
                 minimumDesignTemperatureC={
                   site.pvConfiguration
                     .minimumDesignTemperatureC ??
+                  null
+                }
+                maximumDesignCellTemperatureC={
+                  site.pvConfiguration
+                    .maximumDesignCellTemperatureC ??
+                  null
+                }
+                bifacialCurrentFactor={
+                  site.pvConfiguration
+                    .bifacialCurrentFactor ??
                   null
                 }
                 onChange={updatePV}

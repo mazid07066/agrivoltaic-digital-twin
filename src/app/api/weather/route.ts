@@ -67,6 +67,64 @@ function differenceInDays(first: Date, second: Date): number {
   );
 }
 
+const WEATHER_FETCH_ATTEMPTS = 3;
+const WEATHER_FETCH_TIMEOUT_MS = 12_000;
+
+async function fetchWeatherWithRetry(
+  url: string,
+): Promise<Response> {
+  let lastError: unknown = null;
+
+  for (
+    let attempt = 1;
+    attempt <= WEATHER_FETCH_ATTEMPTS;
+    attempt += 1
+  ) {
+    const controller = new AbortController();
+
+    const timeout = setTimeout(
+      () => controller.abort(),
+      WEATHER_FETCH_TIMEOUT_MS,
+    );
+
+    try {
+      const response = await fetch(url, {
+        headers: {
+          Accept: "application/json",
+        },
+        cache: "no-store",
+        signal: controller.signal,
+      });
+
+      if (
+        response.ok ||
+        response.status < 500 ||
+        attempt === WEATHER_FETCH_ATTEMPTS
+      ) {
+        return response;
+      }
+
+      lastError = new Error(
+        `Open-Meteo returned HTTP ${response.status}.`,
+      );
+    } catch (error) {
+      lastError = error;
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, attempt * 300);
+    });
+  }
+
+  throw (
+    lastError instanceof Error
+      ? lastError
+      : new Error("Open-Meteo request failed.")
+  );
+}
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -167,12 +225,10 @@ export async function GET(request: NextRequest) {
       ].join(","),
     );
 
-    const weatherRequest = await fetch(weatherUrl.toString(), {
-      headers: {
-        Accept: "application/json",
-      },
-      cache: "no-store",
-    });
+    const weatherRequest =
+      await fetchWeatherWithRetry(
+        weatherUrl.toString(),
+      );
 
     if (!weatherRequest.ok) {
       const responseText = await weatherRequest.text();

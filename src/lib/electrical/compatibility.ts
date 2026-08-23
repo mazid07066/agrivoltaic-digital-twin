@@ -29,6 +29,9 @@ export interface PVInverterCompatibilityInput {
   modulesPerString: number | null;
   stringsPerMppt: number | null;
   minimumDesignTemperatureC: number | null;
+  maximumDesignCellTemperatureC?: number | null;
+  bifacialCurrentFactor?: number | null;
+  inverterCount?: number | null;
 }
 
 export interface PVInverterCompatibilityReport {
@@ -38,14 +41,21 @@ export interface PVInverterCompatibilityReport {
   inverterSpecificationId: string;
   calculations: {
     totalArrayPowerW: number | null;
+    inverterCount: number | null;
+    totalAcCapacityW: number | null;
     totalStringCount: number | null;
     stringVmppV: number | null;
+    stringVmppHotV: number | null;
+    stringVmppColdV: number | null;
     stringVocStcV: number | null;
     stringVocColdV: number | null;
     stringIscA: number | null;
+    designIscHotA: number | null;
     mpptImppA: number | null;
     mpptIscA: number | null;
+    mpptDesignCurrentA: number | null;
     totalImppA: number | null;
+    inverterLoadingRatio: number | null;
   };
   checks: EquipmentCompatibilityCheck[];
 }
@@ -162,6 +172,9 @@ export function assessPVInverterCompatibility({
   modulesPerString,
   stringsPerMppt,
   minimumDesignTemperatureC,
+  maximumDesignCellTemperatureC = null,
+  bifacialCurrentFactor = null,
+  inverterCount = 1,
 }: PVInverterCompatibilityInput): PVInverterCompatibilityReport {
   const checks: EquipmentCompatibilityCheck[] = [];
 
@@ -174,17 +187,31 @@ export function assessPVInverterCompatibility({
   const validStringsPerMppt =
     positiveInteger(stringsPerMppt);
 
+  const configuredInverterCount =
+    positiveInteger(inverterCount)
+      ? inverterCount
+      : null;
+
+  const totalAcCapacityW =
+    configuredInverterCount === null
+      ? null
+      : configuredInverterCount *
+        inverter.ac.ratedActivePowerW;
+
   const totalArrayPowerW =
     validModuleCount
       ? module.pmaxW * moduleCount
       : null;
 
-  if (totalArrayPowerW === null) {
+  if (
+    totalArrayPowerW === null ||
+    configuredInverterCount === null
+  ) {
     checks.push(
       unavailable(
         "array-power",
         "Total array STC power",
-        "Module count was not supplied.",
+        "Module count and inverter quantity are required.",
       ),
     );
   } else {
@@ -193,7 +220,9 @@ export function assessPVInverterCompatibility({
         id: "array-power",
         label: "Total array STC power",
         actual: totalArrayPowerW,
-        limit: inverter.dc.maxGeneratorPowerW,
+        limit:
+          configuredInverterCount *
+          inverter.dc.maxGeneratorPowerW,
         unit: "W",
       }),
     );
@@ -221,12 +250,15 @@ export function assessPVInverterCompatibility({
     });
   }
 
-  if (totalStringCount === null) {
+  if (
+    totalStringCount === null ||
+    configuredInverterCount === null
+  ) {
     checks.push(
       unavailable(
         "string-capacity",
         "Total inverter string capacity",
-        "Module count and modules per string are required.",
+        "Module count, string design and inverter quantity are required.",
       ),
     );
   } else {
@@ -236,6 +268,7 @@ export function assessPVInverterCompatibility({
         label: "Total inverter string capacity",
         actual: totalStringCount,
         limit:
+          configuredInverterCount *
           inverter.dc.independentMpptInputs *
           inverter.dc.stringsPerMppt,
         unit: "strings",
@@ -294,6 +327,110 @@ export function assessPVInverterCompatibility({
         id: "string-vmpp-max",
         label: "String Vmpp maximum",
         actual: stringVmppV,
+        limit: inverter.dc.mppVoltageMaxV,
+        unit: "V",
+      }),
+    );
+  }
+
+  let stringVmppHotV: number | null = null;
+
+  if (maximumDesignCellTemperatureC === null) {
+    checks.push(
+      unavailable(
+        "string-vmpp-hot-min",
+        "Hot-condition string Vmpp",
+        "Hot-condition Vmpp = NOT_EVALUATED. Reason: maximum design cell temperature not supplied.",
+      ),
+    );
+  } else if (module.tempCoeffVocPercentPerC === null) {
+    checks.push(
+      unavailable(
+        "string-vmpp-hot-min",
+        "Hot-condition string Vmpp",
+        "Hot-condition Vmpp = NOT_EVALUATED. Reason: voltage temperature coefficient is unavailable.",
+      ),
+    );
+  } else if (stringVmppV === null) {
+    checks.push(
+      unavailable(
+        "string-vmpp-hot-min",
+        "Hot-condition string Vmpp",
+        "Hot-condition Vmpp = NOT_EVALUATED. Reason: string Vmpp at STC is unavailable.",
+      ),
+    );
+  } else {
+    stringVmppHotV =
+      stringVmppV *
+      (
+        1 +
+        (
+          module.tempCoeffVocPercentPerC /
+          100
+        ) *
+        (
+          maximumDesignCellTemperatureC -
+          25
+        )
+      );
+
+    checks.push(
+      minimumCheck({
+        id: "string-vmpp-hot-min",
+        label: "Hot-condition string Vmpp",
+        actual: stringVmppHotV,
+        limit: inverter.dc.mppVoltageMinV,
+        unit: "V",
+      }),
+    );
+  }
+
+  let stringVmppColdV: number | null = null;
+
+  if (minimumDesignTemperatureC === null) {
+    checks.push(
+      unavailable(
+        "string-vmpp-cold-max",
+        "Cold-condition string Vmpp",
+        "Cold-condition Vmpp = NOT_EVALUATED. Reason: minimum design temperature not supplied.",
+      ),
+    );
+  } else if (module.tempCoeffVocPercentPerC === null) {
+    checks.push(
+      unavailable(
+        "string-vmpp-cold-max",
+        "Cold-condition string Vmpp",
+        "Cold-condition Vmpp = NOT_EVALUATED. Reason: voltage temperature coefficient is unavailable.",
+      ),
+    );
+  } else if (stringVmppV === null) {
+    checks.push(
+      unavailable(
+        "string-vmpp-cold-max",
+        "Cold-condition string Vmpp",
+        "Cold-condition Vmpp = NOT_EVALUATED. Reason: string Vmpp at STC is unavailable.",
+      ),
+    );
+  } else {
+    stringVmppColdV =
+      stringVmppV *
+      (
+        1 +
+        (
+          module.tempCoeffVocPercentPerC /
+          100
+        ) *
+        (
+          minimumDesignTemperatureC -
+          25
+        )
+      );
+
+    checks.push(
+      maximumCheck({
+        id: "string-vmpp-cold-max",
+        label: "Cold-condition string Vmpp",
+        actual: stringVmppColdV,
         limit: inverter.dc.mppVoltageMaxV,
         unit: "V",
       }),
@@ -401,6 +538,144 @@ export function assessPVInverterCompatibility({
     );
   }
 
+  let designIscHotA: number | null = null;
+
+  if (maximumDesignCellTemperatureC === null) {
+    checks.push(
+      unavailable(
+        "design-isc-hot",
+        "Hot bifacial design current",
+        "Design current = NOT_EVALUATED. Reason: maximum design cell temperature not supplied.",
+      ),
+    );
+  } else if (bifacialCurrentFactor === null) {
+    checks.push(
+      unavailable(
+        "design-isc-hot",
+        "Hot bifacial design current",
+        "Design current = NOT_EVALUATED. Reason: bifacial current factor not supplied.",
+      ),
+    );
+  } else if (
+    !Number.isFinite(bifacialCurrentFactor) ||
+    bifacialCurrentFactor < 1
+  ) {
+    checks.push({
+      id: "design-isc-hot",
+      label: "Hot bifacial design current",
+      status: "FAIL",
+      actual: bifacialCurrentFactor,
+      limit: 1,
+      unit: "factor",
+      message:
+        "Bifacial current factor must be a finite value greater than or equal to 1.",
+    });
+  } else if (
+    module.iscA === null ||
+    module.tempCoeffIscPercentPerC === null
+  ) {
+    checks.push(
+      unavailable(
+        "design-isc-hot",
+        "Hot bifacial design current",
+        "Design current = NOT_EVALUATED. Reason: module Isc or its temperature coefficient is unavailable.",
+      ),
+    );
+  } else {
+    designIscHotA =
+      module.iscA *
+      (
+        1 +
+        (
+          module.tempCoeffIscPercentPerC /
+          100
+        ) *
+        (
+          maximumDesignCellTemperatureC -
+          25
+        )
+      ) *
+      bifacialCurrentFactor;
+
+    checks.push({
+      id: "design-isc-hot",
+      label: "Hot bifacial design current",
+      status: "PASS",
+      actual: designIscHotA,
+      limit: null,
+      unit: "A",
+      message:
+        "Hot-condition Isc includes the configured bifacial current factor.",
+    });
+  }
+
+  const designImppA =
+    module.imppA !== null &&
+    bifacialCurrentFactor !== null &&
+    Number.isFinite(bifacialCurrentFactor) &&
+    bifacialCurrentFactor >= 1
+      ? module.imppA *
+        bifacialCurrentFactor
+      : null;
+
+  const mpptDesignCurrentA =
+    validStringsPerMppt &&
+    designImppA !== null
+      ? stringsPerMppt *
+        designImppA
+      : null;
+
+  if (mpptDesignCurrentA === null) {
+    checks.push(
+      unavailable(
+        "mppt-design-current",
+        "MPPT bifacial operating current",
+        "Strings per MPPT, module Impp and bifacial current factor are required.",
+      ),
+    );
+  } else {
+    checks.push(
+      maximumCheck({
+        id: "mppt-design-current",
+        label: "MPPT bifacial operating current",
+        actual: mpptDesignCurrentA,
+        limit:
+          inverter.dc
+            .maxOperatingCurrentPerMpptA,
+        unit: "A",
+      }),
+    );
+  }
+
+  const mpptDesignShortCircuitCurrentA =
+    validStringsPerMppt &&
+    designIscHotA !== null
+      ? stringsPerMppt *
+        designIscHotA
+      : null;
+
+  if (mpptDesignShortCircuitCurrentA === null) {
+    checks.push(
+      unavailable(
+        "mppt-design-short-circuit-current",
+        "MPPT hot short-circuit current",
+        "Strings per MPPT and hot-condition Isc are required.",
+      ),
+    );
+  } else {
+    checks.push(
+      maximumCheck({
+        id: "mppt-design-short-circuit-current",
+        label: "MPPT hot short-circuit current",
+        actual: mpptDesignShortCircuitCurrentA,
+        limit:
+          inverter.dc
+            .maxShortCircuitCurrentPerMpptA,
+        unit: "A",
+      }),
+    );
+  }
+
   const mpptImppA =
     validStringsPerMppt && module.imppA !== null
       ? stringsPerMppt * module.imppA
@@ -460,12 +735,15 @@ export function assessPVInverterCompatibility({
       ? totalStringCount * module.imppA
       : null;
 
-  if (totalImppA === null) {
+  if (
+    totalImppA === null ||
+    configuredInverterCount === null
+  ) {
     checks.push(
       unavailable(
         "total-impp",
         "Total DC operating current",
-        "Total string count or module Impp is unavailable.",
+        "String count, module Impp and inverter quantity are required.",
       ),
     );
   } else {
@@ -475,11 +753,48 @@ export function assessPVInverterCompatibility({
         label: "Total DC operating current",
         actual: totalImppA,
         limit:
-          inverter.dc
-            .maxOperatingInputCurrentA,
+          configuredInverterCount *
+          inverter.dc.maxOperatingInputCurrentA,
         unit: "A",
       }),
     );
+  }
+
+  const inverterLoadingRatio =
+    totalArrayPowerW === null ||
+    totalAcCapacityW === null
+      ? null
+      : totalArrayPowerW /
+        totalAcCapacityW;
+
+  if (inverterLoadingRatio === null) {
+    checks.push(
+      unavailable(
+        "inverter-loading-ratio",
+        "Inverter loading ratio",
+        "ILR = NOT_EVALUATED. Reason: total array power is unavailable.",
+      ),
+    );
+  } else {
+    const inRecommendedRange =
+      inverterLoadingRatio >= 1.1 &&
+      inverterLoadingRatio <= 1.35;
+
+    checks.push({
+      id: "inverter-loading-ratio",
+      label: "Inverter loading ratio",
+      status:
+        inRecommendedRange
+          ? "PASS"
+          : "WARNING",
+      actual: inverterLoadingRatio,
+      limit: 1.35,
+      unit: "p.u.",
+      message:
+        inRecommendedRange
+          ? "ILR is within the configured engineering target range of 1.10 to 1.35."
+          : "ILR is outside the engineering target range of 1.10 to 1.35; review inverter quantity or array size.",
+    });
   }
 
   return {
@@ -497,14 +812,22 @@ export function assessPVInverterCompatibility({
 
     calculations: {
       totalArrayPowerW,
+      inverterCount:
+        configuredInverterCount,
+      totalAcCapacityW,
       totalStringCount,
       stringVmppV,
+      stringVmppHotV,
+      stringVmppColdV,
       stringVocStcV,
       stringVocColdV,
       stringIscA,
+      designIscHotA,
       mpptImppA,
       mpptIscA,
+      mpptDesignCurrentA,
       totalImppA,
+      inverterLoadingRatio,
     },
 
     checks,

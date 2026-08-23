@@ -335,6 +335,14 @@ function InverterCabinet({
       .state !==
       "FAULT";
 
+  const mpptCount =
+    data.equipment
+      ?.independentMpptInputs ??
+    data.inverter
+      .dcInput
+      .mppts
+      .length;
+
   return (
     <group
       position={position}
@@ -416,7 +424,7 @@ function InverterCabinet({
 
       {Array.from({
         length:
-          6,
+          mpptCount,
       }).map(
         (
           _,
@@ -501,7 +509,7 @@ function InverterCabinet({
       >
         <EquipmentLabel
           title="PV Inverter"
-          subtitle={`50 kW • ${data.inverter.state}`}
+          subtitle={`${data.equipment?.ratedActivePowerKw ?? 50} kW • ${mpptCount} MPPT • ${data.inverter.state}`}
           color={
             COLORS.inverterAccent
           }
@@ -900,6 +908,26 @@ export default function ElectricalBosScene({
       ]}
     >
       <EquipmentPad />
+
+      <Html
+        position={[
+          pvConnection[0],
+          pvConnection[1] + 1.25,
+          pvConnection[2],
+        ]}
+        center
+        distanceFactor={13}
+      >
+        <EquipmentLabel
+          title="PV Array"
+          subtitle={
+            data.equipment?.moduleCount != null
+              ? `${data.equipment.moduleCount} modules`
+              : "Module count unavailable"
+          }
+          color={COLORS.dc}
+        />
+      </Html>
 
       <InverterCabinet
         position={
