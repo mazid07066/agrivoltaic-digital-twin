@@ -35,6 +35,7 @@ export interface WeatherResponse {
 export interface WeatherApiError {
   error: string;
   details?: string;
+  retryable?: boolean;
 }
 
 export type WeatherSeriesSource =

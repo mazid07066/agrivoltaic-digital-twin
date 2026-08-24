@@ -54,7 +54,7 @@ import type {
   WeatherRangeDay,
 } from "@/types/weather";
 
-type PowerOutputTimeSeriesProps =
+export type PowerOutputTimeSeriesProps =
   | {
       siteKind:
         "land";
@@ -97,7 +97,7 @@ function localDateText():
   return `${year}-${month}-${day}`;
 }
 
-function simulatePowerDay(
+export function simulatePowerDay(
   props:
     PowerOutputTimeSeriesProps,
 
@@ -850,9 +850,24 @@ export default function PowerOutputTimeSeries(
       ) : null}
 
       {error ? (
-        <p className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-          {error}
-        </p>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <span>
+            {error}
+          </span>
+
+          <button
+            type="button"
+            onClick={
+              loadSeries
+            }
+            disabled={
+              loading
+            }
+            className="rounded-lg border border-red-300 bg-white px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Retry request
+          </button>
+        </div>
       ) : null}
 
       {warnings.map(

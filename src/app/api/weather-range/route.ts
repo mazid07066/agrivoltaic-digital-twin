@@ -4,6 +4,10 @@ import {
 } from "next/server";
 
 import {
+  requestOpenMeteoWithRetry,
+} from "@/lib/weather/openMeteoHttp.server";
+
+import {
   buildOpenMeteoRangeUrl,
   normalizeOpenMeteoRange,
 } from "@/lib/weather/openMeteoRange.server";
@@ -20,96 +24,6 @@ import type {
 import type {
   WeatherRangeResponse,
 } from "@/types/weather";
-
-const WEATHER_FETCH_ATTEMPTS =
-  3;
-
-const WEATHER_FETCH_TIMEOUT_MS =
-  20_000;
-
-async function fetchWeatherWithRetry(
-  url:
-    string,
-): Promise<Response> {
-  let lastError:
-    unknown = null;
-
-  for (
-    let attempt = 1;
-    attempt <=
-      WEATHER_FETCH_ATTEMPTS;
-    attempt += 1
-  ) {
-    const controller =
-      new AbortController();
-
-    const timeout =
-      setTimeout(
-        () =>
-          controller.abort(),
-        WEATHER_FETCH_TIMEOUT_MS,
-      );
-
-    try {
-      const response =
-        await fetch(
-          url,
-          {
-            headers: {
-              Accept:
-                "application/json",
-            },
-
-            cache:
-              "no-store",
-
-            signal:
-              controller.signal,
-          },
-        );
-
-      if (
-        response.ok ||
-        response.status < 500 ||
-        attempt ===
-          WEATHER_FETCH_ATTEMPTS
-      ) {
-        return response;
-      }
-
-      lastError =
-        new Error(
-          `Open-Meteo returned HTTP ${response.status}.`,
-        );
-    } catch (error) {
-      lastError =
-        error;
-    } finally {
-      clearTimeout(
-        timeout,
-      );
-    }
-
-    await new Promise<void>(
-      (
-        resolve,
-      ) => {
-        setTimeout(
-          resolve,
-          attempt * 300,
-        );
-      },
-    );
-  }
-
-  throw (
-    lastError instanceof Error
-      ? lastError
-      : new Error(
-          "Open-Meteo request failed.",
-        )
-  );
-}
 
 function validCoordinate(
   value:
@@ -142,7 +56,9 @@ function enumerateDates(
     startDate;
 
   while (date <= endDate) {
-    dates.push(date);
+    dates.push(
+      date,
+    );
 
     date =
       addUtcDays(
@@ -244,6 +160,9 @@ export async function GET(
           error instanceof Error
             ? error.message
             : "Invalid weather date range.",
+
+        retryable:
+          false,
       },
       {
         status:
@@ -267,23 +186,33 @@ export async function GET(
               });
 
             const response =
-              await fetchWeatherWithRetry(
-                url.toString(),
-              );
+              await requestOpenMeteoWithRetry({
+                url:
+                  url.toString(),
+              });
 
-            if (!response.ok) {
-              const details =
-                await response.text();
-
+            if (
+              response.statusCode < 200 ||
+              response.statusCode >= 300
+            ) {
               throw new Error(
-                `Open-Meteo ${segment.source} request failed with HTTP ${response.status}. ${details}`,
+                `Open-Meteo ${segment.source} request returned HTTP ${response.statusCode}. ${response.body.slice(0, 500)}`,
               );
             }
 
-            const payload =
-              (
-                await response.json()
-              ) as OpenMeteoRangePayload;
+            let payload:
+              OpenMeteoRangePayload;
+
+            try {
+              payload =
+                JSON.parse(
+                  response.body,
+                ) as OpenMeteoRangePayload;
+            } catch {
+              throw new Error(
+                `Open-Meteo returned invalid JSON for the ${segment.source} segment.`,
+              );
+            }
 
             if (
               !payload.hourly
@@ -340,6 +269,14 @@ export async function GET(
           ),
       );
 
+    if (
+      days.length === 0
+    ) {
+      throw new Error(
+        "No weather days were returned for the requested range.",
+      );
+    }
+
     const response:
       WeatherRangeResponse = {
       schema:
@@ -367,9 +304,14 @@ export async function GET(
           "Open-Meteo could not provide the requested weather range.",
 
         details:
-          error instanceof Error
-            ? error.message
-            : "Unknown Open-Meteo error.",
+          `The upstream weather connection failed. Please retry the request. ${
+            error instanceof Error
+              ? error.message
+              : "Unknown Open-Meteo error."
+          }`,
+
+        retryable:
+          true,
       },
       {
         status:
