@@ -435,6 +435,32 @@ export default function Home() {
               />
             </div>
 
+            <div className="form-grid">
+              <NumericInput
+                label="Field length"
+                value={configuration.site.fieldLength}
+                min={5}
+                max={500}
+                step={1}
+                unit="m"
+                onChange={(fieldLength) =>
+                  updateSite({ fieldLength })
+                }
+              />
+
+              <NumericInput
+                label="Field width"
+                value={configuration.site.fieldWidth}
+                min={5}
+                max={500}
+                step={1}
+                unit="m"
+                onChange={(fieldWidth) =>
+                  updateSite({ fieldWidth })
+                }
+              />
+            </div>
+
             <label className="field">
               <span>Simulation date</span>
 

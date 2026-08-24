@@ -163,3 +163,22 @@ Phase 9 closure requires and has automated coverage for:
 Phase 10 will focus on persistent multi-day studies,
 electrical energy-series analytics, saved comparisons and
 CSV/JSON research exports.
+
+## Final Land 3D physical-geometry correction
+
+The final Phase 9 visualization checkpoint removed the
+hard-coded 44 × 24 m Three.js ground and fixed camera.
+
+The Land digital twin now:
+
+- derives the displayed site from the configured field dimensions;
+- preserves physical module size, row count and row spacing;
+- calculates the complete array footprint;
+- distinguishes the registered field from array overflow;
+- reports the minimum recommended field dimensions;
+- adapts crops, grid, lighting, camera and orbit limits;
+- positions the electrical BOS outside the cultivation footprint;
+- verifies the geometry through automated regression tests.
+
+An oversized array is intentionally not compressed to fit the
+scene because doing so would misrepresent the engineering design.

@@ -2086,3 +2086,43 @@ button {
 .electrical-mppt-strip div.inactive strong {
   color: #94a3b8;
 }
+
+/* Phase 9 final Land physical-geometry presentation */
+.scene-geometry-warning {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  z-index: 8;
+  width: min(440px, calc(100% - 32px));
+  padding: 11px 13px;
+  display: grid;
+  gap: 3px;
+  color: #78350f;
+  background: rgba(255, 251, 235, 0.94);
+  border: 1px solid rgba(217, 119, 6, 0.45);
+  border-radius: 11px;
+  box-shadow: 0 8px 24px rgba(120, 53, 15, 0.12);
+  backdrop-filter: blur(8px);
+}
+
+.scene-geometry-warning strong {
+  font-size: 0.78rem;
+}
+
+.scene-geometry-warning span {
+  font-size: 0.69rem;
+  line-height: 1.45;
+}
+
+@media (max-width: 560px) {
+  .scene-geometry-warning {
+    left: 10px;
+    bottom: 10px;
+    width: calc(100% - 20px);
+    padding: 9px 10px;
+  }
+
+  .scene-geometry-warning span {
+    font-size: 0.64rem;
+  }
+}
