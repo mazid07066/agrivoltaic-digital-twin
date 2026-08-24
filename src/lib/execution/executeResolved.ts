@@ -131,6 +131,14 @@ export function executeResolvedSimulation(
           .modulesPerString ??
         null,
 
+      stringsPerInverter:
+        input.scenario
+          .technicalConfig
+          .stringsPerInverter ??
+        sitePvConfiguration
+          .stringsPerInverter ??
+        null,
+
       stringsPerMppt:
         input.scenario
           .technicalConfig
@@ -146,6 +154,30 @@ export function executeResolvedSimulation(
         sitePvConfiguration
           .minimumDesignTemperatureC ??
         null,
+
+      maximumDesignCellTemperatureC:
+        input.scenario
+          .technicalConfig
+          .maximumDesignCellTemperatureC ??
+        sitePvConfiguration
+          .maximumDesignCellTemperatureC ??
+        null,
+
+      bifacialCurrentFactor:
+        input.scenario
+          .technicalConfig
+          .bifacialCurrentFactor ??
+        sitePvConfiguration
+          .bifacialCurrentFactor ??
+        null,
+
+      inverterCount:
+        input.scenario
+          .technicalConfig
+          .inverterCount ??
+        sitePvConfiguration
+          .inverterCount ??
+        1,
     });
 
   /*
@@ -163,6 +195,48 @@ export function executeResolvedSimulation(
         scientificResult,
         selectedInverter,
         compatibility,
+
+        {
+          moduleProfileId:
+            selectedModule.id,
+
+          moduleCount:
+            scientificResult
+              .summary
+              .moduleCount,
+
+          modulesPerString:
+            input.scenario
+              .technicalConfig
+              .modulesPerString ??
+            sitePvConfiguration
+              .modulesPerString ??
+            null,
+
+          stringsPerInverter:
+            input.scenario
+              .technicalConfig
+              .stringsPerInverter ??
+            sitePvConfiguration
+              .stringsPerInverter ??
+            null,
+
+          stringsPerMppt:
+            input.scenario
+              .technicalConfig
+              .stringsPerMppt ??
+            sitePvConfiguration
+              .stringsPerMppt ??
+            null,
+
+          inverterCount:
+            input.scenario
+              .technicalConfig
+              .inverterCount ??
+            sitePvConfiguration
+              .inverterCount ??
+            1,
+        },
       ),
   };
 }

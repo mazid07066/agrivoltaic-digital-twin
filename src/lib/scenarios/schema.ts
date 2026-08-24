@@ -35,7 +35,21 @@ export const technicalConfigSchema = z.object({
 
   modulePowerW: optionalNonNegativeNumber,
 
+  inverterCount: z
+    .number()
+    .int()
+    .positive()
+    .nullable()
+    .optional(),
+
   modulesPerString: z
+    .number()
+    .int()
+    .positive()
+    .nullable()
+    .optional(),
+
+  stringsPerInverter: z
     .number()
     .int()
     .positive()
@@ -50,6 +64,16 @@ export const technicalConfigSchema = z.object({
     .optional(),
 
   minimumDesignTemperatureC: optionalFiniteNumber,
+
+  maximumDesignCellTemperatureC:
+    optionalFiniteNumber,
+
+  bifacialCurrentFactor: z
+    .number()
+    .finite()
+    .min(1)
+    .nullable()
+    .optional(),
 
   panelHeightM: optionalNonNegativeNumber,
 

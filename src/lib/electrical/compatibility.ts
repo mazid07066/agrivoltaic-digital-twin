@@ -27,6 +27,7 @@ export interface PVInverterCompatibilityInput {
   inverter: InverterSpecification;
   moduleCount: number | null;
   modulesPerString: number | null;
+  stringsPerInverter?: number | null;
   stringsPerMppt: number | null;
   minimumDesignTemperatureC: number | null;
   maximumDesignCellTemperatureC?: number | null;
@@ -41,6 +42,10 @@ export interface PVInverterCompatibilityReport {
   inverterSpecificationId: string;
   calculations: {
     totalArrayPowerW: number | null;
+    configuredArrayPowerW: number | null;
+    requiredModuleCount: number | null;
+    moduleShortfall: number | null;
+    moduleSurplus: number | null;
     inverterCount: number | null;
     totalAcCapacityW: number | null;
     totalStringCount: number | null;
@@ -143,6 +148,72 @@ function minimumCheck({
   };
 }
 
+function advisoryMinimumCheck({
+  id,
+  label,
+  actual,
+  limit,
+  unit,
+}: {
+  id: string;
+  label: string;
+  actual: number;
+  limit: number;
+  unit: string;
+}): EquipmentCompatibilityCheck {
+  const withinAdvisoryBoundary =
+    actual >= limit;
+
+  return {
+    id,
+    label,
+    status:
+      withinAdvisoryBoundary
+        ? "PASS"
+        : "WARNING",
+    actual,
+    limit,
+    unit,
+    message:
+      withinAdvisoryBoundary
+        ? `${label} remains within the inverter MPPT operating window.`
+        : `${label} is outside the preferred MPPT operating window. This temperature-adjusted result is advisory; absolute DC-voltage safety is evaluated separately.`,
+  };
+}
+
+function advisoryMaximumCheck({
+  id,
+  label,
+  actual,
+  limit,
+  unit,
+}: {
+  id: string;
+  label: string;
+  actual: number;
+  limit: number;
+  unit: string;
+}): EquipmentCompatibilityCheck {
+  const withinAdvisoryBoundary =
+    actual <= limit;
+
+  return {
+    id,
+    label,
+    status:
+      withinAdvisoryBoundary
+        ? "PASS"
+        : "WARNING",
+    actual,
+    limit,
+    unit,
+    message:
+      withinAdvisoryBoundary
+        ? `${label} remains within the inverter MPPT operating window.`
+        : `${label} is outside the preferred MPPT operating window. This temperature-adjusted result is advisory; absolute DC-voltage safety is evaluated separately.`,
+  };
+}
+
 function overallStatus(
   checks: EquipmentCompatibilityCheck[],
 ): EquipmentCompatibilityStatus {
@@ -170,6 +241,7 @@ export function assessPVInverterCompatibility({
   inverter,
   moduleCount,
   modulesPerString,
+  stringsPerInverter = null,
   stringsPerMppt,
   minimumDesignTemperatureC,
   maximumDesignCellTemperatureC = null,
@@ -183,6 +255,9 @@ export function assessPVInverterCompatibility({
 
   const validModulesPerString =
     positiveInteger(modulesPerString);
+
+  const validStringsPerInverter =
+    positiveInteger(stringsPerInverter);
 
   const validStringsPerMppt =
     positiveInteger(stringsPerMppt);
@@ -229,11 +304,93 @@ export function assessPVInverterCompatibility({
   }
 
   const totalStringCount =
-    validModuleCount && validModulesPerString
-      ? Math.ceil(moduleCount / modulesPerString)
+    validStringsPerInverter &&
+    configuredInverterCount !== null
+      ? stringsPerInverter *
+        configuredInverterCount
+      : (
+          validModuleCount &&
+          validModulesPerString
+            ? Math.ceil(
+                moduleCount /
+                modulesPerString,
+              )
+            : null
+        );
+
+  const requiredModuleCount =
+    totalStringCount !== null &&
+    validModulesPerString
+      ? totalStringCount *
+        modulesPerString
+      : null;
+
+  const configuredArrayPowerW =
+    requiredModuleCount === null
+      ? null
+      : requiredModuleCount *
+        module.pmaxW;
+
+  const moduleShortfall =
+    validModuleCount &&
+    requiredModuleCount !== null
+      ? Math.max(
+          0,
+          requiredModuleCount -
+            moduleCount,
+        )
+      : null;
+
+  const moduleSurplus =
+    validModuleCount &&
+    requiredModuleCount !== null
+      ? Math.max(
+          0,
+          moduleCount -
+            requiredModuleCount,
+        )
       : null;
 
   if (
+    validStringsPerInverter &&
+    validModuleCount &&
+    requiredModuleCount !== null
+  ) {
+    if (requiredModuleCount > moduleCount) {
+      checks.push({
+        id: "module-allocation",
+        label: "Chosen string module allocation",
+        status: "FAIL",
+        actual: requiredModuleCount,
+        limit: moduleCount,
+        unit: "modules",
+        message:
+          `The chosen string topology requires ${requiredModuleCount} modules but only ${moduleCount} are installed.`,
+      });
+    } else if (requiredModuleCount < moduleCount) {
+      checks.push({
+        id: "module-allocation",
+        label: "Chosen string module allocation",
+        status: "WARNING",
+        actual: requiredModuleCount,
+        limit: moduleCount,
+        unit: "modules",
+        message:
+          `${moduleCount - requiredModuleCount} installed module(s) are not assigned to the chosen string topology.`,
+      });
+    } else {
+      checks.push({
+        id: "module-allocation",
+        label: "Chosen string module allocation",
+        status: "PASS",
+        actual: requiredModuleCount,
+        limit: moduleCount,
+        unit: "modules",
+        message:
+          "All installed modules are assigned to complete strings.",
+      });
+    }
+  } else if (
     validModuleCount &&
     validModulesPerString &&
     moduleCount % modulesPerString !== 0
@@ -375,7 +532,7 @@ export function assessPVInverterCompatibility({
       );
 
     checks.push(
-      minimumCheck({
+      advisoryMinimumCheck({
         id: "string-vmpp-hot-min",
         label: "Hot-condition string Vmpp",
         actual: stringVmppHotV,
@@ -427,7 +584,7 @@ export function assessPVInverterCompatibility({
       );
 
     checks.push(
-      maximumCheck({
+      advisoryMaximumCheck({
         id: "string-vmpp-cold-max",
         label: "Cold-condition string Vmpp",
         actual: stringVmppColdV,
@@ -760,11 +917,16 @@ export function assessPVInverterCompatibility({
     );
   }
 
+  const inverterLoadingPowerW =
+    validStringsPerInverter
+      ? configuredArrayPowerW
+      : totalArrayPowerW;
+
   const inverterLoadingRatio =
-    totalArrayPowerW === null ||
+    inverterLoadingPowerW === null ||
     totalAcCapacityW === null
       ? null
-      : totalArrayPowerW /
+      : inverterLoadingPowerW /
         totalAcCapacityW;
 
   if (inverterLoadingRatio === null) {
@@ -812,6 +974,10 @@ export function assessPVInverterCompatibility({
 
     calculations: {
       totalArrayPowerW,
+      configuredArrayPowerW,
+      requiredModuleCount,
+      moduleShortfall,
+      moduleSurplus,
       inverterCount:
         configuredInverterCount,
       totalAcCapacityW,

@@ -36,3 +36,69 @@ export interface WeatherApiError {
   error: string;
   details?: string;
 }
+
+export type WeatherSeriesSource =
+  | "historical"
+  | "forecast"
+  | "mixed";
+
+export interface WeatherRangeSegment {
+  source:
+    | "historical"
+    | "forecast";
+
+  startDate:
+    string;
+
+  endDate:
+    string;
+}
+
+export interface WeatherRangePlan {
+  schema:
+    "agritwin-weather-range-plan-v1";
+
+  requestedStartDate:
+    string;
+
+  requestedEndDate:
+    string;
+
+  earliestHistoricalDate:
+    string;
+
+  latestForecastDate:
+    string;
+
+  source:
+    WeatherSeriesSource;
+
+  segments:
+    WeatherRangeSegment[];
+}
+
+export interface WeatherRangeDay {
+  date:
+    string;
+
+  source:
+    | "historical"
+    | "forecast";
+
+  weather:
+    WeatherResponse;
+}
+
+export interface WeatherRangeResponse {
+  schema:
+    "agritwin-weather-range-v1";
+
+  plan:
+    WeatherRangePlan;
+
+  days:
+    WeatherRangeDay[];
+
+  warnings:
+    string[];
+}

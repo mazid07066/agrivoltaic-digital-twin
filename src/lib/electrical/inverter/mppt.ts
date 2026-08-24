@@ -367,6 +367,13 @@ export interface DesignedDcTopologyInput {
   modulesPerString: number;
   stringsPerMppt: number;
   inverterCount: number;
+
+  /**
+   * Explicit physical strings assigned to each identical
+   * inverter. Omitted for legacy inferred designs.
+   */
+  stringsPerInverter?: number;
+
   moduleVmppV: number;
   moduleTemperatureC: number;
   voltageTemperatureCoefficientPercentPerC: number;
@@ -432,6 +439,13 @@ export function createDesignedDcInput(
     "Inverter count",
   );
 
+  if (input.stringsPerInverter !== undefined) {
+    requirePositiveInteger(
+      input.stringsPerInverter,
+      "Strings per inverter",
+    );
+  }
+
   requirePositiveFinite(
     input.moduleVmppV,
     "Module Vmpp",
@@ -467,10 +481,13 @@ export function createDesignedDcInput(
   }
 
   const totalStringCount =
-    Math.floor(
-      input.moduleCount /
-      input.modulesPerString,
-    );
+    input.stringsPerInverter !== undefined
+      ? input.stringsPerInverter *
+        input.inverterCount
+      : Math.floor(
+          input.moduleCount /
+          input.modulesPerString,
+        );
 
   if (totalStringCount < 1) {
     throw new Error(
@@ -481,6 +498,12 @@ export function createDesignedDcInput(
   const assignedModuleCount =
     totalStringCount *
     input.modulesPerString;
+
+  if (assignedModuleCount > input.moduleCount) {
+    throw new Error(
+      `The chosen topology requires ${assignedModuleCount} modules but only ${input.moduleCount} are installed.`,
+    );
+  }
 
   const plantMpptCount =
     input.inverterCount *
@@ -556,15 +579,27 @@ export function createDesignedDcInput(
         operatingStringVoltageV
       : 0;
 
+  const mpptCountPerInverter =
+    specification.dc.independentMpptInputs;
+
+  const allocationStringCount =
+    input.stringsPerInverter ??
+    totalStringCount;
+
+  const allocationChannelCount =
+    input.stringsPerInverter !== undefined
+      ? mpptCountPerInverter
+      : plantMpptCount;
+
   const baseStringsPerChannel =
     Math.floor(
-      totalStringCount /
-      plantMpptCount,
+      allocationStringCount /
+      allocationChannelCount,
     );
 
   const additionalStringChannels =
-    totalStringCount %
-    plantMpptCount;
+    allocationStringCount %
+    allocationChannelCount;
 
   const mppts: InverterMpptInput[] =
     Array.from(
@@ -576,10 +611,16 @@ export function createDesignedDcInput(
         _,
         mpptIndexZeroBased,
       ) => {
+        const allocationChannelIndex =
+          input.stringsPerInverter !== undefined
+            ? mpptIndexZeroBased %
+              mpptCountPerInverter
+            : mpptIndexZeroBased;
+
         const assignedStrings =
           baseStringsPerChannel +
           (
-            mpptIndexZeroBased <
+            allocationChannelIndex <
             additionalStringChannels
               ? 1
               : 0

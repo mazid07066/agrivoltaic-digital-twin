@@ -90,6 +90,44 @@ describe(
     );
 
     it(
+      "treats temperature-adjusted MPPT-window excursions as advisory",
+      () => {
+        const report =
+          assessPVInverterCompatibility({
+            module: moduleProfile,
+            inverter,
+            moduleCount: 114,
+            modulesPerString: 19,
+            stringsPerMppt: 1,
+            minimumDesignTemperatureC: 5,
+            maximumDesignCellTemperatureC: 71.4,
+            bifacialCurrentFactor: 1,
+            inverterCount: 1,
+          });
+
+        expect(
+          report.checks.find(
+            (check) =>
+              check.id ===
+              "string-vmpp-cold-max",
+          )?.status,
+        ).toBe("WARNING");
+
+        expect(
+          report.checks.find(
+            (check) =>
+              check.id ===
+              "string-voc-cold",
+          )?.status,
+        ).toBe("PASS");
+
+        expect(report.status).toBe(
+          "WARNING",
+        );
+      },
+    );
+
+    it(
       "fails excessive string voltage",
       () => {
         const report =

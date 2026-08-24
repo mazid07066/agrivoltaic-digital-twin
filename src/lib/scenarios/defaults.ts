@@ -13,9 +13,15 @@ export const DEFAULT_TECHNICAL_CONFIG: ScenarioTechnicalConfig = {
 
   modulePowerW: null,
 
+  inverterCount: null,
+
   modulesPerString: null,
+  stringsPerInverter: null,
   stringsPerMppt: null,
+
   minimumDesignTemperatureC: null,
+  maximumDesignCellTemperatureC: null,
+  bifacialCurrentFactor: null,
 
   panelHeightM: null,
   rowSpacingM: null,

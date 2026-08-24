@@ -212,6 +212,25 @@ export function applyEquipmentScenarioOverrides<
       inverter.id;
   }
 
+  const inverterCount =
+    positiveNumber(
+      technical.inverterCount,
+      "Inverter count",
+    );
+
+  if (inverterCount !== null) {
+    if (!Number.isInteger(inverterCount)) {
+      throw new Error(
+        "Inverter count must be an integer.",
+      );
+    }
+
+    runtime
+      .pvConfiguration
+      .inverterCount =
+      inverterCount;
+  }
+
   const modulesPerString =
     positiveNumber(
       technical.modulesPerString,
@@ -229,6 +248,25 @@ export function applyEquipmentScenarioOverrides<
       .pvConfiguration
       .modulesPerString =
       modulesPerString;
+  }
+
+  const stringsPerInverter =
+    positiveNumber(
+      technical.stringsPerInverter,
+      "Strings per inverter",
+    );
+
+  if (stringsPerInverter !== null) {
+    if (!Number.isInteger(stringsPerInverter)) {
+      throw new Error(
+        "Strings per inverter must be an integer.",
+      );
+    }
+
+    runtime
+      .pvConfiguration
+      .stringsPerInverter =
+      stringsPerInverter;
   }
 
   const stringsPerMppt =
@@ -264,6 +302,41 @@ export function applyEquipmentScenarioOverrides<
       .pvConfiguration
       .minimumDesignTemperatureC =
       minimumDesignTemperatureC;
+  }
+
+  const maximumDesignCellTemperatureC =
+    finiteNumber(
+      technical
+        .maximumDesignCellTemperatureC,
+    );
+
+  if (
+    maximumDesignCellTemperatureC !==
+    null
+  ) {
+    runtime
+      .pvConfiguration
+      .maximumDesignCellTemperatureC =
+      maximumDesignCellTemperatureC;
+  }
+
+  const bifacialCurrentFactor =
+    positiveNumber(
+      technical.bifacialCurrentFactor,
+      "Bifacial current factor",
+    );
+
+  if (bifacialCurrentFactor !== null) {
+    if (bifacialCurrentFactor < 1) {
+      throw new Error(
+        "Bifacial current factor must be at least 1.",
+      );
+    }
+
+    runtime
+      .pvConfiguration
+      .bifacialCurrentFactor =
+      bifacialCurrentFactor;
   }
 
   return runtime;

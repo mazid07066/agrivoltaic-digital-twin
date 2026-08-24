@@ -49,9 +49,13 @@ interface FormState {
 
   moduleId: string;
   inverterId: string;
+  inverterCount: string;
   modulesPerString: string;
+  stringsPerInverter: string;
   stringsPerMppt: string;
   minimumDesignTemperatureC: string;
+  maximumDesignCellTemperatureC: string;
+  bifacialCurrentFactor: string;
 
   panelHeightM: string;
   rowSpacingM: string;
@@ -112,13 +116,25 @@ const EMPTY_FORM: FormState = {
   inverterId:
     "",
 
+  inverterCount:
+    "",
+
   modulesPerString:
+    "",
+
+  stringsPerInverter:
     "",
 
   stringsPerMppt:
     "",
 
   minimumDesignTemperatureC:
+    "",
+
+  maximumDesignCellTemperatureC:
+    "",
+
+  bifacialCurrentFactor:
     "",
 
   panelHeightM:
@@ -355,11 +371,25 @@ export default function ScenarioManager({
           .inverterId ??
         "",
 
+      inverterCount:
+        valueOrEmpty(
+          scenario
+            .technicalConfig
+            .inverterCount,
+        ),
+
       modulesPerString:
         valueOrEmpty(
           scenario
             .technicalConfig
             .modulesPerString,
+        ),
+
+      stringsPerInverter:
+        valueOrEmpty(
+          scenario
+            .technicalConfig
+            .stringsPerInverter,
         ),
 
       stringsPerMppt:
@@ -374,6 +404,20 @@ export default function ScenarioManager({
           scenario
             .technicalConfig
             .minimumDesignTemperatureC,
+        ),
+
+      maximumDesignCellTemperatureC:
+        valueOrEmpty(
+          scenario
+            .technicalConfig
+            .maximumDesignCellTemperatureC,
+        ),
+
+      bifacialCurrentFactor:
+        valueOrEmpty(
+          scenario
+            .technicalConfig
+            .bifacialCurrentFactor,
         ),
 
       panelHeightM:
@@ -571,9 +615,19 @@ export default function ScenarioManager({
           form.inverterId.trim() ||
           null,
 
+        inverterCount:
+          optionalNumber(
+            form.inverterCount,
+          ),
+
         modulesPerString:
           optionalNumber(
             form.modulesPerString,
+          ),
+
+        stringsPerInverter:
+          optionalNumber(
+            form.stringsPerInverter,
           ),
 
         stringsPerMppt:
@@ -584,6 +638,16 @@ export default function ScenarioManager({
         minimumDesignTemperatureC:
           optionalNumber(
             form.minimumDesignTemperatureC,
+          ),
+
+        maximumDesignCellTemperatureC:
+          optionalNumber(
+            form.maximumDesignCellTemperatureC,
+          ),
+
+        bifacialCurrentFactor:
+          optionalNumber(
+            form.bifacialCurrentFactor,
           ),
 
         panelHeightM:
@@ -1172,16 +1236,32 @@ export default function ScenarioManager({
 
                 {[
                   [
+                    "inverterCount",
+                    "Inverter units",
+                  ],
+                  [
                     "modulesPerString",
                     "Modules per string",
                   ],
                   [
+                    "stringsPerInverter",
+                    "Total strings per inverter",
+                  ],
+                  [
                     "stringsPerMppt",
-                    "Strings per MPPT",
+                    "Maximum occupied strings per MPPT",
                   ],
                   [
                     "minimumDesignTemperatureC",
                     "Minimum design temperature (°C)",
+                  ],
+                  [
+                    "maximumDesignCellTemperatureC",
+                    "Maximum cell temperature (°C)",
+                  ],
+                  [
+                    "bifacialCurrentFactor",
+                    "Bifacial current factor",
                   ],
                   [
                     "panelHeightM",

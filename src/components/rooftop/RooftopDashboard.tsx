@@ -49,6 +49,7 @@ import { useRooftopStore } from "@/store/useRooftopStore";
 
 import VersionHistory from "./VersionHistory";
 
+import PowerOutputTimeSeries from "@/components/charts/PowerOutputTimeSeries";
 import ElectricalStatusPanel from "@/components/twin/electrical/ElectricalStatusPanel";
 import PVInverterCompatibilityPanel from "@/components/twin/electrical/PVInverterCompatibilityPanel";
 
@@ -350,6 +351,11 @@ export default function RooftopDashboard() {
               .modulesPerString ??
             null,
 
+          stringsPerInverter:
+            site.pvConfiguration
+              .stringsPerInverter ??
+            null,
+
           stringsPerMppt:
             site.pvConfiguration
               .stringsPerMppt ??
@@ -376,6 +382,7 @@ export default function RooftopDashboard() {
         layout.moduleCount,
         site.pvConfiguration.moduleProfileId,
         site.pvConfiguration.modulesPerString,
+        site.pvConfiguration.stringsPerInverter,
         site.pvConfiguration.stringsPerMppt,
         site.pvConfiguration.inverterCount,
       ],
@@ -1157,6 +1164,11 @@ export default function RooftopDashboard() {
               </dl>
             </article>
           </section>
+
+          <PowerOutputTimeSeries
+            siteKind="rooftop"
+            site={site}
+          />
 
           <section className="rounded-2xl border border-slate-200 bg-white p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">

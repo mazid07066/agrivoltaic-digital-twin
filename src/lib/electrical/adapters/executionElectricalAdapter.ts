@@ -16,7 +16,12 @@ import {
 
 import {
   createDemonstrationDcInput,
+  createDesignedDcInput,
 } from "../inverter/mppt";
+
+import {
+  createPlantEquivalentSpecification,
+} from "../demonstration";
 
 import {
   PHASE_9E_DEMONSTRATION_INVERTER,
@@ -37,6 +42,30 @@ import type {
 import type {
   SimulationExecutionResult,
 } from "@/lib/execution/types";
+
+import {
+  findPVModuleProfile,
+} from "@/lib/pv/moduleProfiles";
+
+export interface ElectricalExecutionDesign {
+  moduleProfileId: string;
+  moduleCount: number | null;
+  modulesPerString: number | null;
+  stringsPerInverter: number | null;
+  stringsPerMppt: number | null;
+  inverterCount: number | null;
+}
+
+function positiveInteger(
+  value: number | null | undefined,
+): value is number {
+  return (
+    typeof value === "number" &&
+    Number.isFinite(value) &&
+    Number.isInteger(value) &&
+    value > 0
+  );
+}
 
 function createDemonstrationFeeders(
   result:
@@ -178,11 +207,111 @@ export function createElectricalSimulationResult(
 
   compatibility?:
     PVInverterCompatibilityReport,
+
+  design?:
+    ElectricalExecutionDesign,
 ): ElectricalSimulationResult {
   const feeders =
     createDemonstrationFeeders(
       result,
     );
+
+  const moduleProfile =
+    design
+      ? findPVModuleProfile(
+          design.moduleProfileId,
+        )
+      : null;
+
+  const designModuleCount =
+    design?.moduleCount;
+
+  const designModulesPerString =
+    design?.modulesPerString;
+
+  const designStringsPerInverter =
+    design?.stringsPerInverter;
+
+  const designInverterCount =
+    design?.inverterCount;
+
+  const configuredInverterCount =
+    positiveInteger(
+      designInverterCount,
+    )
+      ? designInverterCount
+      : 1;
+
+  const plantSpecification =
+    createPlantEquivalentSpecification(
+      specification,
+      configuredInverterCount,
+    );
+
+  /*
+   * Total strings per inverter is authoritative.
+   *
+   * Seven strings across six MPPTs therefore produces
+   * [2, 1, 1, 1, 1, 1].
+   */
+  const derivedStringsPerMppt =
+    positiveInteger(
+      designStringsPerInverter,
+    )
+      ? Math.ceil(
+          designStringsPerInverter /
+            specification.dc
+              .independentMpptInputs,
+        )
+      : null;
+
+  const requiredModuleCount =
+    positiveInteger(
+      designModulesPerString,
+    ) &&
+    positiveInteger(
+      designStringsPerInverter,
+    )
+      ? designModulesPerString *
+        designStringsPerInverter *
+        configuredInverterCount
+      : null;
+
+  const hasHourlyModuleTemperature =
+    result.hourly.every(
+      (point) =>
+        typeof point.moduleTemperatureC ===
+          "number" &&
+        Number.isFinite(
+          point.moduleTemperatureC,
+        ),
+    );
+
+  const useDesignedTopology =
+    moduleProfile !== null &&
+    moduleProfile.vmppV !== null &&
+    moduleProfile
+      .tempCoeffVocPercentPerC !== null &&
+    positiveInteger(
+      designModuleCount,
+    ) &&
+    positiveInteger(
+      designModulesPerString,
+    ) &&
+    positiveInteger(
+      designStringsPerInverter,
+    ) &&
+    derivedStringsPerMppt !== null &&
+    derivedStringsPerMppt <=
+      specification.dc.stringsPerMppt &&
+    designStringsPerInverter <=
+      specification.dc
+        .independentMpptInputs *
+      specification.dc.stringsPerMppt &&
+    requiredModuleCount !== null &&
+    requiredModuleCount <=
+      designModuleCount &&
+    hasHourlyModuleTemperature;
 
   const hourly =
     result.hourly.map(
@@ -195,12 +324,44 @@ export function createElectricalSimulationResult(
           );
 
         const dcInput =
-          createDemonstrationDcInput(
-            {
-              availablePowerKw,
-            },
-            specification,
-          );
+          useDesignedTopology
+            ? createDesignedDcInput(
+                {
+                  availablePowerKw,
+
+                  moduleCount:
+                    designModuleCount!,
+
+                  modulesPerString:
+                    designModulesPerString!,
+
+                  stringsPerInverter:
+                    designStringsPerInverter!,
+
+                  stringsPerMppt:
+                    derivedStringsPerMppt!,
+
+                  inverterCount:
+                    configuredInverterCount,
+
+                  moduleVmppV:
+                    moduleProfile!.vmppV!,
+
+                  moduleTemperatureC:
+                    point.moduleTemperatureC!,
+
+                  voltageTemperatureCoefficientPercentPerC:
+                    moduleProfile!
+                      .tempCoeffVocPercentPerC!,
+                },
+                specification,
+              )
+            : createDemonstrationDcInput(
+                {
+                  availablePowerKw,
+                },
+                plantSpecification,
+              );
 
         const inverter =
           simulateInverterTimestep(
@@ -211,7 +372,7 @@ export function createElectricalSimulationResult(
               dcInput,
 
               specification:
-                specification,
+                plantSpecification,
 
               efficiencyMode:
                 "legacy_power_passthrough",
@@ -300,13 +461,18 @@ export function createElectricalSimulationResult(
         specification
           .id,
 
-      ...(compatibility
+      ...(moduleProfile
         ? {
             pvModuleProfileId:
-              compatibility
-                .moduleProfileId,
+              moduleProfile.id,
           }
-        : {}),
+        : compatibility
+          ? {
+              pvModuleProfileId:
+                compatibility
+                  .moduleProfileId,
+            }
+          : {}),
 
       inverterModelVersion:
         "phase-9e-2-v1",
@@ -327,10 +493,14 @@ export function createElectricalSimulationResult(
         `Upstream Phase 7B/8C pvPowerKw already contains the historical systemEfficiency factor. No additional ${(specification.ac.maximumEfficiency * 100).toFixed(1)}% inverter efficiency multiplication is applied in compatibility mode.`,
 
       dcVoltageAssumption:
-        `When PV power is positive, the demonstration DC operating voltage is assumed to be the selected inverter rated input voltage of ${specification.dc.ratedInputVoltageV} V. At zero PV power the demonstration voltage is set to 0 V.`,
+        useDesignedTopology
+          ? "Operating string voltage is calculated from selected-module Vmpp, modules per string and hourly simulated module temperature."
+          : `When PV power is positive, the demonstration DC operating voltage is assumed to be the selected inverter rated input voltage of ${specification.dc.ratedInputVoltageV} V. At zero PV power the demonstration voltage is set to 0 V.`,
 
       mpptAllocationAssumption:
-        `Aggregate PV power is equally allocated across ${specification.dc.independentMpptInputs} MPPT inputs and ${specification.dc.stringsPerMppt} strings per MPPT. This is a demonstration allocation, not measured string telemetry. Isc values remain unavailable.`,
+        useDesignedTopology
+          ? `${designStringsPerInverter} chosen strings per inverter are balanced independently across ${specification.dc.independentMpptInputs} MPPT inputs, with a maximum of ${derivedStringsPerMppt} strings on one MPPT.`
+          : `Aggregate PV power is equally allocated across ${plantSpecification.dc.independentMpptInputs} MPPT inputs and ${plantSpecification.dc.stringsPerMppt} strings per MPPT. This is a demonstration allocation, not measured string telemetry. Isc values remain unavailable.`,
 
       loadProfileAssumption:
         "Three assumed demonstration feeders are used at constant 10 kW, 8 kW and 6 kW demand respectively. These values are not measured site loads.",

@@ -144,7 +144,7 @@ describe(
   "string-design engineering priorities",
   () => {
     it(
-      "prefers one inverter over a smaller partial-module remainder",
+      "keeps temperature-adjusted MPPT-window values advisory",
       () => {
         const baseModule =
           getPVModuleProfile(
@@ -183,7 +183,7 @@ describe(
 
         expect(
           result.selected?.modulesPerString,
-        ).toBe(16);
+        ).toBe(17);
 
         expect(
           result.selected?.totalStrings,
@@ -191,7 +191,15 @@ describe(
 
         expect(
           result.selected?.unassignedModules,
-        ).toBe(6);
+        ).toBe(0);
+
+        expect(
+          result.selected?.stringVmppColdV,
+        ).toBeGreaterThan(
+          getInverterProfile(
+            DEFAULT_INVERTER_PROFILE_ID,
+          ).dc.mppVoltageMaxV,
+        );
       },
     );
   },

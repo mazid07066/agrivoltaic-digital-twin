@@ -319,6 +319,101 @@ describe(
     );
 
     it(
+      "preserves a chosen seven-string topology in persisted execution",
+      () => {
+        const scientific =
+          scientificResult(
+            "land",
+          );
+
+        scientific.summary.moduleCount =
+          119;
+
+        scientific.hourly =
+          scientific.hourly.map(
+            (point) => ({
+              ...point,
+
+              moduleTemperatureC:
+                45,
+            }),
+          );
+
+        const result =
+          createElectricalSimulationResult(
+            scientific,
+            undefined,
+            undefined,
+            {
+              moduleProfileId:
+                "jinko-solar-jkm-540-560m",
+
+              moduleCount:
+                119,
+
+              modulesPerString:
+                17,
+
+              stringsPerInverter:
+                7,
+
+              stringsPerMppt:
+                2,
+
+              inverterCount:
+                1,
+            },
+          );
+
+        const noon =
+          result.hourly[12];
+
+        expect(
+          noon.inverter
+            .dcInput
+            .mppts
+            .map(
+              (mppt) =>
+                mppt.strings.length,
+            ),
+        ).toEqual([
+          2,
+          1,
+          1,
+          1,
+          1,
+          1,
+        ]);
+
+        expect(
+          noon.inverter
+            .dcInput
+            .mppts
+            .flatMap(
+              (mppt) =>
+                mppt.strings,
+            ),
+        ).toHaveLength(
+          7,
+        );
+
+        expect(
+          result.provenance
+            .pvModuleProfileId,
+        ).toBe(
+          "jinko-solar-jkm-540-560m",
+        );
+
+        expect(
+          result.provenance
+            .mpptAllocationAssumption,
+        ).toContain(
+          "7 chosen strings per inverter",
+        );
+      },
+    );
+
+    it(
       "records zero assumed distribution losses",
       () => {
         const result =

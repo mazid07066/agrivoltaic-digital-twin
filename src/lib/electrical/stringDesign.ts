@@ -180,6 +180,9 @@ export function recommendPVStringDesign({
   const iscStc =
     pvModule.iscA as number;
 
+  const imppStc =
+    pvModule.imppA as number;
+
   const voltageCoefficient =
     pvModule.tempCoeffVocPercentPerC as number;
 
@@ -223,6 +226,15 @@ export function recommendPVStringDesign({
     ) *
     currentFactor;
 
+  /*
+   * Operating-current checks use module Impp with the
+   * configured bifacial current factor. Temperature-adjusted
+   * Isc is reserved for short-circuit checks.
+   */
+  const operatingCurrentPerString =
+    imppStc *
+    currentFactor;
+
   const parsedModuleVoltage =
     Number.parseFloat(
       pvModule.maxSystemVoltage,
@@ -236,10 +248,17 @@ export function recommendPVStringDesign({
         )
       : inverter.dc.maxInputVoltageV;
 
+  /*
+   * The STC MPPT window defines the recommended nominal
+   * string range. Hot/cold Vmpp values remain available as
+   * advisory engineering outputs and ranking margins.
+   *
+   * Cold-condition Voc remains an absolute hard limit.
+   */
   const minimumModulesPerString =
     Math.ceil(
       inverter.dc.mppVoltageMinV /
-        vmppHot,
+        vmppStc,
     );
 
   const maximumModulesByVoc =
@@ -251,7 +270,7 @@ export function recommendPVStringDesign({
   const maximumModulesByMppt =
     Math.floor(
       inverter.dc.mppVoltageMaxV /
-        vmppCold,
+        vmppStc,
     );
 
   const maximumModulesPerString =
@@ -266,7 +285,7 @@ export function recommendPVStringDesign({
       Math.floor(
         inverter.dc
           .maxOperatingCurrentPerMpptA /
-          designIscHot,
+          operatingCurrentPerString,
       ),
       Math.floor(
         inverter.dc
@@ -379,7 +398,7 @@ export function recommendPVStringDesign({
             inverter.dc
               .maxGeneratorPowerW &&
           stringCount *
-            designIscHot <=
+            operatingCurrentPerString <=
             inverter.dc
               .maxOperatingInputCurrentA,
       );

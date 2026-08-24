@@ -56,7 +56,7 @@ export interface DemonstrationElectricalTimestep {
   };
 }
 
-function createPlantEquivalentSpecification(
+export function createPlantEquivalentSpecification(
   specification: InverterSpecification,
   inverterCount: number,
 ): InverterSpecification {
@@ -177,6 +177,7 @@ export function simulateDemonstrationElectricalTimestep({
   moduleProfileId,
   moduleCount,
   modulesPerString,
+  stringsPerInverter,
   stringsPerMppt,
   inverterCount,
   moduleTemperatureC,
@@ -187,6 +188,7 @@ export function simulateDemonstrationElectricalTimestep({
   moduleProfileId?: string;
   moduleCount?: number | null;
   modulesPerString?: number | null;
+  stringsPerInverter?: number | null;
   stringsPerMppt?: number | null;
   inverterCount?: number | null;
   moduleTemperatureC?: number | null;
@@ -243,13 +245,34 @@ export function simulateDemonstrationElectricalTimestep({
     stringsPerMppt <=
       specification.dc.stringsPerMppt;
 
+  const configuredStringsPerInverter:
+    number | null =
+    stringsPerInverter !== null &&
+    stringsPerInverter !== undefined &&
+    Number.isInteger(stringsPerInverter) &&
+    stringsPerInverter > 0
+      ? stringsPerInverter
+      : null;
+
   const totalStringCount =
     validModuleCount &&
     validModulesPerString
-      ? Math.floor(
-          moduleCount /
-          modulesPerString,
+      ? (
+          configuredStringsPerInverter !== null
+            ? configuredStringsPerInverter *
+              configuredInverterCount
+            : Math.floor(
+                moduleCount /
+                modulesPerString,
+              )
         )
+      : null;
+
+  const requiredModuleCount =
+    totalStringCount !== null &&
+    validModulesPerString
+      ? totalStringCount *
+        modulesPerString
       : null;
 
   const topologyCapacity =
@@ -268,6 +291,8 @@ export function simulateDemonstrationElectricalTimestep({
     totalStringCount !== null &&
     totalStringCount > 0 &&
     totalStringCount <= topologyCapacity &&
+    requiredModuleCount !== null &&
+    requiredModuleCount <= moduleCount &&
     moduleTemperatureC !== null &&
     moduleTemperatureC !== undefined &&
     Number.isFinite(moduleTemperatureC) &&
@@ -286,6 +311,14 @@ export function simulateDemonstrationElectricalTimestep({
             stringsPerMppt,
             inverterCount:
               configuredInverterCount,
+            ...(
+              configuredStringsPerInverter !== null
+                ? {
+                    stringsPerInverter:
+                      configuredStringsPerInverter,
+                  }
+                : {}
+            ),
             moduleVmppV:
               moduleProfile!.vmppV!,
             moduleTemperatureC,

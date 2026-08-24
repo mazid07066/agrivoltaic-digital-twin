@@ -39,11 +39,20 @@ export interface ScenarioTechnicalConfig {
   modulePowerW?: number | null;
 
   /**
+   * Identical inverter units assigned to the array.
+   */
+  inverterCount?: number | null;
+
+  /**
    * Electrical string design; independent of physical row layout.
    */
   modulesPerString?: number | null;
+  stringsPerInverter?: number | null;
   stringsPerMppt?: number | null;
+
   minimumDesignTemperatureC?: number | null;
+  maximumDesignCellTemperatureC?: number | null;
+  bifacialCurrentFactor?: number | null;
 
   panelHeightM?: number | null;
   rowSpacingM?: number | null;

@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import IrradianceChart from "@/components/charts/IrradianceChart";
+import PowerOutputTimeSeries from "@/components/charts/PowerOutputTimeSeries";
 import SpatialDLIHeatmap from "@/components/charts/SpatialDLIHeatmap";
 import WeatherConnectionCard from "@/components/dashboard/WeatherConnectionCard";
 import PVInverterCompatibilityPanel from "@/components/twin/electrical/PVInverterCompatibilityPanel";
@@ -248,6 +249,10 @@ export default function Home() {
             configuration.pv.modulesPerString ??
             null,
 
+          stringsPerInverter:
+            configuration.pv.stringsPerInverter ??
+            null,
+
           stringsPerMppt:
             configuration.pv.stringsPerMppt ??
             null,
@@ -273,6 +278,7 @@ export default function Home() {
         configuration.pv.numberOfRows,
         configuration.pv.modulesPerRow,
         configuration.pv.modulesPerString,
+        configuration.pv.stringsPerInverter,
         configuration.pv.stringsPerMppt,
         configuration.pv.inverterCount,
         selectedModule.id,
@@ -622,7 +628,7 @@ export default function Home() {
                 label="Panel rows"
                 value={configuration.pv.numberOfRows}
                 min={1}
-                max={10}
+                max={100}
                 onChange={(numberOfRows) =>
                   updatePV({ numberOfRows })
                 }
@@ -1076,6 +1082,11 @@ export default function Home() {
               </div>
             </article>
           </section>
+
+          <PowerOutputTimeSeries
+            siteKind="land"
+            site={activeSite}
+          />
 
           <section className="content-card engineering-table-card">
             {configuration.pv.trackingMode === "custom" && (

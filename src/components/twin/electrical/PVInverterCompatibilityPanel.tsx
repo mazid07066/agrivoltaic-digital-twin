@@ -134,6 +134,7 @@ export default function PVInverterCompatibilityPanel({
       inverter,
       moduleCount,
       modulesPerString,
+      stringsPerInverter,
       stringsPerMppt:
         derivedStringsPerMppt,
       minimumDesignTemperatureC,
@@ -507,7 +508,7 @@ export default function PVInverterCompatibilityPanel({
         </div>
         <div className="rounded-lg bg-slate-50 p-2">
           <dt className="text-slate-500">
-            Array STC
+            Installed array STC
           </dt>
           <dd className="font-semibold text-slate-900">
             {report.calculations.totalArrayPowerW ===
@@ -524,14 +525,77 @@ export default function PVInverterCompatibilityPanel({
           <dt className="text-slate-500">
             Configured strings
             <span className="block text-[10px] font-normal">
-              Capacity{" "}
-              {inverter.dc.independentMpptInputs *
+              Plant capacity{" "}
+              {(report.calculations.inverterCount ?? 1) *
+                inverter.dc.independentMpptInputs *
                 inverter.dc.stringsPerMppt}
             </span>
           </dt>
           <dd className="font-semibold text-slate-900">
             {report.calculations.totalStringCount ??
               "—"}
+          </dd>
+        </div>
+
+        <div className="rounded-lg bg-slate-50 p-2">
+          <dt className="text-slate-500">
+            Installed modules
+          </dt>
+          <dd className="font-semibold text-slate-900">
+            {moduleCount ?? "—"}
+          </dd>
+        </div>
+
+        <div className="rounded-lg bg-slate-50 p-2">
+          <dt className="text-slate-500">
+            Required modules
+          </dt>
+          <dd className="font-semibold text-slate-900">
+            {report.calculations.requiredModuleCount ??
+              "—"}
+          </dd>
+        </div>
+
+        <div className="rounded-lg bg-slate-50 p-2">
+          <dt className="text-slate-500">
+            Configured design STC
+          </dt>
+          <dd className="font-semibold text-slate-900">
+            {report.calculations.configuredArrayPowerW ===
+            null
+              ? "—"
+              : `${(
+                  report.calculations
+                    .configuredArrayPowerW / 1000
+                ).toFixed(2)} kWp`}
+          </dd>
+        </div>
+
+        <div className="rounded-lg bg-slate-50 p-2">
+          <dt className="text-slate-500">
+            Module balance
+          </dt>
+          <dd
+            className={`font-semibold ${
+              (report.calculations.moduleShortfall ??
+                0) > 0
+                ? "text-red-700"
+                : (report.calculations.moduleSurplus ??
+                      0) > 0
+                  ? "text-amber-700"
+                  : "text-emerald-700"
+            }`}
+          >
+            {(report.calculations.moduleShortfall ??
+              0) > 0
+              ? `Short ${report.calculations.moduleShortfall}`
+              : (report.calculations.moduleSurplus ??
+                    0) > 0
+                ? `Extra ${report.calculations.moduleSurplus}`
+                : report.calculations
+                      .requiredModuleCount === null
+                  ? "—"
+                  : "Exact"}
           </dd>
         </div>
 
