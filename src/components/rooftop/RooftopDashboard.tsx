@@ -1166,6 +1166,7 @@ export default function RooftopDashboard() {
           </section>
 
           <PowerOutputTimeSeries
+            key={site.updatedAt}
             siteKind="rooftop"
             site={site}
           />

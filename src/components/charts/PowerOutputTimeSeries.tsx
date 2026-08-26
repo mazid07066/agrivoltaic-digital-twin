@@ -54,6 +54,12 @@ import type {
   WeatherRangeDay,
 } from "@/types/weather";
 
+import type {
+  ResearchExportPayload,
+  ResearchHourlyPowerRow,
+  ResearchWeatherRow,
+} from "@/lib/researchExport";
+
 export type PowerOutputTimeSeriesProps =
   | {
       siteKind:
@@ -327,6 +333,34 @@ export default function PowerOutputTimeSeries(
     >([]);
 
   const [
+    exportHourlyPower,
+    setExportHourlyPower,
+  ] =
+    useState<
+      ResearchHourlyPowerRow[]
+    >([]);
+
+  const [
+    exportWeather,
+    setExportWeather,
+  ] =
+    useState<
+      ResearchWeatherRow[]
+    >([]);
+
+  const [
+    exporting,
+    setExporting,
+  ] =
+    useState(false);
+
+  const [
+    exportStatus,
+    setExportStatus,
+  ] =
+    useState("");
+
+  const [
     loading,
     setLoading,
   ] =
@@ -440,6 +474,18 @@ export default function PowerOutputTimeSeries(
       [],
     );
 
+    setExportHourlyPower(
+      [],
+    );
+
+    setExportWeather(
+      [],
+    );
+
+    setExportStatus(
+      "",
+    );
+
     try {
       const chunks =
         chunkDateRange({
@@ -460,6 +506,12 @@ export default function PowerOutputTimeSeries(
 
       let selectedHourly:
         HourlyPowerPoint[] = [];
+
+      const collectedHourlyPower:
+        ResearchHourlyPowerRow[] = [];
+
+      const collectedWeather:
+        ResearchWeatherRow[] = [];
 
       for (
         let index = 0;
@@ -513,6 +565,83 @@ export default function PowerOutputTimeSeries(
             simulated.daily,
           );
 
+          collectedHourlyPower.push(
+            ...simulated.hourly.map(
+              (
+                point,
+              ) => ({
+                date:
+                  day.date,
+
+                hour:
+                  point.hour,
+
+                timestampLocal:
+                  `${day.date}T${point.hour}`,
+
+                timezone:
+                  props.site
+                    .location
+                    .timezone,
+
+                source:
+                  day.source,
+
+                powerKw:
+                  point.powerKw,
+              }),
+            ),
+          );
+
+          collectedWeather.push(
+            ...day.weather.hourly.map(
+              (
+                point,
+              ) => ({
+                date:
+                  day.date,
+
+                hour:
+                  point.hour,
+
+                timestampLocal:
+                  point.time,
+
+                timezone:
+                  day.weather
+                    .summary
+                    .timezone,
+
+                source:
+                  day.source,
+
+                ghiWM2:
+                  point.shortwaveRadiation,
+
+                dniWM2:
+                  point.directNormalIrradiance,
+
+                dhiWM2:
+                  point.diffuseRadiation,
+
+                temperatureC:
+                  point.temperature,
+
+                relativeHumidityPercent:
+                  point.relativeHumidity,
+
+                cloudCoverPercent:
+                  point.cloudCover,
+
+                windSpeed:
+                  point.windSpeed,
+
+                precipitationMm:
+                  point.precipitation,
+              }),
+            ),
+          );
+
           if (
             mode === "day"
           ) {
@@ -563,6 +692,14 @@ export default function PowerOutputTimeSeries(
         selectedHourly,
       );
 
+      setExportHourlyPower(
+        collectedHourlyPower,
+      );
+
+      setExportWeather(
+        collectedWeather,
+      );
+
       setWarnings(
         collectedWarnings,
       );
@@ -590,6 +727,123 @@ export default function PowerOutputTimeSeries(
           "",
         );
       }
+    }
+  }
+
+  function exportPayload():
+    ResearchExportPayload {
+    return {
+      schema:
+        "agritwin-research-export-v1",
+
+      generatedAt:
+        new Date().toISOString(),
+
+      siteKind:
+        props.siteKind,
+
+      site:
+        props.site,
+
+      mode,
+
+      startDate,
+
+      endDate:
+        mode === "day"
+          ? startDate
+          : endDate,
+
+      summary,
+
+      dailyPower:
+        dailyPoints,
+
+      hourlyPower:
+        exportHourlyPower,
+
+      weather:
+        exportWeather,
+
+      warnings,
+    };
+  }
+
+  async function downloadXlsx() {
+    setExporting(
+      true,
+    );
+
+    setExportStatus(
+      "Preparing XLSX workbook…",
+    );
+
+    try {
+      const {
+        exportResearchWorkbook,
+      } =
+        await import(
+          "@/lib/researchExport/xlsx.client"
+        );
+
+      await exportResearchWorkbook(
+        exportPayload(),
+      );
+
+      setExportStatus(
+        "XLSX workbook downloaded.",
+      );
+    } catch (
+      exportError
+    ) {
+      setExportStatus(
+        exportError instanceof Error
+          ? exportError.message
+          : "XLSX export failed.",
+      );
+    } finally {
+      setExporting(
+        false,
+      );
+    }
+  }
+
+  async function downloadPdf() {
+    setExporting(
+      true,
+    );
+
+    setExportStatus(
+      "Preparing PDF report…",
+    );
+
+    try {
+      const {
+        exportResearchPdf,
+      } =
+        await import(
+          "@/lib/researchExport/pdf.client"
+        );
+
+      exportResearchPdf(
+        exportPayload(),
+      );
+
+      setExportStatus(
+        "PDF report downloaded.",
+      );
+    } catch (
+      exportError
+    ) {
+      setExportStatus(
+        exportError instanceof Error
+          ? exportError.message
+          : "PDF export failed.",
+      );
+    } finally {
+      setExporting(
+        false,
+      );
     }
   }
 
@@ -646,11 +900,39 @@ export default function PowerOutputTimeSeries(
         </div>
 
         {hasData ? (
-          <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
-            {sourceLabel(
-              summary.source,
-            )}
-          </span>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
+              {sourceLabel(
+                summary.source,
+              )}
+            </span>
+
+            <button
+              type="button"
+              onClick={
+                downloadXlsx
+              }
+              disabled={
+                exporting
+              }
+              className="rounded-lg border border-emerald-700 bg-white px-3 py-2 text-xs font-semibold text-emerald-800 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Export XLSX
+            </button>
+
+            <button
+              type="button"
+              onClick={
+                downloadPdf
+              }
+              disabled={
+                exporting
+              }
+              className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Download PDF report
+            </button>
+          </div>
         ) : null}
       </div>
 
@@ -842,6 +1124,15 @@ export default function PowerOutputTimeSeries(
         currently ends{" "}
         {latestForecastDate}.
       </p>
+
+      {exportStatus ? (
+        <p
+          className="mt-3 rounded-lg border border-sky-200 bg-sky-50 p-3 text-sm text-sky-800"
+          role="status"
+        >
+          {exportStatus}
+        </p>
+      ) : null}
 
       {progress ? (
         <p className="mt-3 rounded-lg bg-blue-50 p-3 text-sm text-blue-800">

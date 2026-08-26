@@ -20,6 +20,7 @@ import {
 
 import IrradianceChart from "@/components/charts/IrradianceChart";
 import PowerOutputTimeSeries from "@/components/charts/PowerOutputTimeSeries";
+import LandScientificModelPanel from "@/components/twin/science/LandScientificModelPanel";
 import SpatialDLIHeatmap from "@/components/charts/SpatialDLIHeatmap";
 import WeatherConnectionCard from "@/components/dashboard/WeatherConnectionCard";
 import PVInverterCompatibilityPanel from "@/components/twin/electrical/PVInverterCompatibilityPanel";
@@ -1110,8 +1111,20 @@ export default function Home() {
           </section>
 
           <PowerOutputTimeSeries
+            key={activeSite.updatedAt}
             siteKind="land"
             site={activeSite}
+          />
+
+          <LandScientificModelPanel
+            site={activeSite}
+            results={results}
+            selectedHour={selectedHour}
+            module={selectedModule}
+            inverter={selectedInverter}
+            electrical={electrical}
+            onUpdatePV={updatePV}
+            onUpdateSite={updateSite}
           />
 
           <section className="content-card engineering-table-card">
@@ -1198,4 +1211,3 @@ export default function Home() {
     </main>
   );
 }
-
