@@ -166,6 +166,20 @@ export const useSimulationStore = create<SimulationStore>()(
 
       setSimulationDate: (simulationDate) =>
         set((state) => {
+          const validDate =
+            /^\d{4}-\d{2}-\d{2}$/.test(
+              simulationDate,
+            ) &&
+            !Number.isNaN(
+              Date.parse(
+                `${simulationDate}T00:00:00Z`,
+              ),
+            );
+
+          if (!validDate) {
+            return state;
+          }
+
           const nextSite = touch({
             ...state.activeSite,
             simulationDate,
