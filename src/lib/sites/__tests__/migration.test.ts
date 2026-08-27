@@ -77,4 +77,22 @@ describe("Phase 8A legacy migration", () => {
       ).toEqual(legacy);
     },
   );
+
+  it(
+    "repairs an accidentally cleared legacy efficiency value",
+    () => {
+      const persisted =
+        migrateLegacyConfiguration(legacy);
+
+      persisted.pvConfiguration.systemEfficiency =
+        0;
+
+      const migrated =
+        migratePersistedSiteState(persisted);
+
+      expect(
+        migrated.pvConfiguration.systemEfficiency,
+      ).toBe(0.82);
+    },
+  );
 });

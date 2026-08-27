@@ -33,6 +33,9 @@ import { useSimulationStore } from "@/store/useSimulationStore";
 import {
   simulateDemonstrationElectricalTimestep,
 } from "@/lib/electrical/demonstration";
+import {
+  resolvePhysicsConfiguration,
+} from "@/lib/physics/defaults";
 
 import {
   DEFAULT_INVERTER_PROFILE_ID,
@@ -66,6 +69,7 @@ interface NumericInputProps {
   unit?: string;
   onChange: (value: number) => void;
   disabled?: boolean;
+  description?: string;
 }
 
 function NumericInput({
@@ -77,6 +81,7 @@ function NumericInput({
   unit,
   onChange,
   disabled = false,
+  description,
 }: NumericInputProps) {
   return (
     <label className="field">
@@ -90,13 +95,25 @@ function NumericInput({
           max={max}
           step={step}
           disabled={disabled}
-          onChange={(event) =>
-            onChange(Number(event.target.value))
-          }
+          onChange={(event) => {
+            const rawValue = event.target.value;
+
+            if (!rawValue.trim()) {
+              return;
+            }
+
+            const parsedValue = Number(rawValue);
+
+            if (Number.isFinite(parsedValue)) {
+              onChange(parsedValue);
+            }
+          }}
         />
 
         {unit && <small>{unit}</small>}
       </div>
+
+      {description && <small>{description}</small>}
     </label>
   );
 }
@@ -137,6 +154,14 @@ export default function Home() {
   const configuration = useMemo(
     () => toLandSimulationConfiguration(activeSite),
     [activeSite],
+  );
+
+  const physicsConfiguration = useMemo(
+    () =>
+      resolvePhysicsConfiguration(
+        configuration.pv.physicsConfiguration,
+      ),
+    [configuration.pv.physicsConfiguration],
   );
 
   const selectedHour = useSimulationStore(
@@ -731,7 +756,7 @@ export default function Home() {
               />
 
               <NumericInput
-                label="System efficiency"
+                label="Legacy system efficiency"
                 value={Number(
                   (
                     configuration.pv.systemEfficiency *
@@ -741,6 +766,16 @@ export default function Home() {
                 min={50}
                 max={100}
                 unit="%"
+                disabled={
+                  physicsConfiguration.mode !==
+                  "legacy_parity"
+                }
+                description={
+                  physicsConfiguration.mode ===
+                  "legacy_parity"
+                    ? "Applied only by Legacy Web parity mode."
+                    : "Inactive in Physics / research mode; explicit optical, DC, inverter and AC losses are used instead."
+                }
                 onChange={(percentage) =>
                   updatePV({
                     systemEfficiency:

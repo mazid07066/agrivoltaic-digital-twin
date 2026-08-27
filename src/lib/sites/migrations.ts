@@ -10,6 +10,8 @@ import type {
 
 type UnknownRecord = Record<string, unknown>;
 
+const LEGACY_SYSTEM_EFFICIENCY_FALLBACK = 0.82;
+
 function isRecord(value: unknown): value is UnknownRecord {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -119,6 +121,30 @@ export function isSiteProfile(
   );
 }
 
+function normalizeLegacySystemEfficiency(
+  site: SiteProfile,
+): SiteProfile {
+  const systemEfficiency =
+    site.pvConfiguration.systemEfficiency;
+
+  if (
+    isFiniteNumber(systemEfficiency) &&
+    systemEfficiency > 0 &&
+    systemEfficiency <= 1
+  ) {
+    return site;
+  }
+
+  return {
+    ...site,
+    pvConfiguration: {
+      ...site.pvConfiguration,
+      systemEfficiency:
+        LEGACY_SYSTEM_EFFICIENCY_FALLBACK,
+    },
+  };
+}
+
 export function migrateLegacyConfiguration(
   configuration: SimulationConfiguration,
   id = "site-migrated-phase-7b",
@@ -155,7 +181,9 @@ export function migratePersistedSiteState(
   persisted: unknown,
 ): SiteProfile {
   if (isSiteProfile(persisted)) {
-    return persisted;
+    return normalizeLegacySystemEfficiency(
+      persisted,
+    );
   }
 
   if (isRecord(persisted)) {
@@ -163,15 +191,19 @@ export function migratePersistedSiteState(
       persisted.activeSite ?? persisted.siteProfile;
 
     if (isSiteProfile(possibleSite)) {
-      return possibleSite;
+      return normalizeLegacySystemEfficiency(
+        possibleSite,
+      );
     }
 
     const possibleConfiguration =
       persisted.configuration;
 
     if (isRecord(possibleConfiguration)) {
-      return migrateLegacyConfiguration(
-        possibleConfiguration as unknown as SimulationConfiguration,
+      return normalizeLegacySystemEfficiency(
+        migrateLegacyConfiguration(
+          possibleConfiguration as unknown as SimulationConfiguration,
+        ),
       );
     }
 

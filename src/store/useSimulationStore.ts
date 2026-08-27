@@ -200,7 +200,9 @@ export const useSimulationStore = create<SimulationStore>()(
     }),
     {
       name: "agritwin-site-profile",
-      version: 1,
+      // Version 2 repairs legacy efficiency values that were
+      // accidentally persisted as zero when a numeric field was cleared.
+      version: 2,
       partialize: (state) => ({
         activeSite: state.activeSite,
         selectedHour: state.selectedHour,
