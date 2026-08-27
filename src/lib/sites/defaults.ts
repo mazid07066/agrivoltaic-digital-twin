@@ -9,6 +9,10 @@ import type {
   LandAgrivoltaicSiteProfile,
 } from "./schema";
 
+import {
+  createDefaultPhysicsModelConfiguration,
+} from "@/lib/physics/defaults";
+
 function createDefaultPVConfiguration() {
   const pvModule = getPVModuleProfile("jinko-solar-jkm-540-560m");
 
@@ -43,6 +47,20 @@ function createDefaultPVConfiguration() {
     moduleVmpp: pvModule.vmppV,
     moduleIsc: pvModule.iscA,
     moduleImpp: pvModule.imppA,
+    moduleTempCoeffVocPercentPerC:
+      pvModule.tempCoeffVocPercentPerC,
+    moduleTempCoeffIscPercentPerC:
+      pvModule.tempCoeffIscPercentPerC,
+    moduleCellsInSeries:
+      pvModule.numberOfCells === null
+        ? null
+        : pvModule.numberOfCells > 100
+          ? Math.round(pvModule.numberOfCells / 2)
+          : pvModule.numberOfCells,
+    physicsConfiguration:
+      createDefaultPhysicsModelConfiguration(
+        "legacy_parity",
+      ),
   };
 }
 

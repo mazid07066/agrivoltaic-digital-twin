@@ -211,6 +211,16 @@ export function createElectricalSimulationResult(
   design?:
     ElectricalExecutionDesign,
 ): ElectricalSimulationResult {
+  const physicsResearchMode =
+    result.hourly.some(
+      (point) =>
+        point.additionalValues
+          .modelMode ===
+          "physics_research" ||
+        point.additionalValues
+          .modelMode ===
+          "reference_validation",
+    );
   const feeders =
     createDemonstrationFeeders(
       result,
@@ -375,7 +385,9 @@ export function createElectricalSimulationResult(
                 plantSpecification,
 
               efficiencyMode:
-                "legacy_power_passthrough",
+                physicsResearchMode
+                  ? "explicit_fitted_curve"
+                  : "legacy_power_passthrough",
 
               lineNeutralVoltageV:
                 230,
@@ -398,6 +410,36 @@ export function createElectricalSimulationResult(
           );
 
         const distribution =
+          (() => {
+            const physics =
+              point.additionalValues
+                .physics as
+                  | {
+                      netAcPowerW?: number;
+                    }
+                  | null
+                  | undefined;
+            const modeledNetAcKw =
+              typeof physics?.netAcPowerW ===
+                "number"
+                ? physics.netAcPowerW /
+                  1000
+                : inverter.ac
+                    .activePowerKw;
+            const explicitDownstreamLossKw =
+              physicsResearchMode
+                ? Math.max(
+                    0,
+                    inverter.ac
+                      .activePowerKw -
+                      modeledNetAcKw,
+                  ) +
+                  (inverter
+                    .standbyConsumptionKw ??
+                    0)
+                : 0;
+
+            return (
           dispatchElectricalPower(
             {
               timestamp:
@@ -413,9 +455,11 @@ export function createElectricalSimulationResult(
               feeders,
 
               distributionLossKw:
-                0,
+                explicitDownstreamLossKw,
             },
-          );
+          )
+            );
+          })();
 
         return {
           hourIndex:
@@ -475,7 +519,9 @@ export function createElectricalSimulationResult(
           : {}),
 
       inverterModelVersion:
-        "phase-9e-2-v1",
+        physicsResearchMode
+          ? "phase-9h-fitted-inverter-v1"
+          : "phase-9e-2-v1",
 
       distributionModelVersion:
         "phase-9e-4-v1",
@@ -484,13 +530,19 @@ export function createElectricalSimulationResult(
         "pvPowerKw",
 
       efficiencyModel:
-        "legacy_system_adjusted",
+        physicsResearchMode
+          ? "fitted_loss_curve"
+          : "legacy_system_adjusted",
 
       efficiencyApplicationMode:
-        "legacy_power_passthrough",
+        physicsResearchMode
+          ? "explicit_fitted_curve"
+          : "legacy_power_passthrough",
 
       efficiencyAssumption:
-        `Upstream Phase 7B/8C pvPowerKw already contains the historical systemEfficiency factor. No additional ${(specification.ac.maximumEfficiency * 100).toFixed(1)}% inverter efficiency multiplication is applied in compatibility mode.`,
+        physicsResearchMode
+          ? "Upstream pvPowerKw is an explicit DC boundary with aggregate systemEfficiency disabled. Inverter conversion uses the calibrated SMA fitted loss curve and applies clipping separately."
+          : `Upstream Phase 7B/8C pvPowerKw already contains the historical systemEfficiency factor. No additional ${(specification.ac.maximumEfficiency * 100).toFixed(1)}% inverter efficiency multiplication is applied in compatibility mode.`,
 
       dcVoltageAssumption:
         useDesignedTopology
@@ -506,7 +558,9 @@ export function createElectricalSimulationResult(
         "Three assumed demonstration feeders are used at constant 10 kW, 8 kW and 6 kW demand respectively. These values are not measured site loads.",
 
       distributionLossAssumption:
-        "Distribution loss is fixed at 0 kW because cable, transformer and impedance data have not been supplied.",
+        physicsResearchMode
+          ? "Explicit AC-ohmic, transformer, auxiliary, availability and curtailment stages are supplied by the versioned physics result; night standby is accounted separately."
+          : "Distribution loss is fixed at 0 kW because cable, transformer and impedance data have not been supplied.",
     },
 
     ...(compatibility

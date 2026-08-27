@@ -136,6 +136,21 @@ function createHourlyResults(
 
           angleOfIncidenceDeg:
             point.angleOfIncidenceDeg,
+
+          modelMode:
+            point.physics?.modelMode ??
+            "legacy_parity",
+
+          deliveredAcPowerKw:
+            point.deliveredAcPowerKW ??
+            null,
+
+          physics:
+            point.physics
+              ? structuredClone(
+                  point.physics,
+                )
+              : null,
         },
       };
     },
@@ -207,6 +222,10 @@ function createSummary(
 function createWarnings(
   input:
     ResolvedSimulationExecutionInput,
+  engineResults?:
+    ReturnType<
+      typeof runFlatRoofSimulation
+    >,
 ): string[] {
   const warnings = [
     ...input.environment
@@ -222,6 +241,17 @@ function createWarnings(
   ) {
     warnings.push(
       "The current Phase 8C rooftop engine executes one simulation day at a time; only the first 24 hourly environmental records were used.",
+    );
+  }
+
+  for (const warning of
+    engineResults?.hourly.flatMap(
+      (point) =>
+        point.physics?.warnings ??
+        [],
+    ) ?? []) {
+    warnings.push(
+      warning,
     );
   }
 
@@ -323,6 +353,7 @@ export function executeRooftopSimulation(
     warnings:
       createWarnings(
         input,
+        engineResults,
       ),
   };
 }

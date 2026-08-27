@@ -26,6 +26,12 @@ import type {
   SiteConfiguration,
 } from "@/types/simulation";
 
+import PhysicsConfigurationPanel from "./PhysicsConfigurationPanel";
+
+import {
+  resolvePhysicsConfiguration,
+} from "@/lib/physics/defaults";
+
 interface Props {
   site: LandAgrivoltaicSiteProfile;
   results: SimulationResults;
@@ -49,6 +55,7 @@ interface NumberInputProps {
   max?: number;
   step?: number;
   optional?: boolean;
+  disabled?: boolean;
   onChange: (
     value: number | null,
   ) => void;
@@ -62,6 +69,7 @@ function NumberInput({
   max,
   step = 1,
   optional = false,
+  disabled = false,
   onChange,
 }: NumberInputProps) {
   return (
@@ -107,6 +115,7 @@ function NumberInput({
               onChange(parsed);
             }
           }}
+          disabled={disabled}
           className="min-w-0 flex-1 rounded-lg px-3 py-2 outline-none"
         />
 
@@ -145,6 +154,10 @@ export default function LandScientificModelPanel({
 }: Props) {
   const pv =
     site.pvConfiguration;
+  const physicsConfiguration =
+    resolvePhysicsConfiguration(
+      pv.physicsConfiguration,
+    );
 
   const model =
     calculateLandModelTransparency({
@@ -299,6 +312,104 @@ export default function LandScientificModelPanel({
         </div>
       </div>
 
+      <div className="mt-5">
+        <PhysicsConfigurationPanel
+          pv={pv}
+          onUpdatePV={onUpdatePV}
+        />
+      </div>
+
+      {point?.physics ? (
+        <details className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/40 p-4" open>
+          <summary className="cursor-pointer font-semibold text-emerald-950">
+            Selected-hour physics diagnostics and loss waterfall
+          </summary>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4 text-xs">
+            <div className="rounded-lg bg-white p-3">
+              <span className="text-slate-500">Solar geometry</span>
+              <p className="mt-1 font-semibold text-slate-900">
+                Zenith {point.physics.solar.apparentZenithDeg.toFixed(2)}° · Azimuth{" "}
+                {point.physics.solar.azimuthDeg.toFixed(2)}°
+              </p>
+            </div>
+            <div className="rounded-lg bg-white p-3">
+              <span className="text-slate-500">Tracker</span>
+              <p className="mt-1 font-semibold text-slate-900">
+                Ideal {point.physics.tracker.idealAngleDeg.toFixed(2)}° · Final{" "}
+                {point.physics.tracker.finalAngleDeg.toFixed(2)}°
+              </p>
+            </div>
+            <div className="rounded-lg bg-white p-3">
+              <span className="text-slate-500">Optical/effective POA</span>
+              <p className="mt-1 font-semibold text-slate-900">
+                {point.physics.irradiance.poaGlobalWm2.toFixed(1)} →{" "}
+                {point.physics.iam.effectiveIrradianceWm2.toFixed(1)} W/m²
+              </p>
+            </div>
+            <div className="rounded-lg bg-white p-3">
+              <span className="text-slate-500">Module MPP</span>
+              <p className="mt-1 font-semibold text-slate-900">
+                {point.physics.module.vmpV.toFixed(2)} V ·{" "}
+                {point.physics.module.impA.toFixed(2)} A ·{" "}
+                {point.physics.module.pmpW.toFixed(1)} W
+              </p>
+            </div>
+            <div className="rounded-lg bg-white p-3">
+              <span className="text-slate-500">DC at inverter</span>
+              <p className="mt-1 font-semibold text-slate-900">
+                {(point.physics.dcAtInverterW / 1000).toFixed(2)} kW
+              </p>
+            </div>
+            <div className="rounded-lg bg-white p-3">
+              <span className="text-slate-500">Inverter conversion</span>
+              <p className="mt-1 font-semibold text-slate-900">
+                {(point.physics.inverter.efficiency * 100).toFixed(2)}% · clipping{" "}
+                {(point.physics.inverter.clippingLossW / 1000).toFixed(3)} kW
+              </p>
+            </div>
+            <div className="rounded-lg bg-white p-3">
+              <span className="text-slate-500">Net delivered AC</span>
+              <p className="mt-1 font-semibold text-slate-900">
+                {(point.physics.netAcPowerW / 1000).toFixed(2)} kW
+              </p>
+            </div>
+            <div className="rounded-lg bg-white p-3">
+              <span className="text-slate-500">Energy balance</span>
+              <p className="mt-1 font-semibold text-slate-900">
+                {point.physics.energyBalance.withinTolerance ? "PASS" : "CHECK"} · residual{" "}
+                {point.physics.energyBalance.balanceResidualW.toFixed(4)} W
+              </p>
+            </div>
+          </div>
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[720px] text-left text-xs">
+              <thead className="border-b border-emerald-200 text-slate-600">
+                <tr>
+                  <th className="p-2">Stage</th>
+                  <th className="p-2">Domain</th>
+                  <th className="p-2">Input kW</th>
+                  <th className="p-2">Output kW</th>
+                  <th className="p-2">Loss kW</th>
+                  <th className="p-2">Source</th>
+                </tr>
+              </thead>
+              <tbody>
+                {point.physics.losses.map((loss) => (
+                  <tr key={loss.id} className="border-b border-emerald-100">
+                    <td className="p-2 font-medium">{loss.label}</td>
+                    <td className="p-2">{loss.domain}</td>
+                    <td className="p-2">{(loss.inputPowerW / 1000).toFixed(3)}</td>
+                    <td className="p-2">{(loss.outputPowerW / 1000).toFixed(3)}</td>
+                    <td className="p-2">{(loss.lossPowerW / 1000).toFixed(3)}</td>
+                    <td className="p-2">{loss.sourceCategory.replaceAll("_", " ")}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </details>
+      ) : null}
+
       <details className="mt-5 rounded-xl border border-slate-200 p-4" open>
         <summary className="cursor-pointer font-semibold text-slate-900">
           Active equations and substituted values
@@ -329,6 +440,7 @@ export default function LandScientificModelPanel({
               GHI·ρg·(1-cos β)/2
             </p>
             <p className="mt-1 text-slate-600">
+              Model: {physicsConfiguration.irradianceModel}.{" "}
               Selected hour: beam{" "}
               {point?.poaBeam.toFixed(1) ?? "—"} +
               sky diffuse{" "}
@@ -344,14 +456,17 @@ export default function LandScientificModelPanel({
               Module temperature
             </Value>
             <p className="mt-1 font-mono text-xs text-slate-700">
-              Tmodule = Tamb + ((NOCT − 20)/800)·POA
+              {physicsConfiguration.thermalModel === "simple_noct"
+                ? "Tmodule = Tamb + ((NOCT − 20)/800)·POA"
+                : physicsConfiguration.thermalModel === "faiman"
+                  ? "Tmodule = Tamb + POA/(U0 + U1·wind)"
+                  : "Tmodule = Tamb + POA·(alpha−eta)/(Uc + Uv·wind)"}
             </p>
             <p className="mt-1 text-slate-600">
               NOCT {pv.moduleNOCT}°C; calculated module
               temperature{" "}
               {point?.moduleTemperature.toFixed(1) ?? "—"}°C.
-              Current implementation does not yet apply a
-              wind-dependent thermal correction.
+              Active model: {physicsConfiguration.thermalModel}.
             </p>
           </div>
 
@@ -375,10 +490,14 @@ export default function LandScientificModelPanel({
               Hourly modeled PV power
             </Value>
             <p className="mt-1 font-mono text-xs text-slate-700">
-              Ppv = Pdc,STC·(POA/1000)·ηsystem·fT
+              {physicsConfiguration.mode === "legacy_parity"
+                ? "Ppv = Pdc,STC·(POA/1000)·ηsystem·fT"
+                : "POA → IAM → shading/soiling → single diode → strings/MPPT → fitted inverter → explicit AC losses"}
             </p>
             <p className="mt-1 text-slate-600">
-              ηsystem = {(pv.systemEfficiency * 100).toFixed(1)}%;
+              {physicsConfiguration.mode === "legacy_parity"
+                ? `ηsystem = ${(pv.systemEfficiency * 100).toFixed(1)}%; `
+                : "Aggregate ηsystem is disabled; "}
               selected-hour result ={" "}
               {point?.pvPower.toFixed(2) ?? "—"} kW.
               This is modeled aggregate PV output, not measured
@@ -603,6 +722,10 @@ export default function LandScientificModelPanel({
             min={1}
             max={100}
             step={0.5}
+            disabled={
+              physicsConfiguration.mode !==
+              "legacy_parity"
+            }
             onChange={(value) => {
               if (value !== null) {
                 onUpdatePV({

@@ -254,7 +254,17 @@ export function researchFormulaRows():
       parameters:
         "DNI, DHI, GHI, AOI, tilt and ground albedo",
       note:
-        "Transposition used by the AgriTwin land/rooftop engine.",
+        "Legacy mode uses isotropic transposition; physics/reference modes may use Perez anisotropic diffuse transposition.",
+    },
+    {
+      quantity:
+        "Effective irradiance",
+      equation:
+        "E_eff = POA_direct·IAM_direct + POA_sky·IAM_sky + POA_ground·IAM_ground",
+      parameters:
+        "POA components and Martin–Ruiz incidence-angle modifiers",
+      note:
+        "Physics/reference modes expose each optical component independently.",
     },
     {
       quantity:
@@ -264,7 +274,7 @@ export function researchFormulaRows():
       parameters:
         "Ambient temperature, NOCT and POA irradiance",
       note:
-        "Simplified NOCT temperature model.",
+        "Selectable baseline; physics mode also supports Faiman and PVsyst thermal models with wind input.",
     },
     {
       quantity:
@@ -284,7 +294,37 @@ export function researchFormulaRows():
       parameters:
         "Installed capacity, POA, temperature and system efficiency",
       note:
-        "Current aggregate-loss formulation.",
+        "Legacy-parity formulation only; aggregate eta_system is disabled in physics/reference modes.",
+    },
+    {
+      quantity:
+        "Single-diode module current",
+      equation:
+        "I = IL − I0·(exp((V+I·Rs)/a)−1) − (V+I·Rs)/Rsh",
+      parameters:
+        "Effective irradiance, cell temperature and datasheet-estimated five parameters",
+      note:
+        "MPP is selected from the calculated I–V curve in physics/reference mode.",
+    },
+    {
+      quantity:
+        "Fitted inverter conversion",
+      equation:
+        "P_loss = 75 W + 0.016711·Pdc + 1.6038e−8·Pdc²; Pac = min(Pdc−P_loss, Paco)",
+      parameters:
+        "Per-inverter DC input and manufacturer AC power ceiling",
+      note:
+        "Calibrated from SMA STP 50-40 manufacturer efficiency data; clipping is separate.",
+    },
+    {
+      quantity:
+        "Power conservation",
+      equation:
+        "P_input = P_delivered + ΣP_named_loss + residual",
+      parameters:
+        "Explicit DC, MPPT, inverter and AC loss stages",
+      note:
+        "PASS tolerance is max(1 W, 0.1% of input power).",
     },
     {
       quantity:
@@ -323,7 +363,10 @@ export function researchAssumptions():
   string[] {
   return [
     "Open-Meteo weather values are external modeled/reanalysis/forecast inputs, not on-site measurements.",
-    "The current system-efficiency parameter represents aggregate PV-system losses.",
+    "Legacy-parity mode uses the historical aggregate system-efficiency parameter; physics/reference modes disable it and use explicit named losses.",
+    "Soiling, mismatch, wiring, auxiliary, availability, degradation and curtailment parameters retain source classifications and enabled states.",
+    "Negative module-quality loss represents a gain relative to nominal rather than an additional loss.",
+    "Inverter conversion and 4.8 W/unit night self-consumption are not counted again under auxiliary losses.",
     "Hourly energy integration uses one-hour intervals.",
     "Electrical string topology is exported only when a complete chosen design exists.",
     "Results are modeled estimates and require PVlib, Simulink and measured-data validation before publication claims.",

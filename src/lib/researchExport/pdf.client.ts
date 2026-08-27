@@ -14,6 +14,10 @@ import type {
   ResearchExportPayload,
 } from "./types";
 
+import {
+  resolvePhysicsConfiguration,
+} from "@/lib/physics/defaults";
+
 interface ReportCursor {
   y: number;
 }
@@ -787,6 +791,29 @@ export function exportResearchPdf(
     cursor,
     "Tracking",
     pv.trackingMode,
+  );
+
+  const physicsConfiguration =
+    resolvePhysicsConfiguration(
+      pv.physicsConfiguration,
+    );
+
+  keyValue(
+    document,
+    payload,
+    cursor,
+    "Simulation model mode",
+    physicsConfiguration.mode,
+  );
+
+  keyValue(
+    document,
+    payload,
+    cursor,
+    "Efficiency boundary",
+    physicsConfiguration.mode === "legacy_parity"
+      ? `Aggregate system efficiency ${(pv.systemEfficiency * 100).toFixed(1)}% with inverter passthrough`
+      : "Explicit optical/DC/MPPT/inverter/AC losses; aggregate system efficiency disabled",
   );
 
   heading(

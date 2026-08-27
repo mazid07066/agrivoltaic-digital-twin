@@ -148,6 +148,16 @@ export const useSimulationStore = create<SimulationStore>()(
               moduleVmpp: profile.vmppV,
               moduleIsc: profile.iscA,
               moduleImpp: profile.imppA,
+              moduleTempCoeffVocPercentPerC:
+                profile.tempCoeffVocPercentPerC,
+              moduleTempCoeffIscPercentPerC:
+                profile.tempCoeffIscPercentPerC,
+              moduleCellsInSeries:
+                profile.numberOfCells === null
+                  ? null
+                  : profile.numberOfCells > 100
+                    ? Math.round(profile.numberOfCells / 2)
+                    : profile.numberOfCells,
             },
           });
 

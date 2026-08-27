@@ -422,6 +422,13 @@ export function createHourlyResultInserts(
               }
             : {},
         ),
+
+      physics_values:
+        asJson(
+          point.additionalValues
+            .physics ??
+          {},
+        ),
       };
     },
   );

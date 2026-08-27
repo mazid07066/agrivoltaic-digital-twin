@@ -135,9 +135,14 @@ export function mapSimulationHourlyRow(
       ),
 
     additionalValues:
-      asRecord(
-        row.additional_values,
-      ),
+      {
+        ...asRecord(
+          row.additional_values,
+        ),
+        ...(Object.keys(asRecord(row.physics_values)).length > 0
+          ? { physics: asRecord(row.physics_values) }
+          : {}),
+      },
   };
 }
 

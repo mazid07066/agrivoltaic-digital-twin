@@ -140,6 +140,7 @@ export function simulatePowerDay(
             point.hour,
 
           powerKw:
+            point.deliveredAcPowerKw ??
             point.pvPower,
         }),
       );
@@ -193,6 +194,7 @@ export function simulatePowerDay(
           point.hour,
 
         powerKw:
+          point.deliveredAcPowerKW ??
           point.dcPowerKW,
       }),
     );

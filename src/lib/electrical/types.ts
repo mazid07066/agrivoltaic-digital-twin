@@ -52,7 +52,8 @@ export interface ElectricalSimulationProvenance {
     | "constant_bounded"
     | "legacy_system_adjusted"
     | "telemetry"
-    | "external_curve";
+    | "external_curve"
+    | "fitted_loss_curve";
 
   efficiencyApplicationMode:
     InverterEfficiencyApplicationMode;

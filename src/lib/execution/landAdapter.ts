@@ -196,6 +196,21 @@ function createHourlyResults(
 
           temperatureFactor:
             point.temperatureFactor,
+
+          modelMode:
+            point.physics?.modelMode ??
+            "legacy_parity",
+
+          deliveredAcPowerKw:
+            point.deliveredAcPowerKw ??
+            null,
+
+          physics:
+            point.physics
+              ? structuredClone(
+                  point.physics,
+                )
+              : null,
         },
       };
     },
@@ -339,6 +354,10 @@ function createSpatialResults(
 function createWarnings(
   input:
     ResolvedSimulationExecutionInput,
+  engineResults?:
+    ReturnType<
+      typeof runLandAgrivoltaicSimulation
+    >,
 ): string[] {
   const warnings = [
     ...input.environment
@@ -354,6 +373,17 @@ function createWarnings(
   ) {
     warnings.push(
       "The current Phase 7B land engine executes one simulation day at a time; only the first 24 hourly environmental records were used.",
+    );
+  }
+
+  for (const warning of
+    engineResults?.hourly.flatMap(
+      (point) =>
+        point.physics?.warnings ??
+        [],
+    ) ?? []) {
+    warnings.push(
+      warning,
     );
   }
 
@@ -453,6 +483,7 @@ export function executeLandSimulation(
     warnings:
       createWarnings(
         input,
+        engineResults,
       ),
   };
 }

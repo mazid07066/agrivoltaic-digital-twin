@@ -44,6 +44,11 @@ export interface ComparableRunIdentity {
   controllerVersion: string | null;
   weatherAdapterVersion: string | null;
 
+  modelMode?:
+    | "legacy_parity"
+    | "physics_research"
+    | "reference_validation";
+
   executionFingerprint: string | null;
   environmentFingerprint: string | null;
 

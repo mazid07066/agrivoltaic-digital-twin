@@ -27,7 +27,9 @@ import {
   CONTROLLER_VERSION,
   EXECUTION_CONTRACT_VERSION,
   LAND_ENGINE_VERSION,
+  LAND_PHYSICS_ENGINE_VERSION,
   ROOFTOP_ENGINE_VERSION,
+  ROOFTOP_PHYSICS_ENGINE_VERSION,
   WEATHER_ADAPTER_VERSION,
 } from "./versions";
 
@@ -64,6 +66,11 @@ export function createSimulationEngineIdentity(
     resolveSimulationEngineKind(
       site,
     );
+  const physicsMode =
+    site.pvConfiguration
+      .physicsConfiguration
+      ?.mode ??
+    "legacy_parity";
 
   if (
     engineKind ===
@@ -76,7 +83,10 @@ export function createSimulationEngineIdentity(
       engineKind,
 
       engineVersion:
-        LAND_ENGINE_VERSION,
+        physicsMode ===
+          "legacy_parity"
+          ? LAND_ENGINE_VERSION
+          : LAND_PHYSICS_ENGINE_VERSION,
 
       controllerVersion:
         CONTROLLER_VERSION,
@@ -96,7 +106,10 @@ export function createSimulationEngineIdentity(
     engineKind,
 
     engineVersion:
-      ROOFTOP_ENGINE_VERSION,
+      physicsMode ===
+        "legacy_parity"
+        ? ROOFTOP_ENGINE_VERSION
+        : ROOFTOP_PHYSICS_ENGINE_VERSION,
 
     controllerVersion:
       null,

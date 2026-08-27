@@ -340,6 +340,7 @@ export type Database = {
         Row: {
           additional_values: Json
           electrical_values: Json
+          physics_values: Json
           crop_dli_increment_mol_m2: number | null
           ghi_wm2: number | null
           hour_index: number
@@ -358,6 +359,7 @@ export type Database = {
         Insert: {
           additional_values?: Json
           electrical_values?: Json
+          physics_values?: Json
           crop_dli_increment_mol_m2?: number | null
           ghi_wm2?: number | null
           hour_index: number
@@ -376,6 +378,7 @@ export type Database = {
         Update: {
           additional_values?: Json
           electrical_values?: Json
+          physics_values?: Json
           crop_dli_increment_mol_m2?: number | null
           ghi_wm2?: number | null
           hour_index?: number
@@ -409,16 +412,21 @@ export type Database = {
           electrical_operating_mode: string | null
           electrical_provenance: Json | null
           electrical_summary: Json | null
+          energy_balance_summary: Json | null
           engine_version: string
           error_message: string | null
           id: string
           input_snapshot: Json
+          explicit_loss_summary: Json | null
           module_catalogue_version: string | null
+          parameter_source_manifest: Json | null
+          physics_model_version: string | null
           project_id: string
           requested_by: string | null
           result_summary: Json | null
           scenario_id: string | null
           simulation_date: string
+          simulation_model_mode: string | null
           site_id: string
           site_schema_version: number
           site_version_id: string
@@ -435,16 +443,21 @@ export type Database = {
           electrical_operating_mode?: string | null
           electrical_provenance?: Json | null
           electrical_summary?: Json | null
+          energy_balance_summary?: Json | null
           engine_version: string
           error_message?: string | null
           id?: string
           input_snapshot: Json
+          explicit_loss_summary?: Json | null
           module_catalogue_version?: string | null
+          parameter_source_manifest?: Json | null
+          physics_model_version?: string | null
           project_id: string
           requested_by?: string | null
           result_summary?: Json | null
           scenario_id?: string | null
           simulation_date: string
+          simulation_model_mode?: string | null
           site_id: string
           site_schema_version: number
           site_version_id: string
@@ -461,16 +474,21 @@ export type Database = {
           electrical_operating_mode?: string | null
           electrical_provenance?: Json | null
           electrical_summary?: Json | null
+          energy_balance_summary?: Json | null
           engine_version?: string
           error_message?: string | null
           id?: string
           input_snapshot?: Json
+          explicit_loss_summary?: Json | null
           module_catalogue_version?: string | null
+          parameter_source_manifest?: Json | null
+          physics_model_version?: string | null
           project_id?: string
           requested_by?: string | null
           result_summary?: Json | null
           scenario_id?: string | null
           simulation_date?: string
+          simulation_model_mode?: string | null
           site_id?: string
           site_schema_version?: number
           site_version_id?: string

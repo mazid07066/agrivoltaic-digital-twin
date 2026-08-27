@@ -52,6 +52,7 @@ import VersionHistory from "./VersionHistory";
 import PowerOutputTimeSeries from "@/components/charts/PowerOutputTimeSeries";
 import ElectricalStatusPanel from "@/components/twin/electrical/ElectricalStatusPanel";
 import PVInverterCompatibilityPanel from "@/components/twin/electrical/PVInverterCompatibilityPanel";
+import PhysicsConfigurationPanel from "@/components/twin/science/PhysicsConfigurationPanel";
 
 const RooftopScene = dynamic(
   () => import("./RooftopScene"),
@@ -926,6 +927,12 @@ export default function RooftopDashboard() {
                 onChange={updatePV}
               />
 
+              <PhysicsConfigurationPanel
+                pv={site.pvConfiguration}
+                onUpdatePV={updatePV}
+                compact
+              />
+
               <div className="grid grid-cols-2 gap-3">
                 <NumberField
                   label="Rack height"
@@ -1213,6 +1220,9 @@ export default function RooftopDashboard() {
                     <th className="p-2">
                       DC power
                     </th>
+                    <th className="p-2">
+                      Net AC
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1245,6 +1255,9 @@ export default function RooftopDashboard() {
                         </td>
                         <td className="p-2">
                           {point.dcPowerKW.toFixed(2)} kW
+                        </td>
+                        <td className="p-2">
+                          {point.deliveredAcPowerKW?.toFixed(2) ?? "—"} kW
                         </td>
                       </tr>
                     ),

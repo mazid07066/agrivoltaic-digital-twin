@@ -108,6 +108,10 @@ export function createPlantEquivalentSpecification(
         specification.ac.ratedOutputCurrentA *
         inverterCount,
     },
+
+    nightSelfConsumptionW:
+      (specification.nightSelfConsumptionW ?? 4.8) *
+      inverterCount,
   };
 }
 

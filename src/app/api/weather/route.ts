@@ -198,6 +198,7 @@ export async function GET(request: NextRequest) {
     weatherUrl.searchParams.set("start_date", requestedDate);
     weatherUrl.searchParams.set("end_date", requestedDate);
     weatherUrl.searchParams.set("timezone", "auto");
+    weatherUrl.searchParams.set("wind_speed_unit", "ms");
 
     weatherUrl.searchParams.set(
       "hourly",

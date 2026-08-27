@@ -4,6 +4,16 @@ import { getCropProfile } from "./crops";
 import { angleOfIncidence, getSolarPosition, getSurfaceOrientation } from "./solarPosition";
 import { calculateSpatialLight } from "./spatialLight";
 import { createAdaptiveSchedule } from "./adaptiveControl";
+import {
+  resolvePhysicsConfiguration,
+  simulatePhysicsTimestep,
+} from "@/lib/physics";
+import { siteTimeToDate } from "./solarPosition";
+import {
+  DEFAULT_INVERTER_PROFILE_ID,
+  findInverterProfile,
+  getInverterProfile,
+} from "@/lib/electrical/inverter/catalogue";
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 const radians = (degrees: number) => degrees * Math.PI / 180;
@@ -27,6 +37,13 @@ export function runSimulation(
   const spacingFactor = clamp(4 / Math.max(pv.rowSpacing, 1), 0.35, 1.4);
   const heightFactor = clamp(2 / Math.max(pv.panelHeight, 0.5), 0.45, 1.5);
   const timezone = weather?.summary.timezone || site.timezone || "UTC";
+  const physicsConfiguration = resolvePhysicsConfiguration(
+    pv.physicsConfiguration,
+  );
+  const selectedInverter =
+    findInverterProfile(
+      pv.inverterProfileId ?? DEFAULT_INVERTER_PROFILE_ID,
+    ) ?? getInverterProfile(DEFAULT_INVERTER_PROFILE_ID);
 
   const calculateHour = (hour: number, operatingMode: Exclude<TrackingMode, "custom">) => {
     const weatherPoint = weather?.hourly[hour];
@@ -66,6 +83,119 @@ export function runSimulation(
     );
     const pvPower = installedCapacityKW * (poaIrradiance / 1000) *
       pv.systemEfficiency * temperatureFactor;
+
+    if (physicsConfiguration.mode !== "legacy_parity") {
+      const moduleCount = totalModules;
+      const inverterCount = Math.max(1, Math.round(pv.inverterCount ?? 1));
+      const modulesPerString = Math.max(
+        1,
+        Math.round(pv.modulesPerString ?? Math.min(17, moduleCount)),
+      );
+      const stringsPerInverter = Math.max(
+        1,
+        Math.round(
+          pv.stringsPerInverter ??
+            Math.ceil(moduleCount / modulesPerString / inverterCount),
+        ),
+      );
+      const trackerModel =
+        operatingMode === "fixed"
+          ? "fixed_tilt"
+          : operatingMode === "reverse"
+            ? "adaptive_custom"
+            : "standard_backtracking";
+      const instant = siteTimeToDate(
+        simulationDate,
+        hour,
+        timezone,
+      );
+      const physics = simulatePhysicsTimestep({
+        timestamp: instant,
+        latitudeDeg: site.latitude,
+        longitudeDeg: site.longitude,
+        ghiWm2: ghi,
+        dniWm2: dni,
+        dhiWm2: dhi,
+        ambientTemperatureC: temperature,
+        windSpeedMs: weatherPoint?.windSpeed ?? 0,
+        relativeHumidityPercent: weatherPoint?.relativeHumidity,
+        rainMm: weatherPoint?.precipitation,
+        rowCount: pv.numberOfRows,
+        rowPitchM: pv.rowSpacing,
+        collectorWidthM: pv.moduleLength,
+        clearanceM: pv.panelHeight,
+        fixedTiltDeg: pv.tilt,
+        fixedAzimuthDeg: pv.azimuth,
+        maximumTrackerAngleDeg: pv.maximumTrackerAngle,
+        groundCoverageRatio,
+        groundAlbedo: pv.groundAlbedo,
+        moduleCount,
+        modulesPerString,
+        stringsPerInverter,
+        inverterCount,
+        mpptCountPerInverter: selectedInverter.dc.independentMpptInputs,
+        maxStringsPerMppt: selectedInverter.dc.stringsPerMppt,
+        mppVoltageMinV: selectedInverter.dc.mppVoltageMinV,
+        mppVoltageMaxV: selectedInverter.dc.mppVoltageMaxV,
+        maxInputVoltageV: selectedInverter.dc.maxInputVoltageV,
+        maxOperatingCurrentPerMpptA:
+          selectedInverter.dc.maxOperatingCurrentPerMpptA,
+        maxShortCircuitCurrentPerMpptA:
+          selectedInverter.dc.maxShortCircuitCurrentPerMpptA,
+        ratedAcPowerPerInverterW: selectedInverter.ac.ratedActivePowerW,
+        module: {
+          pmaxW: pv.modulePower,
+          vmppV: pv.moduleVmpp ?? pv.modulePower / 10,
+          imppA: pv.moduleImpp ?? 10,
+          vocV: pv.moduleVoc ?? (pv.moduleVmpp ?? pv.modulePower / 10) * 1.2,
+          iscA: pv.moduleIsc ?? (pv.moduleImpp ?? 10) * 1.05,
+          tempCoeffPmaxPercentPerC: pv.temperatureCoefficientPmax,
+          tempCoeffVocPercentPerC:
+            pv.moduleTempCoeffVocPercentPerC ?? -0.29,
+          tempCoeffIscPercentPerC:
+            pv.moduleTempCoeffIscPercentPerC ?? 0.05,
+          noctC: pv.moduleNOCT,
+          efficiencyFraction: pv.moduleEfficiency / 100,
+          cellsInSeries: pv.moduleCellsInSeries ?? 72,
+        },
+        configuration: {
+          ...physicsConfiguration,
+          trackingModel: trackerModel,
+        },
+      });
+
+      return {
+        hour: weatherPoint?.hour ?? `${String(hour).padStart(2, "0")}:00`,
+        irradiance: rounded(ghi),
+        cropIrradiance: rounded(physics.cropGroundIrradianceWm2),
+        pvPower: rounded(physics.dcAtInverterW / 1000, 3),
+        deliveredAcPowerKw: rounded(physics.netAcPowerW / 1000, 3),
+        shadePercentage: rounded(
+          (1 -
+            physics.rowShadingFactors.reduce((sum, value) => sum + value, 0) /
+              physics.rowShadingFactors.length) *
+            100,
+        ),
+        solarAltitude: rounded(physics.solar.apparentElevationDeg),
+        solarZenith: rounded(physics.solar.apparentZenithDeg),
+        solarAzimuth: rounded(physics.solar.azimuthDeg),
+        trackerAngle: rounded(physics.tracker.finalAngleDeg),
+        surfaceTilt: rounded(physics.tracker.surfaceTiltDeg),
+        surfaceAzimuth: rounded(physics.tracker.surfaceAzimuthDeg),
+        angleOfIncidence: rounded(physics.irradiance.angleOfIncidenceDeg),
+        poaBeam: rounded(physics.irradiance.poaDirectWm2),
+        poaSkyDiffuse: rounded(physics.irradiance.poaSkyDiffuseWm2),
+        poaGroundReflected: rounded(physics.irradiance.poaGroundDiffuseWm2),
+        poaIrradiance: rounded(physics.irradiance.poaGlobalWm2),
+        operatingMode,
+        moduleTemperature: rounded(physics.thermal.cellTemperatureC),
+        temperatureFactor: rounded(
+          physics.module.pmpW / Math.max(pv.modulePower, 0.001),
+          3,
+        ),
+        physics,
+      };
+    }
 
     return {
       hour: weatherPoint?.hour ?? `${String(hour).padStart(2, "0")}:00`,
@@ -154,7 +284,11 @@ export function runSimulation(
       adaptiveController.standardTrackingHours;
   }
 
-  const dailyEnergyKWh = hourly.reduce((sum, point) => sum + point.pvPower, 0);
+  const dailyEnergyKWh = hourly.reduce(
+    (sum, point) =>
+      sum + (point.deliveredAcPowerKw ?? point.pvPower),
+    0,
+  );
   const dli = (key: "irradiance" | "cropIrradiance") => hourly.reduce(
     (sum, point) => sum + point[key] * 0.45 * 4.57 * 3600, 0,
   ) / 1_000_000;
@@ -171,7 +305,8 @@ export function runSimulation(
     : cropDLI <= crop.maximumDLI
       ? clamp(92 + (1 - Math.abs(cropDLI - crop.optimumDLI) / Math.max(crop.optimumDLI, 1)) * 8, 85, 100)
       : clamp(100 - (cropDLI - crop.maximumDLI) / crop.maximumDLI * 25, 70, 100);
-  const referenceEnergy = installedCapacityKW * 5 * pv.systemEfficiency;
+  const referenceEnergy = installedCapacityKW * 5 *
+    (physicsConfiguration.mode === "legacy_parity" ? pv.systemEfficiency : 1);
   const relativeEnergyYield = referenceEnergy > 0 ? clamp(dailyEnergyKWh / referenceEnergy, 0, 1.25) : 0;
 
   return {
@@ -199,4 +334,3 @@ export function runSimulation(
     },
   };
 }
-

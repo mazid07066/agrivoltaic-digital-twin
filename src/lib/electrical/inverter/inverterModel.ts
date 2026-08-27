@@ -165,6 +165,19 @@ export function simulateInverterTimestep(
       specification,
     );
 
+  const standbyConsumptionKw =
+    input.efficiencyMode ===
+      "explicit_fitted_curve" &&
+    availableDcPowerKw <= 0 &&
+    gridAvailable
+      ? (
+          specification
+            .nightSelfConsumptionW ??
+          4.8
+        ) /
+        1000
+      : 0;
+
   const ratedActivePowerKw =
     specification.ac
       .ratedActivePowerW /
@@ -336,6 +349,12 @@ export function simulateInverterTimestep(
 
     deratingLossKw:
       0,
+
+    standbyConsumptionKw,
+
+    standbyConsumptionEnergyKwh:
+      standbyConsumptionKw *
+      timestepHours,
 
     ac: {
       activePowerKw,

@@ -195,6 +195,42 @@ const hourlyPowerColumns:
         (row) =>
           row.inverterState,
     },
+    {
+      header: "model_mode",
+      value: (row) => row.modelMode ?? null,
+    },
+    {
+      header: "effective_irradiance_w_m2",
+      value: (row) => row.effectiveIrradianceWM2 ?? null,
+    },
+    {
+      header: "dc_at_inverter_kw",
+      value: (row) => row.dcAtInverterKw ?? null,
+    },
+    {
+      header: "ac_before_clipping_kw",
+      value: (row) => row.acBeforeClippingKw ?? null,
+    },
+    {
+      header: "conversion_loss_kw",
+      value: (row) => row.conversionLossKw ?? null,
+    },
+    {
+      header: "clipping_loss_kw",
+      value: (row) => row.clippingLossKw ?? null,
+    },
+    {
+      header: "explicit_loss_kw",
+      value: (row) => row.explicitLossKw ?? null,
+    },
+    {
+      header: "delivered_ac_kw",
+      value: (row) => row.deliveredAcKw ?? null,
+    },
+    {
+      header: "balance_residual_w",
+      value: (row) => row.balanceResidualW ?? null,
+    },
   ];
 
 const dailyPowerColumns:

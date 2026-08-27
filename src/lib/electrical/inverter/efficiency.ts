@@ -4,6 +4,10 @@ import type {
   InverterSpecification,
 } from "./types";
 
+import {
+  calculateFittedInverterConversion,
+} from "@/lib/physics/inverter";
+
 export interface EfficiencyEvaluation {
   appliedEfficiency:
     ElectricalValue<number>;
@@ -31,6 +35,69 @@ export function evaluateInverterEfficiency(
     throw new Error(
       "Accepted DC power must be a non-negative finite number.",
     );
+  }
+
+  if (
+    mode ===
+      "explicit_fitted_curve"
+  ) {
+    const plantCountMatch =
+      specification.id.match(
+        /::plant-(\d+)$/,
+      );
+    const inverterCount =
+      plantCountMatch
+        ? Math.max(
+            1,
+            Number(
+              plantCountMatch[1],
+            ),
+          )
+        : 1;
+    const dcPerInverterKw =
+      acceptedDcPowerKw /
+      inverterCount;
+    const fitted =
+      calculateFittedInverterConversion(
+        {
+          dcInputPowerW:
+            dcPerInverterKw *
+            1000,
+
+          ratedAcPowerW:
+            specification.ac
+              .ratedActivePowerW /
+            inverterCount,
+
+          nightSelfConsumptionW:
+            specification
+              .nightSelfConsumptionW ??
+            4.8,
+        },
+      );
+
+    return {
+      appliedEfficiency: {
+        value:
+          fitted.efficiency,
+
+        provenance:
+          "calculated",
+
+        note:
+          "SMA STP 50-40 fitted part-load loss curve: 75 W + 0.016711·Pdc + 1.6038e-8·Pdc².",
+      },
+
+      acBeforePowerLimitsKw:
+        fitted.acUnclippedPowerW /
+        1000 *
+        inverterCount,
+
+      conversionLossKw:
+        fitted.conversionLossW /
+        1000 *
+        inverterCount,
+    };
   }
 
   if (

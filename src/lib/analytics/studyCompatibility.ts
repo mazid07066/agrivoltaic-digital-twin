@@ -140,6 +140,18 @@ export function assessStudyCompatibility(
       ),
     );
 
+  const modelModes =
+    distinctNonNull(
+      records.map(
+        (
+          record,
+        ) =>
+          record.identity
+            .modelMode ??
+          "legacy_parity",
+      ),
+    );
+
   const issues:
     StudyCompatibilityIssue[] =
       [];
@@ -186,6 +198,28 @@ export function assessStudyCompatibility(
 
       explanation:
         "The selected runs were produced by different engine kinds and are not directly comparable as one scientific decision matrix.",
+
+      affectedRunIds:
+        ids,
+    });
+  }
+
+  if (
+    modelModes.size >
+    1
+  ) {
+    issues.push({
+      key:
+        "mixed-model-modes",
+
+      level:
+        "incompatible",
+
+      label:
+        "Mixed physics/legacy model modes",
+
+      explanation:
+        "Legacy aggregate-efficiency, physics-research and locked reference-validation runs use different energy boundaries and must not be ranked as one direct study set.",
 
       affectedRunIds:
         ids,

@@ -92,6 +92,15 @@ export interface ValidationHourlyPowerRow {
   poaIrradianceWM2: number | null;
   moduleTemperatureC: number | null;
   inverterState: string | null;
+  modelMode?: string | null;
+  effectiveIrradianceWM2?: number | null;
+  dcAtInverterKw?: number | null;
+  acBeforeClippingKw?: number | null;
+  clippingLossKw?: number | null;
+  conversionLossKw?: number | null;
+  explicitLossKw?: number | null;
+  deliveredAcKw?: number | null;
+  balanceResidualW?: number | null;
 }
 
 export interface ValidationDailyPowerRow {

@@ -39,7 +39,8 @@ export interface ElectricalValue<T> {
  */
 export type InverterEfficiencyApplicationMode =
   | "legacy_power_passthrough"
-  | "explicit_constant_efficiency";
+  | "explicit_constant_efficiency"
+  | "explicit_fitted_curve";
 
 export type InverterOperatingState =
   | "OFF"
@@ -160,6 +161,8 @@ export interface InverterSpecification {
   dc: InverterDcSpecification;
 
   ac: InverterAcSpecification;
+
+  nightSelfConsumptionW?: number;
 }
 
 export interface InverterStringInput {
@@ -263,6 +266,10 @@ export interface InverterTimestepResult {
   conversionLossKw: number;
 
   deratingLossKw: number;
+
+  standbyConsumptionKw?: number;
+
+  standbyConsumptionEnergyKwh?: number;
 
   ac:
     InverterAcOutput;

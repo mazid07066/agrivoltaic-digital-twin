@@ -1074,7 +1074,7 @@ export default function Home() {
                         {weather.summary.maximumWindSpeed.toFixed(
                           1,
                         )}{" "}
-                        km/h
+                        m/s
                       </dd>
                     </div>
 
@@ -1150,7 +1150,7 @@ export default function Home() {
               <table className="engineering-table">
                 <thead><tr>
                   <th>Time</th><th>Mode</th><th>Altitude</th><th>Azimuth</th><th>Tracker</th>
-                  <th>AOI</th><th>POA</th><th>Module temp.</th><th>PV power</th><th>Crop light</th><th>Shade</th>
+                  <th>AOI</th><th>POA</th><th>Module temp.</th><th>PV DC</th><th>Net AC</th><th>Crop light</th><th>Shade</th>
                 </tr></thead>
                 <tbody>
                   {results.hourly.map((point) => (
@@ -1158,6 +1158,7 @@ export default function Home() {
                       <td>{point.hour}</td><td>{point.operatingMode === "standard" ? "ST" : point.operatingMode === "reverse" ? "RT" : "Fixed"}</td><td>{point.solarAltitude}°</td><td>{point.solarAzimuth}°</td>
                       <td>{point.trackerAngle}°</td><td>{point.angleOfIncidence}°</td>
                       <td>{point.poaIrradiance} W/m²</td><td>{point.moduleTemperature}°C</td><td>{point.pvPower} kW</td>
+                      <td>{point.deliveredAcPowerKw?.toFixed(2) ?? "—"} kW</td>
                       <td>{point.cropIrradiance} W/m²</td><td>{point.shadePercentage}%</td>
                     </tr>
                   ))}

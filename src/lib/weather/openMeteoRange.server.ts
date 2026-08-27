@@ -223,6 +223,11 @@ export function buildOpenMeteoRangeUrl({
   );
 
   url.searchParams.set(
+    "wind_speed_unit",
+    "ms",
+  );
+
+  url.searchParams.set(
     "hourly",
     hourlyVariables,
   );

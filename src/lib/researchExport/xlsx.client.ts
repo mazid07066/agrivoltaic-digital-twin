@@ -14,6 +14,10 @@ import type {
   ResearchExportPayload,
 } from "./types";
 
+import {
+  resolvePhysicsConfiguration,
+} from "@/lib/physics/defaults";
+
 type ExportCell =
   | string
   | number
@@ -147,6 +151,11 @@ export async function exportResearchWorkbook(
     pv.modulesPerRow *
     pv.modulePower /
     1000;
+
+  const physicsConfiguration =
+    resolvePhysicsConfiguration(
+      pv.physicsConfiguration,
+    );
 
   const sheets = [
     createSheet(
@@ -392,6 +401,45 @@ export async function exportResearchWorkbook(
             row.allocationStatus,
         }),
       ),
+    ),
+
+    createSheet(
+      "Efficiency and Losses",
+      [
+        {
+          parameter: "simulation_mode",
+          value: physicsConfiguration.mode,
+          unit: "",
+          enabled: true,
+          source_category: "configuration",
+        },
+        {
+          parameter: "aggregate_system_efficiency",
+          value: pv.systemEfficiency * 100,
+          unit: "%",
+          enabled: physicsConfiguration.mode === "legacy_parity",
+          source_category: "legacy_user_assumption",
+        },
+        ...Object.entries(physicsConfiguration.losses)
+          .filter(([key]) => key !== "schemaVersion")
+          .map(([key, parameter]) => {
+            const value = parameter as {
+              value: number;
+              unit: string;
+              enabled: boolean;
+              sourceCategory: string;
+              sourceReference?: string;
+            };
+            return {
+              parameter: key,
+              value: value.value,
+              unit: value.unit,
+              enabled: value.enabled,
+              source_category: value.sourceCategory,
+              reference: value.sourceReference ?? "",
+            };
+          }),
+      ],
     ),
 
     createSheet(

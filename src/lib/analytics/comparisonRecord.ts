@@ -246,6 +246,13 @@ export function createComparableRunRecord(
       weatherAdapterVersion:
         engine.weatherAdapterVersion,
 
+      modelMode:
+        input.siteConfiguration
+          .pvConfiguration
+          .physicsConfiguration
+          ?.mode ??
+        "legacy_parity",
+
       executionFingerprint:
         input.inputFingerprint,
 

@@ -99,6 +99,14 @@ export interface PVConfiguration {
   moduleVmpp: number | null;
   moduleIsc: number | null;
   moduleImpp: number | null;
+
+  /** Phase 9H–9L versioned physics/loss configuration. */
+  physicsConfiguration?: import("@/lib/physics/types").PhysicsModelConfiguration;
+
+  /** Optional manufacturer temperature coefficients used by physics mode. */
+  moduleTempCoeffVocPercentPerC?: number | null;
+  moduleTempCoeffIscPercentPerC?: number | null;
+  moduleCellsInSeries?: number | null;
 }
 
 export interface SimulationConfiguration {
@@ -113,6 +121,7 @@ export interface HourlySimulationPoint {
   irradiance: number;
   cropIrradiance: number;
   pvPower: number;
+  deliveredAcPowerKw?: number;
   shadePercentage: number;
   solarAltitude: number;
   solarZenith: number;
@@ -128,6 +137,7 @@ export interface HourlySimulationPoint {
   operatingMode: "fixed" | "standard" | "reverse";
   moduleTemperature: number;
   temperatureFactor: number;
+  physics?: import("@/lib/physics/types").PhysicsTimestepResult;
 }
 
 export interface AdaptiveControllerResults {

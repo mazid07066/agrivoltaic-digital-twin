@@ -2,6 +2,17 @@ import { angleOfIncidence, getSolarPosition } from "@/lib/simulation/solarPositi
 import { solveRectangularRoofLayout } from "@/lib/geometry/rectangularRoof";
 import type { FlatRoofSiteProfile } from "@/lib/sites/schema";
 import type { WeatherResponse } from "@/types/weather";
+import {
+  resolvePhysicsConfiguration,
+  simulatePhysicsTimestep,
+} from "@/lib/physics";
+import { siteTimeToDate } from "@/lib/simulation/solarPosition";
+import {
+  DEFAULT_INVERTER_PROFILE_ID,
+  findInverterProfile,
+  getInverterProfile,
+} from "@/lib/electrical/inverter/catalogue";
+import type { PhysicsTimestepResult } from "@/lib/physics/types";
 
 const radians = (degrees: number) => (degrees * Math.PI) / 180;
 const clamp = (value: number, min: number, max: number) =>
@@ -28,6 +39,8 @@ export interface RooftopHourlyPoint {
   solarAltitudeDeg: number;
   solarAzimuthDeg: number;
   angleOfIncidenceDeg: number;
+  deliveredAcPowerKW?: number;
+  physics?: PhysicsTimestepResult;
 }
 
 export interface RooftopSimulationResults {
@@ -59,6 +72,14 @@ export function runFlatRoofSimulation(
     weather?.summary.timezone ??
     site.location.timezone ??
     "UTC";
+  const physicsConfiguration = resolvePhysicsConfiguration(
+    site.pvConfiguration.physicsConfiguration,
+  );
+  const selectedInverter =
+    findInverterProfile(
+      site.pvConfiguration.inverterProfileId ??
+        DEFAULT_INVERTER_PROFILE_ID,
+    ) ?? getInverterProfile(DEFAULT_INVERTER_PROFILE_ID);
 
   const hourly = Array.from({ length: 24 }, (_, hour) => {
     const weatherPoint = weather?.hourly[hour];
@@ -137,6 +158,105 @@ export function runFlatRoofSimulation(
       site.pvConfiguration.systemEfficiency *
       temperatureFactor;
 
+    if (physicsConfiguration.mode !== "legacy_parity") {
+      const pv = site.pvConfiguration;
+      const inverterCount = Math.max(1, Math.round(pv.inverterCount ?? 1));
+      const modulesPerString = Math.max(
+        1,
+        Math.round(pv.modulesPerString ?? Math.min(17, layout.moduleCount || 1)),
+      );
+      const stringsPerInverter = Math.max(
+        1,
+        Math.round(
+          pv.stringsPerInverter ??
+            Math.ceil(layout.moduleCount / modulesPerString / inverterCount),
+        ),
+      );
+      const physics = simulatePhysicsTimestep({
+        timestamp: siteTimeToDate(site.simulationDate, hour, timezone),
+        latitudeDeg: site.location.latitude,
+        longitudeDeg: site.location.longitude,
+        elevationM:
+          (site.location.terrainElevationM ?? 0) +
+          site.siteGeometry.buildingHeightM,
+        ghiWm2: ghi,
+        dniWm2: dni,
+        dhiWm2: dhi,
+        ambientTemperatureC,
+        windSpeedMs: weatherPoint?.windSpeed ?? 0,
+        relativeHumidityPercent: weatherPoint?.relativeHumidity,
+        rainMm: weatherPoint?.precipitation,
+        rowCount: Math.max(1, layout.rows),
+        rowPitchM:
+          pv.moduleLength + site.siteGeometry.array.rowSpacingM,
+        collectorWidthM: pv.moduleLength,
+        clearanceM: site.siteGeometry.array.rackHeightM,
+        fixedTiltDeg: site.siteGeometry.array.tiltDeg,
+        fixedAzimuthDeg: site.siteGeometry.array.azimuthDeg,
+        maximumTrackerAngleDeg: 0,
+        groundCoverageRatio:
+          layout.usableArea.areaM2 > 0
+            ? clamp(
+                (layout.moduleCount * pv.moduleLength * pv.moduleWidth) /
+                  layout.usableArea.areaM2,
+                0,
+                1,
+              )
+            : 0,
+        groundAlbedo: site.siteGeometry.surfaceAlbedo,
+        moduleCount: layout.moduleCount,
+        modulesPerString,
+        stringsPerInverter,
+        inverterCount,
+        mpptCountPerInverter: selectedInverter.dc.independentMpptInputs,
+        maxStringsPerMppt: selectedInverter.dc.stringsPerMppt,
+        mppVoltageMinV: selectedInverter.dc.mppVoltageMinV,
+        mppVoltageMaxV: selectedInverter.dc.mppVoltageMaxV,
+        maxInputVoltageV: selectedInverter.dc.maxInputVoltageV,
+        maxOperatingCurrentPerMpptA:
+          selectedInverter.dc.maxOperatingCurrentPerMpptA,
+        maxShortCircuitCurrentPerMpptA:
+          selectedInverter.dc.maxShortCircuitCurrentPerMpptA,
+        ratedAcPowerPerInverterW: selectedInverter.ac.ratedActivePowerW,
+        module: {
+          pmaxW: pv.modulePower,
+          vmppV: pv.moduleVmpp ?? pv.modulePower / 10,
+          imppA: pv.moduleImpp ?? 10,
+          vocV: pv.moduleVoc ?? (pv.moduleVmpp ?? pv.modulePower / 10) * 1.2,
+          iscA: pv.moduleIsc ?? (pv.moduleImpp ?? 10) * 1.05,
+          tempCoeffPmaxPercentPerC: pv.temperatureCoefficientPmax,
+          tempCoeffVocPercentPerC:
+            pv.moduleTempCoeffVocPercentPerC ?? -0.29,
+          tempCoeffIscPercentPerC:
+            pv.moduleTempCoeffIscPercentPerC ?? 0.05,
+          noctC: pv.moduleNOCT,
+          efficiencyFraction: pv.moduleEfficiency / 100,
+          cellsInSeries: pv.moduleCellsInSeries ?? 72,
+        },
+        configuration: {
+          ...physicsConfiguration,
+          trackingModel: "fixed_tilt",
+        },
+      });
+
+      return {
+        hour: weatherPoint?.hour ?? `${String(hour).padStart(2, "0")}:00`,
+        ghi: rounded(ghi, 1),
+        poaIrradiance: rounded(physics.irradiance.poaGlobalWm2, 1),
+        ambientTemperatureC: rounded(ambientTemperatureC, 1),
+        moduleTemperatureC: rounded(physics.thermal.cellTemperatureC, 1),
+        dcPowerKW: rounded(physics.dcAtInverterW / 1000, 3),
+        deliveredAcPowerKW: rounded(physics.netAcPowerW / 1000, 3),
+        solarAltitudeDeg: rounded(physics.solar.apparentElevationDeg, 1),
+        solarAzimuthDeg: rounded(physics.solar.azimuthDeg, 1),
+        angleOfIncidenceDeg: rounded(
+          physics.irradiance.angleOfIncidenceDeg,
+          1,
+        ),
+        physics,
+      };
+    }
+
     return {
       hour:
         weatherPoint?.hour ??
@@ -165,7 +285,7 @@ export function runFlatRoofSimulation(
   });
 
   const dailyEnergyKWh = hourly.reduce(
-    (sum, point) => sum + point.dcPowerKW,
+    (sum, point) => sum + (point.deliveredAcPowerKW ?? point.dcPowerKW),
     0,
   );
 

@@ -148,6 +148,11 @@ export const INVERTER_PROFILES:
           profile.efficiency
             .maximumEfficiency,
       },
+
+      nightSelfConsumptionW:
+        profile.general
+          .nightSelfConsumptionW ??
+        undefined,
     }),
   );
 

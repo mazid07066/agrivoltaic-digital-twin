@@ -7,6 +7,12 @@ export const LAND_ENGINE_VERSION =
 export const ROOFTOP_ENGINE_VERSION =
   "agritwin-rooftop-phase8c";
 
+export const LAND_PHYSICS_ENGINE_VERSION =
+  "agritwin-land-phase9h-9l-physics-v1";
+
+export const ROOFTOP_PHYSICS_ENGINE_VERSION =
+  "agritwin-rooftop-phase9h-9l-physics-v1";
+
 export const WEATHER_ADAPTER_VERSION =
   "agritwin-environment-9b-v1";
 
