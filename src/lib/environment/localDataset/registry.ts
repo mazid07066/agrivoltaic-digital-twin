@@ -133,7 +133,7 @@ export const LOCAL_ENVIRONMENT_DATASETS:
         "solar-mem-data-v1",
 
       name:
-        "Solar-MEM Measurement Dataset",
+        "World Bank/ESMAP Feni QC Measurements",
 
       description:
         "High-resolution measured solar and meteorological observations normalized by AgriTwin from one-minute logger records to hourly environmental records.",
@@ -148,7 +148,7 @@ export const LOCAL_ENVIRONMENT_DATASETS:
         "solar_mem",
 
       timezone:
-        "Asia/Dhaka",
+        "UTC",
 
       mode:
         "dataset",
@@ -172,7 +172,7 @@ export const LOCAL_ENVIRONMENT_DATASETS:
           "DHI_ThPyra2_Wm-2_avg",
 
         temperature:
-          null,
+          "Temp_ThHyg1_degC_avg",
 
         relativeHumidity:
           "RH_ThHyg1_per100_avg",
@@ -181,10 +181,10 @@ export const LOCAL_ENVIRONMENT_DATASETS:
           null,
 
         windSpeed:
-          null,
+          "WindSpeed_Anemo1_ms_avg",
 
         windDirection:
-          null,
+          "WindDir_Wvane1_deg_avg360",
 
         precipitation:
           "Precip_Pluvio1_mm_sum",
@@ -239,6 +239,42 @@ export const LOCAL_ENVIRONMENT_DATASETS:
 
         localOnly:
           true,
+
+        manifestDatasetId:
+          "world-bank-esmap-feni-qc-v1",
+
+        officialDatasetId:
+          "f23c1086-a5e2-4889-849d-cac110086900",
+
+        officialResourceId:
+          "a7190145-47c6-4926-b829-bf5c48501d2b",
+
+        stationId:
+          "BDFE2",
+
+        stationName:
+          "BDFE2 (Feni)",
+
+        stationLatitude:
+          22.80029,
+
+        stationLongitude:
+          91.35819,
+
+        stationElevationM:
+          5,
+
+        sourceTimezone:
+          "UTC",
+
+        sourceSha256:
+          "39a7697322612ff98e4e7a3454e3e8bd4eb206e53417973b73845394ec07d3c1",
+
+        validationScope:
+          "environmental_reconstruction",
+
+        dhakaApplicationClassification:
+          "spatial_transfer",
       },
     },
   ];

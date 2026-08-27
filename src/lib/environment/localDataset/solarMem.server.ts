@@ -1069,8 +1069,13 @@ export async function loadSolarMemEnvironmentalDataset(
        * not claim that the logger location equals
        * the scenario coordinate.
        */
-      resolvedCoordinate:
-        null,
+      resolvedCoordinate: {
+        latitude:
+          22.80029,
+
+        longitude:
+          91.35819,
+      },
 
       timezone:
         definition.timezone,
@@ -1086,7 +1091,7 @@ export async function loadSolarMemEnvironmentalDataset(
         null,
 
       providerElevationM:
-        null,
+        5,
 
       rawSourceMetadata: {
         filename:

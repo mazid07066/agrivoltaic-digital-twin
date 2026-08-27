@@ -1,0 +1,192 @@
+{
+  "schemaVersion": 1,
+  "datasetId": "world-bank-esmap-feni-qc-v1",
+  "title": "Bangladesh - Solar Radiation Measurement Data",
+  "publisher": "World Bank Group / ESMAP",
+  "serviceProvider": "Suntrace GmbH",
+  "officialDatasetId": "f23c1086-a5e2-4889-849d-cac110086900",
+  "officialSourceUrl": "https://energydata.info/dataset/bangladesh-solar-radiation-measurement-data",
+  "licence": {
+    "id": "CC-BY-4.0",
+    "title": "Creative Commons Attribution 4.0",
+    "url": "https://creativecommons.org/licenses/by/4.0/"
+  },
+  "citation": "World Bank Group and Energy Sector Management Assistance Program (ESMAP), Bangladesh - Solar Radiation Measurement Data, Feni station BDFE2.",
+  "retrievedAt": "2026-08-20T11:37:02Z",
+  "manifestCreatedAt": "2026-08-27T00:00:00Z",
+  "station": {
+    "id": "BDFE2",
+    "name": "BDFE2 (Feni)",
+    "hostInstitution": "Char Darbesh Adarsha Gram Government Primary School",
+    "equipment": "Helioscale omega station (Tier 1)",
+    "latitude": 22.80029,
+    "longitude": 91.35819,
+    "elevationM": 5,
+    "timezone": "UTC"
+  },
+  "measurementPeriod": {
+    "start": "2017-06-08T00:00:00Z",
+    "end": "2019-09-30T23:59:00Z",
+    "sourceResolution": "PT1M",
+    "expectedIntervalSeconds": 60
+  },
+  "resources": [
+    {
+      "id": "a7190145-47c6-4926-b829-bf5c48501d2b",
+      "role": "quality_controlled_measurements",
+      "name": "Solar-Measurements_Bangladesh_Feni_WB-ESMAP_QC",
+      "format": "CSV",
+      "url": "https://energydata.info/dataset/f23c1086-a5e2-4889-849d-cac110086900/resource/a7190145-47c6-4926-b829-bf5c48501d2b/download/solar-measurements_bangladesh_feni_wb-esmap_qc.csv",
+      "localPath": "../../environment/solar-mem-data.csv",
+      "fileSizeBytes": 423310809,
+      "sha256": "39a7697322612ff98e4e7a3454e3e8bd4eb206e53417973b73845394ec07d3c1",
+      "acquired": true,
+      "immutable": true
+    },
+    {
+      "id": "d45fd8f0-b2f3-4329-b555-d07cd08a381a",
+      "role": "schema_header",
+      "name": "Solar-Measurements_Bangladesh_Feni_WB-ESMAP_Header",
+      "format": "CSV",
+      "url": "https://energydata.info/dataset/f23c1086-a5e2-4889-849d-cac110086900/resource/d45fd8f0-b2f3-4329-b555-d07cd08a381a/download/solar-measurements_bangladesh_feni_wb-esmap_header.csv",
+      "localPath": "raw/solar-measurements_bangladesh_feni_wb-esmap_header.csv",
+      "fileSizeBytes": 6247,
+      "sha256": "227507f6c2988ebe73df444a55baed651f077500acfa881e02ab88ead89ee876",
+      "acquired": true,
+      "immutable": true
+    },
+    {
+      "id": "2f96955c-6f0b-48c3-a437-f4d122867b90",
+      "role": "raw_measurements",
+      "name": "Solar-Measurements_Bangladesh_Feni_WB-ESMAP_Raw",
+      "format": "ZIP",
+      "url": "https://energydata.info/dataset/f23c1086-a5e2-4889-849d-cac110086900/resource/2f96955c-6f0b-48c3-a437-f4d122867b90/download/solar-measurements_bangladesh_feni_wb-esmap_raw.zip",
+      "localPath": null,
+      "fileSizeBytes": null,
+      "sha256": null,
+      "acquired": false,
+      "immutable": true
+    },
+    {
+      "id": "98b12ff6-bcb1-4e8b-a4f8-b8be390e5628",
+      "role": "monthly_reports",
+      "name": "Solar-Measurements-Monthly-Reports_Bangladesh_Feni_WB-ESMAP",
+      "format": "ZIP",
+      "url": "https://energydata.info/dataset/f23c1086-a5e2-4889-849d-cac110086900/resource/98b12ff6-bcb1-4e8b-a4f8-b8be390e5628/download/solar-measurements-monthly-reports_bangladesh_feni_wb-esmap.zip",
+      "localPath": null,
+      "fileSizeBytes": null,
+      "sha256": null,
+      "acquired": false,
+      "immutable": true
+    }
+  ],
+  "scientificBoundaries": {
+    "validationScope": "environmental_reconstruction",
+    "isDhakaValidation": false,
+    "dhakaApplicationClassification": "spatial_transfer",
+    "fullDigitalTwinValidation": false,
+    "modelTrainingPerformed": false
+  },
+  "sensors": [
+    {
+      "variable": "ghi",
+      "manufacturer": "Hukseflux",
+      "model": "SR30-D1",
+      "serialNumber": "2062",
+      "heightM": 7,
+      "orientation": "horizontal",
+      "activeFrom": "2017-06-07",
+      "activeTo": null
+    },
+    {
+      "variable": "dhi",
+      "manufacturer": "Hukseflux",
+      "model": "SR30-D1",
+      "serialNumber": "2064",
+      "heightM": 7,
+      "orientation": "horizontal",
+      "activeFrom": "2017-06-07",
+      "activeTo": null
+    },
+    {
+      "variable": "dni",
+      "manufacturer": "Hukseflux",
+      "model": "DR01-T1",
+      "serialNumber": "8410",
+      "heightM": 8,
+      "orientation": null,
+      "activeFrom": "2017-06-07",
+      "activeTo": "2017-07-07"
+    },
+    {
+      "variable": "dni",
+      "manufacturer": "Hukseflux",
+      "model": "DR01-T1",
+      "serialNumber": "8411",
+      "heightM": 8,
+      "orientation": null,
+      "activeFrom": "2017-07-27",
+      "activeTo": null
+    },
+    {
+      "variable": "windSpeed",
+      "manufacturer": "Thies Clima",
+      "model": "4.3351.10000",
+      "serialNumber": "10159378",
+      "heightM": 11,
+      "orientation": "horizontal",
+      "activeFrom": "2017-06-07",
+      "activeTo": null
+    },
+    {
+      "variable": "windDirection",
+      "manufacturer": "Thies Clima",
+      "model": "4.3151.101212",
+      "serialNumber": "04171092",
+      "heightM": 9,
+      "orientation": null,
+      "activeFrom": "2017-06-07",
+      "activeTo": null
+    },
+    {
+      "variable": "ambientTemperature",
+      "manufacturer": "E+E",
+      "model": "EE08",
+      "serialNumber": "161005000123A9",
+      "heightM": 7,
+      "orientation": null,
+      "activeFrom": "2017-06-07",
+      "activeTo": null
+    },
+    {
+      "variable": "relativeHumidity",
+      "manufacturer": "E+E",
+      "model": "EE08",
+      "serialNumber": "161005000123A9",
+      "heightM": 7,
+      "orientation": null,
+      "activeFrom": "2017-06-07",
+      "activeTo": null
+    },
+    {
+      "variable": "atmosphericPressure",
+      "manufacturer": "Willmers Messtechnik",
+      "model": null,
+      "serialNumber": null,
+      "heightM": 7,
+      "orientation": null,
+      "activeFrom": "2017-06-07",
+      "activeTo": null
+    },
+    {
+      "variable": "precipitation",
+      "manufacturer": "Young",
+      "model": "52203",
+      "serialNumber": "TB 13714",
+      "heightM": 7,
+      "orientation": null,
+      "activeFrom": "2017-06-07",
+      "activeTo": null
+    }
+  ]
+}

@@ -46,3 +46,13 @@ phase-8a-backup-*/
 # AgriTwin private/local environmental datasets
 /data/environment/*
 !/data/environment/.gitkeep
+
+# Phase 10 measured-data generated and large artifacts
+/data/measured/world-bank-esmap-feni/raw/*
+!/data/measured/world-bank-esmap-feni/raw/solar-measurements_bangladesh_feni_wb-esmap_header.csv
+/data/measured/world-bank-esmap-feni/bronze/
+/data/measured/world-bank-esmap-feni/silver/
+
+# Python generated artifacts
+__pycache__/
+*.py[cod]
