@@ -524,7 +524,7 @@ export default function PowerOutputTimeSeries(
           chunks[index];
 
         setProgress(
-          `Loading weather batch ${index + 1} of ${chunks.length}…`,
+          `Loading weather batch ${index + 1} of ${chunks.length}: ${chunk.startDate} to ${chunk.endDate}…`,
         );
 
         const response =
@@ -554,9 +554,23 @@ export default function PowerOutputTimeSeries(
         );
 
         for (
-          const day of
-          response.days
+          let dayIndex = 0;
+          dayIndex < response.days.length;
+          dayIndex += 1
         ) {
+          if (
+            controller.signal.aborted
+          ) {
+            return;
+          }
+
+          const day =
+            response.days[dayIndex];
+
+          setProgress(
+            `Simulating batch ${index + 1} of ${chunks.length}: ${day.date} (${dayIndex + 1} of ${response.days.length} days)…`,
+          );
+
           const simulated =
             simulatePowerDay(
               props,
@@ -650,22 +664,24 @@ export default function PowerOutputTimeSeries(
             selectedHourly =
               simulated.hourly;
           }
-        }
 
-        /*
-         * Allow React to repaint between larger
-         * simulation batches.
-         */
-        await new Promise<void>(
-          (
-            resolve,
-          ) => {
-            window.setTimeout(
+          /*
+           * Physics/research mode can perform single-diode,
+           * row-mismatch and adaptive-tracker calculations.
+           * Yield between days so progress and Cancel remain
+           * responsive during long ranges in production.
+           */
+          await new Promise<void>(
+            (
               resolve,
-              0,
-            );
-          },
-        );
+            ) => {
+              window.setTimeout(
+                resolve,
+                0,
+              );
+            },
+          );
+        }
       }
 
       collected.sort(
@@ -729,7 +745,33 @@ export default function PowerOutputTimeSeries(
           "",
         );
       }
+
+      if (
+        abortRef.current ===
+        controller
+      ) {
+        abortRef.current =
+          null;
+      }
     }
+  }
+
+  function cancelSeriesLoad() {
+    abortRef.current?.abort();
+    abortRef.current =
+      null;
+
+    setLoading(
+      false,
+    );
+
+    setProgress(
+      "",
+    );
+
+    setError(
+      "Weather request cancelled. Choose a shorter range or retry.",
+    );
   }
 
   function exportPayload():
@@ -1099,25 +1141,39 @@ export default function PowerOutputTimeSeries(
           />
         </label>
 
-        <button
-          type="button"
-          onClick={
-            loadSeries
-          }
-          disabled={
-            loading ||
-            !startDate ||
-            (
-              mode === "range" &&
-              !endDate
-            )
-          }
-          className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-slate-300"
-        >
-          {loading
-            ? "Loading…"
-            : "Generate graph"}
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={
+              loadSeries
+            }
+            disabled={
+              loading ||
+              !startDate ||
+              (
+                mode === "range" &&
+                !endDate
+              )
+            }
+            className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+          >
+            {loading
+              ? "Loading…"
+              : "Generate graph"}
+          </button>
+
+          {loading ? (
+            <button
+              type="button"
+              onClick={
+                cancelSeriesLoad
+              }
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              Cancel
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <p className="mt-3 text-xs text-slate-500">

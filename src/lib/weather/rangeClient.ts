@@ -18,6 +18,9 @@ export interface WeatherRangeRequest {
 
   signal?:
     AbortSignal;
+
+  timeoutMs?:
+    number;
 }
 
 export async function getWeatherRange({
@@ -26,6 +29,7 @@ export async function getWeatherRange({
   startDate,
   endDate,
   signal,
+  timeoutMs = 30_000,
 }: WeatherRangeRequest): Promise<WeatherRangeResponse> {
   const parameters =
     new URLSearchParams({
@@ -40,24 +44,69 @@ export async function getWeatherRange({
       endDate,
     });
 
-  const response =
-    await fetch(
-      `/api/weather-range?${parameters.toString()}`,
-      {
-        method:
-          "GET",
+  const requestController =
+    new AbortController();
 
-        headers: {
-          Accept:
-            "application/json",
-        },
+  const forwardAbort = () =>
+    requestController.abort();
 
-        cache:
-          "no-store",
+  signal?.addEventListener(
+    "abort",
+    forwardAbort,
+    { once: true },
+  );
 
-        signal,
-      },
+  const timeout =
+    globalThis.setTimeout(
+      () =>
+        requestController.abort(),
+      timeoutMs,
     );
+
+  let response:
+    Response;
+
+  try {
+    response =
+      await fetch(
+        `/api/weather-range?${parameters.toString()}`,
+        {
+          method:
+            "GET",
+
+          headers: {
+            Accept:
+              "application/json",
+          },
+
+          cache:
+            "no-store",
+
+          signal:
+            requestController.signal,
+        },
+      );
+  } catch (error) {
+    if (
+      requestController.signal.aborted &&
+      !signal?.aborted
+    ) {
+      throw new Error(
+        `Weather batch timed out after ${Math.round(timeoutMs / 1000)} seconds. Retry the request; if it recurs, request a shorter date range.`,
+      );
+    }
+
+    throw error;
+  } finally {
+    globalThis.clearTimeout(
+      timeout,
+    );
+
+    signal?.removeEventListener(
+      "abort",
+      forwardAbort,
+    );
+  }
 
   const data =
     (

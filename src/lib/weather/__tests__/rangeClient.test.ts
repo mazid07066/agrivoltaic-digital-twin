@@ -69,5 +69,50 @@ describe(
         );
       },
     );
+
+    it(
+      "ends a stalled browser request at the configured deadline",
+      async () => {
+        vi.stubGlobal(
+          "fetch",
+          vi.fn(
+            (
+              _input: RequestInfo | URL,
+              init?: RequestInit,
+            ) =>
+              new Promise<Response>(
+                (
+                  _resolve,
+                  reject,
+                ) => {
+                  init?.signal?.addEventListener(
+                    "abort",
+                    () =>
+                      reject(
+                        new DOMException(
+                          "Aborted",
+                          "AbortError",
+                        ),
+                      ),
+                    { once: true },
+                  );
+                },
+              ),
+          ),
+        );
+
+        await expect(
+          getWeatherRange({
+            latitude: 23.81,
+            longitude: 90.41,
+            startDate: "2026-08-01",
+            endDate: "2026-08-27",
+            timeoutMs: 5,
+          }),
+        ).rejects.toThrow(
+          "Weather batch timed out",
+        );
+      },
+    );
   },
 );

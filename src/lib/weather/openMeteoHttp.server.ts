@@ -28,6 +28,26 @@ function requestOnce(
       resolve,
       reject,
     ) => {
+      let settled =
+        false;
+
+      const finish = <T>(
+        callback: (value: T) => void,
+        value: T,
+      ) => {
+        if (settled) {
+          return;
+        }
+
+        settled = true;
+        clearTimeout(
+          responseTimer,
+        );
+        callback(
+          value,
+        );
+      };
+
       const request =
         get(
           url,
@@ -78,21 +98,63 @@ function requestOnce(
             response.on(
               "end",
               () => {
-                resolve({
-                  statusCode:
-                    response.statusCode ??
-                    502,
+                finish(
+                  resolve,
+                  {
+                    statusCode:
+                      response.statusCode ??
+                      502,
 
-                  body:
-                    Buffer.concat(
-                      chunks,
-                    ).toString(
-                      "utf8",
-                    ),
-                });
+                    body:
+                      Buffer.concat(
+                        chunks,
+                      ).toString(
+                        "utf8",
+                      ),
+                  },
+                );
+              },
+            );
+
+            response.on(
+              "aborted",
+              () => {
+                finish(
+                  reject,
+                  new Error(
+                    "Open-Meteo closed the response before completion.",
+                  ),
+                );
+              },
+            );
+
+            response.on(
+              "error",
+              (error) => {
+                finish(
+                  reject,
+                  error,
+                );
               },
             );
           },
+        );
+
+      /*
+       * Use an absolute deadline. request.setTimeout() only
+       * measures socket inactivity and can wait indefinitely
+       * when an upstream response continues to trickle data.
+       */
+      const responseTimer =
+        setTimeout(
+          () => {
+            request.destroy(
+              new Error(
+                `Open-Meteo request exceeded the ${timeoutMs} ms total deadline.`,
+              ),
+            );
+          },
+          timeoutMs,
         );
 
       request.setTimeout(
@@ -111,7 +173,8 @@ function requestOnce(
         (
           error,
         ) => {
-          reject(
+          finish(
+            reject,
             error,
           );
         },
@@ -132,8 +195,8 @@ function retryableStatus(
 
 export async function requestOpenMeteoWithRetry({
   url,
-  attempts = 3,
-  timeoutMs = 20_000,
+  attempts = 2,
+  timeoutMs = 12_000,
 }: {
   url:
     string;

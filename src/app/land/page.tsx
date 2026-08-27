@@ -1110,12 +1110,6 @@ export default function Home() {
             </article>
           </section>
 
-          <PowerOutputTimeSeries
-            key={activeSite.updatedAt}
-            siteKind="land"
-            site={activeSite}
-          />
-
           <LandScientificModelPanel
             site={activeSite}
             results={results}
@@ -1125,6 +1119,12 @@ export default function Home() {
             electrical={electrical}
             onUpdatePV={updatePV}
             onUpdateSite={updateSite}
+          />
+
+          <PowerOutputTimeSeries
+            key={activeSite.updatedAt}
+            siteKind="land"
+            site={activeSite}
           />
 
           <section className="content-card engineering-table-card">
