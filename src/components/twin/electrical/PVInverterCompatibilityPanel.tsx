@@ -1,6 +1,11 @@
 "use client";
 
 import {
+  useMemo,
+  useState,
+} from "react";
+
+import {
   assessPVInverterCompatibility,
 } from "@/lib/electrical/compatibility";
 
@@ -20,6 +25,12 @@ import type {
   PVConfiguration,
 } from "@/types/simulation";
 
+import {
+  createBalancedMpptAllocation,
+  parseMpptAllocation,
+  validateMpptAllocation,
+} from "@/lib/electrical/mpptAllocation";
+
 interface PVInverterCompatibilityPanelProps {
   module: PVModuleProfile;
   inverter: InverterCatalogueProfile;
@@ -27,6 +38,7 @@ interface PVInverterCompatibilityPanelProps {
   modulesPerString: number | null;
   stringsPerInverter?: number | null;
   stringsPerMppt: number | null;
+  mpptStringAllocation?: number[] | null;
   minimumDesignTemperatureC: number | null;
   maximumDesignCellTemperatureC?: number | null;
   bifacialCurrentFactor?: number | null;
@@ -38,6 +50,7 @@ interface PVInverterCompatibilityPanelProps {
         | "modulesPerString"
         | "stringsPerInverter"
         | "stringsPerMppt"
+        | "mpptStringAllocation"
         | "minimumDesignTemperatureC"
         | "maximumDesignCellTemperatureC"
         | "bifacialCurrentFactor"
@@ -86,47 +99,84 @@ export default function PVInverterCompatibilityPanel({
   modulesPerString,
   stringsPerInverter = null,
   stringsPerMppt,
+  mpptStringAllocation = null,
   minimumDesignTemperatureC,
   maximumDesignCellTemperatureC = null,
   bifacialCurrentFactor = null,
   inverterCount = 1,
   onChange,
 }: PVInverterCompatibilityPanelProps) {
-  const derivedStringsPerMppt =
+  const generatedMpptAllocation =
     stringsPerInverter !== null &&
     Number.isInteger(stringsPerInverter) &&
     stringsPerInverter > 0
-      ? Math.ceil(
-          stringsPerInverter /
+      ? createBalancedMpptAllocation(
+          stringsPerInverter,
           inverter.dc.independentMpptInputs,
         )
+      : null;
+
+  const effectiveMpptAllocation =
+    mpptStringAllocation ??
+    generatedMpptAllocation;
+
+  const derivedStringsPerMppt =
+    effectiveMpptAllocation &&
+    effectiveMpptAllocation.length > 0
+      ? Math.max(...effectiveMpptAllocation)
       : stringsPerMppt;
 
-  const mpptAllocation =
-    stringsPerInverter !== null &&
-    Number.isInteger(stringsPerInverter) &&
-    stringsPerInverter > 0
-      ? Array.from(
-          {
-            length:
-              inverter.dc.independentMpptInputs,
-          },
-          (_, index) => {
-            const base =
-              Math.floor(
-                stringsPerInverter /
-                inverter.dc.independentMpptInputs,
-              );
+  const [allocationDraftOverride, setAllocationDraftOverride] =
+    useState<string | null>(null);
 
-            const remainder =
-              stringsPerInverter %
-              inverter.dc.independentMpptInputs;
+  const allocationDraft =
+    allocationDraftOverride ??
+    effectiveMpptAllocation?.join(", ") ??
+    "";
 
-            return base +
-              (index < remainder ? 1 : 0);
-          },
-        )
-      : null;
+  const allocationValidation = useMemo(() => {
+    if (
+      stringsPerInverter === null ||
+      !Number.isInteger(stringsPerInverter) ||
+      stringsPerInverter <= 0
+    ) {
+      return {
+        valid: false,
+        allocation: [] as number[],
+        errors: [
+          "Enter total strings per inverter before editing the MPPT allocation.",
+        ],
+      };
+    }
+
+    const parsed = parseMpptAllocation(
+      allocationDraft,
+    );
+
+    if (!parsed) {
+      return {
+        valid: false,
+        allocation: [] as number[],
+        errors: [
+          "Enter comma-separated whole numbers, for example 1,1,1,1,1,2.",
+        ],
+      };
+    }
+
+    return validateMpptAllocation(parsed, {
+      mpptCount:
+        inverter.dc.independentMpptInputs,
+      totalStrings:
+        stringsPerInverter,
+      maximumStringsPerMppt:
+        inverter.dc.stringsPerMppt,
+    });
+  }, [
+    allocationDraft,
+    inverter.dc.independentMpptInputs,
+    inverter.dc.stringsPerMppt,
+    stringsPerInverter,
+  ]);
 
   const report =
     assessPVInverterCompatibility({
@@ -242,6 +292,8 @@ export default function PVInverterCompatibilityPanel({
             value={stringsPerInverter ?? ""}
             placeholder="Not specified"
             onChange={(event) => {
+              setAllocationDraftOverride(null);
+
               const total =
                 optionalNumber(
                   event.target.value,
@@ -250,6 +302,9 @@ export default function PVInverterCompatibilityPanel({
               onChange({
                 stringsPerInverter:
                   total,
+
+                mpptStringAllocation:
+                  null,
 
                 stringsPerMppt:
                   total === null
@@ -360,14 +415,94 @@ export default function PVInverterCompatibilityPanel({
         </label>
       </div>
 
-      {mpptAllocation ? (
-        <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs leading-5 text-emerald-900">
-          <strong>
-            Generated MPPT allocation:
-          </strong>{" "}
-          [{mpptAllocation.join(", ")}]
+      <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs leading-5 text-emerald-900">
+        <label className="block font-semibold" htmlFor="mppt-string-allocation">
+          MPPT string allocation
+        </label>
+
+        <p className="mt-1 text-emerald-800">
+          Enter one value per MPPT. Zero keeps an MPPT inactive.
+          The values must sum to the total strings per inverter.
+        </p>
+
+        <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+          <input
+            id="mppt-string-allocation"
+            type="text"
+            value={allocationDraft}
+            placeholder={
+              createBalancedMpptAllocation(
+                stringsPerInverter ?? 0,
+                inverter.dc.independentMpptInputs,
+              ).join(",")
+            }
+            onChange={(event) =>
+              setAllocationDraftOverride(
+                event.target.value,
+              )
+            }
+            className="min-w-0 flex-1 rounded-lg border border-emerald-300 bg-white px-3 py-2 font-mono"
+          />
+
+          <button
+            type="button"
+            disabled={!allocationValidation.valid}
+            onClick={() => {
+              setAllocationDraftOverride(null);
+
+              onChange({
+                mpptStringAllocation:
+                  allocationValidation.allocation,
+                stringsPerMppt:
+                  Math.max(
+                    ...allocationValidation.allocation,
+                  ),
+              });
+            }}
+            className="rounded-lg bg-emerald-700 px-3 py-2 font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+          >
+            Apply allocation
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              const balanced =
+                createBalancedMpptAllocation(
+                  stringsPerInverter ?? 0,
+                  inverter.dc.independentMpptInputs,
+                );
+
+              setAllocationDraftOverride(null);
+
+              onChange({
+                mpptStringAllocation: null,
+                stringsPerMppt:
+                  balanced.length > 0
+                    ? Math.max(...balanced)
+                    : null,
+              });
+            }}
+            className="rounded-lg border border-emerald-300 bg-white px-3 py-2 font-semibold text-emerald-800"
+          >
+            Use balanced
+          </button>
         </div>
-      ) : null}
+
+        {!allocationValidation.valid ? (
+          <ul className="mt-2 list-disc pl-5 text-amber-800">
+            {allocationValidation.errors.map(
+              (error) => (
+                <li key={error}>{error}</li>
+              ),
+            )}
+          </ul>
+        ) : (
+          <p className="mt-2 font-medium text-emerald-800">
+            Valid allocation: [{allocationValidation.allocation.join(", ")}]
+          </p>
+        )}
+      </div>
 
       <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs leading-5 text-blue-900">
         <strong>Chosen-design mode:</strong>{" "}
@@ -427,6 +562,8 @@ export default function PVInverterCompatibilityPanel({
                   ),
                 stringsPerMppt:
                   recommendedDesign.stringsPerMppt,
+                mpptStringAllocation:
+                  null,
                 inverterCount:
                   recommendedDesign.inverterCount,
               });

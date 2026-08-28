@@ -229,6 +229,11 @@ export function executeResolvedSimulation(
               .stringsPerMppt ??
             null,
 
+          mpptStringAllocation:
+            sitePvConfiguration
+              .mpptStringAllocation ??
+            null,
+
           inverterCount:
             input.scenario
               .technicalConfig

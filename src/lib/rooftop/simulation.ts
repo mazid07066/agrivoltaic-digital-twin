@@ -210,6 +210,8 @@ export function runFlatRoofSimulation(
         inverterCount,
         mpptCountPerInverter: selectedInverter.dc.independentMpptInputs,
         maxStringsPerMppt: selectedInverter.dc.stringsPerMppt,
+        mpptStringAllocation:
+          pv.mpptStringAllocation,
         mppVoltageMinV: selectedInverter.dc.mppVoltageMinV,
         mppVoltageMaxV: selectedInverter.dc.mppVoltageMaxV,
         maxInputVoltageV: selectedInverter.dc.maxInputVoltageV,

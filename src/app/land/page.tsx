@@ -283,6 +283,10 @@ export default function Home() {
             configuration.pv.stringsPerMppt ??
             null,
 
+          mpptStringAllocation:
+            configuration.pv.mpptStringAllocation ??
+            null,
+
           inverterCount:
             configuration.pv.inverterCount ??
             1,
@@ -306,6 +310,7 @@ export default function Home() {
         configuration.pv.modulesPerString,
         configuration.pv.stringsPerInverter,
         configuration.pv.stringsPerMppt,
+        configuration.pv.mpptStringAllocation,
         configuration.pv.inverterCount,
         selectedModule.id,
       ],
@@ -655,6 +660,10 @@ export default function Home() {
               }
               stringsPerMppt={
                 configuration.pv.stringsPerMppt ??
+                null
+              }
+              mpptStringAllocation={
+                configuration.pv.mpptStringAllocation ??
                 null
               }
               minimumDesignTemperatureC={

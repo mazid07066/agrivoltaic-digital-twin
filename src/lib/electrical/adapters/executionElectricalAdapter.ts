@@ -47,12 +47,17 @@ import {
   findPVModuleProfile,
 } from "@/lib/pv/moduleProfiles";
 
+import {
+  resolveMpptAllocation,
+} from "@/lib/electrical/mpptAllocation";
+
 export interface ElectricalExecutionDesign {
   moduleProfileId: string;
   moduleCount: number | null;
   modulesPerString: number | null;
   stringsPerInverter: number | null;
   stringsPerMppt: number | null;
+  mpptStringAllocation?: number[] | null;
   inverterCount: number | null;
 }
 
@@ -258,20 +263,35 @@ export function createElectricalSimulationResult(
       configuredInverterCount,
     );
 
-  /*
-   * Total strings per inverter is authoritative.
-   *
-   * Seven strings across six MPPTs therefore produces
-   * [2, 1, 1, 1, 1, 1].
-   */
-  const derivedStringsPerMppt =
+  const resolvedMpptStringAllocation =
     positiveInteger(
       designStringsPerInverter,
     )
-      ? Math.ceil(
-          designStringsPerInverter /
-            specification.dc
-              .independentMpptInputs,
+      ? (() => {
+          try {
+            return resolveMpptAllocation(
+              design?.mpptStringAllocation,
+              {
+                mpptCount:
+                  specification.dc
+                    .independentMpptInputs,
+                totalStrings:
+                  designStringsPerInverter,
+                maximumStringsPerMppt:
+                  specification.dc
+                    .stringsPerMppt,
+              },
+            );
+          } catch {
+            return null;
+          }
+        })()
+      : null;
+
+  const derivedStringsPerMppt =
+    resolvedMpptStringAllocation
+      ? Math.max(
+          ...resolvedMpptStringAllocation,
         )
       : null;
 
@@ -311,6 +331,7 @@ export function createElectricalSimulationResult(
     positiveInteger(
       designStringsPerInverter,
     ) &&
+    resolvedMpptStringAllocation !== null &&
     derivedStringsPerMppt !== null &&
     derivedStringsPerMppt <=
       specification.dc.stringsPerMppt &&
@@ -350,6 +371,9 @@ export function createElectricalSimulationResult(
 
                   stringsPerMppt:
                     derivedStringsPerMppt!,
+
+                  mpptStringAllocation:
+                    resolvedMpptStringAllocation!,
 
                   inverterCount:
                     configuredInverterCount,
@@ -551,7 +575,7 @@ export function createElectricalSimulationResult(
 
       mpptAllocationAssumption:
         useDesignedTopology
-          ? `${designStringsPerInverter} chosen strings per inverter are balanced independently across ${specification.dc.independentMpptInputs} MPPT inputs, with a maximum of ${derivedStringsPerMppt} strings on one MPPT.`
+          ? `${designStringsPerInverter} chosen strings per inverter use the explicit MPPT allocation [${resolvedMpptStringAllocation!.join(", ")}], with a maximum of ${derivedStringsPerMppt} strings on one MPPT.`
           : `Aggregate PV power is equally allocated across ${plantSpecification.dc.independentMpptInputs} MPPT inputs and ${plantSpecification.dc.stringsPerMppt} strings per MPPT. This is a demonstration allocation, not measured string telemetry. Isc values remain unavailable.`,
 
       loadProfileAssumption:

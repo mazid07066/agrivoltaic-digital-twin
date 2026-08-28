@@ -5,6 +5,11 @@ import type {
   InverterStringInput,
 } from "./types";
 
+import {
+  createBalancedMpptAllocation,
+  resolveMpptAllocation,
+} from "../mpptAllocation";
+
 export interface DemonstrationMpptAllocationInput {
   availablePowerKw:
     number;
@@ -374,6 +379,9 @@ export interface DesignedDcTopologyInput {
    */
   stringsPerInverter?: number;
 
+  /** Exact per-inverter allocation in MPPT order. */
+  mpptStringAllocation?: number[];
+
   moduleVmppV: number;
   moduleTemperatureC: number;
   voltageTemperatureCoefficientPercentPerC: number;
@@ -582,24 +590,28 @@ export function createDesignedDcInput(
   const mpptCountPerInverter =
     specification.dc.independentMpptInputs;
 
-  const allocationStringCount =
-    input.stringsPerInverter ??
-    totalStringCount;
-
-  const allocationChannelCount =
+  const perInverterAllocation =
     input.stringsPerInverter !== undefined
-      ? mpptCountPerInverter
-      : plantMpptCount;
+      ? resolveMpptAllocation(
+          input.mpptStringAllocation,
+          {
+            mpptCount:
+              mpptCountPerInverter,
+            totalStrings:
+              input.stringsPerInverter,
+            maximumStringsPerMppt:
+              specification.dc.stringsPerMppt,
+          },
+        )
+      : null;
 
-  const baseStringsPerChannel =
-    Math.floor(
-      allocationStringCount /
-      allocationChannelCount,
-    );
-
-  const additionalStringChannels =
-    allocationStringCount %
-    allocationChannelCount;
+  const plantAllocation =
+    perInverterAllocation === null
+      ? createBalancedMpptAllocation(
+          totalStringCount,
+          plantMpptCount,
+        )
+      : null;
 
   const mppts: InverterMpptInput[] =
     Array.from(
@@ -612,19 +624,17 @@ export function createDesignedDcInput(
         mpptIndexZeroBased,
       ) => {
         const allocationChannelIndex =
-          input.stringsPerInverter !== undefined
-            ? mpptIndexZeroBased %
-              mpptCountPerInverter
-            : mpptIndexZeroBased;
+          mpptIndexZeroBased %
+          mpptCountPerInverter;
 
         const assignedStrings =
-          baseStringsPerChannel +
-          (
-            allocationChannelIndex <
-            additionalStringChannels
-              ? 1
-              : 0
-          );
+          perInverterAllocation
+            ? perInverterAllocation[
+                allocationChannelIndex
+              ] ?? 0
+            : plantAllocation?.[
+                mpptIndexZeroBased
+              ] ?? 0;
 
         if (
           assignedStrings >

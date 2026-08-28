@@ -4,6 +4,10 @@ import {
 } from "@/lib/electrical/inverter/catalogue";
 
 import {
+  resolveMpptAllocation,
+} from "@/lib/electrical/mpptAllocation";
+
+import {
   buildElectricalTopologyRows,
 } from "@/lib/validationExchange";
 
@@ -190,21 +194,23 @@ export function buildPayloadTopology(
   const assignments:
     ValidationMpptAssignment[] = [];
 
+  const allocation =
+    resolveMpptAllocation(
+      pv.mpptStringAllocation,
+      {
+        mpptCount,
+        totalStrings:
+          stringsPerInverter,
+        maximumStringsPerMppt:
+          inverter.dc.stringsPerMppt,
+      },
+    );
+
   for (
     let inverterIndex = 1;
     inverterIndex <= inverterCount;
     inverterIndex += 1
   ) {
-    const base =
-      Math.floor(
-        stringsPerInverter /
-        mpptCount,
-      );
-
-    const remainder =
-      stringsPerInverter %
-      mpptCount;
-
     for (
       let mpptIndex = 1;
       mpptIndex <= mpptCount;
@@ -214,12 +220,9 @@ export function buildPayloadTopology(
         inverterIndex,
         mpptIndex,
         stringCount:
-          base +
-          (
-            mpptIndex <= remainder
-              ? 1
-              : 0
-          ),
+          allocation[
+            mpptIndex - 1
+          ] ?? 0,
         modulesPerString,
       });
     }

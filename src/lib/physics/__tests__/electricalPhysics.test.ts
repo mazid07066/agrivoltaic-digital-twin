@@ -86,4 +86,34 @@ describe("Phase 9H/9L electrical physics", () => {
     expect(mppts[0].currentA).toBeCloseTo(18.74, 2);
     expect(mppts[0].status).toBe("NORMAL");
   });
+
+  it("respects an explicit [1,1,1,1,1,2] dynamic-MPPT allocation", () => {
+    const modulePoint = calculateModuleOperatingPoint({
+      model: "simple_power",
+      datasheet: moduleDatasheet,
+      effectiveIrradianceWm2: 1000,
+      cellTemperatureC: 25,
+    });
+    const strings = createStringOperatingPoints({
+      module: modulePoint,
+      stringCount: 7,
+      modulesPerString: 17,
+    });
+    const mppts = evaluateDynamicMppts({
+      strings,
+      mpptCount: 6,
+      stringAllocation: [1, 1, 1, 1, 1, 2],
+      mppVoltageMinV: 500,
+      mppVoltageMaxV: 800,
+      maxInputVoltageV: 1000,
+      maxOperatingCurrentPerMpptA: 20,
+      maxShortCircuitCurrentPerMpptA: 30,
+      maxStringsPerMppt: 2,
+    });
+
+    expect(
+      mppts.map((point) => point.strings.length),
+    ).toEqual([1, 1, 1, 1, 1, 2]);
+    expect(mppts[5].currentA).toBeCloseTo(18.74, 2);
+  });
 });

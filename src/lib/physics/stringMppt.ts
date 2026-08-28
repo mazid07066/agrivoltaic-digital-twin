@@ -41,15 +41,61 @@ export function createStringOperatingPoints(input: {
 export function allocateStringsToMppts(
   strings: StringOperatingPoint[],
   mpptCount: number,
+  stringAllocation?: readonly number[] | null,
 ): StringOperatingPoint[][] {
   const groups = Array.from(
     { length: Math.max(1, Math.round(mpptCount)) },
     () => [] as StringOperatingPoint[],
   );
-  strings.forEach((string, index) => {
-    if (index < groups.length) groups[index].push(string);
-    else groups[index % groups.length].push(string);
-  });
+  if (stringAllocation) {
+    if (stringAllocation.length !== groups.length) {
+      throw new Error(
+        `MPPT allocation has ${stringAllocation.length} entries; expected ${groups.length}.`,
+      );
+    }
+
+    if (
+      stringAllocation.some(
+        (value) => !Number.isInteger(value) || value < 0,
+      )
+    ) {
+      throw new Error(
+        "MPPT allocation values must be non-negative whole numbers.",
+      );
+    }
+
+    const allocatedCount = stringAllocation.reduce(
+      (sum, value) => sum + value,
+      0,
+    );
+
+    if (allocatedCount !== strings.length) {
+      throw new Error(
+        `MPPT allocation assigns ${allocatedCount} strings; expected ${strings.length}.`,
+      );
+    }
+
+    let stringOffset = 0;
+
+    stringAllocation.forEach(
+      (count, mpptIndex) => {
+        groups[mpptIndex].push(
+          ...strings.slice(
+            stringOffset,
+            stringOffset + count,
+          ),
+        );
+
+        stringOffset += count;
+      },
+    );
+  } else {
+    strings.forEach((string, index) => {
+      if (index < groups.length) groups[index].push(string);
+      else groups[index % groups.length].push(string);
+    });
+  }
+
   return groups;
 }
 
@@ -62,8 +108,13 @@ export function evaluateDynamicMppts(input: {
   maxOperatingCurrentPerMpptA: number;
   maxShortCircuitCurrentPerMpptA: number;
   maxStringsPerMppt: number;
+  stringAllocation?: number[] | null;
 }): MpptOperatingPoint[] {
-  return allocateStringsToMppts(input.strings, input.mpptCount).map(
+  return allocateStringsToMppts(
+    input.strings,
+    input.mpptCount,
+    input.stringAllocation,
+  ).map(
     (strings, index) => {
       if (strings.length === 0) {
         return {

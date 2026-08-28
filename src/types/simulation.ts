@@ -64,6 +64,14 @@ export interface PVConfiguration {
    */
   stringsPerMppt?: number | null;
 
+  /**
+   * Exact number of strings assigned to each MPPT on every
+   * identical inverter, in MPPT order. For the six-input SMA
+   * inverter, seven strings may be represented as
+   * [1, 1, 1, 1, 1, 2].
+   */
+  mpptStringAllocation?: number[] | null;
+
   minimumDesignTemperatureC?: number | null;
 
   /**

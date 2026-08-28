@@ -53,6 +53,7 @@ export interface PhysicsTimestepInput {
   inverterCount: number;
   mpptCountPerInverter: number;
   maxStringsPerMppt: number;
+  mpptStringAllocation?: number[] | null;
   mppVoltageMinV: number;
   mppVoltageMaxV: number;
   maxInputVoltageV: number;
@@ -306,6 +307,8 @@ export function simulatePhysicsTimestep(
       maxOperatingCurrentPerMpptA: input.maxOperatingCurrentPerMpptA,
       maxShortCircuitCurrentPerMpptA: input.maxShortCircuitCurrentPerMpptA,
       maxStringsPerMppt: input.maxStringsPerMppt,
+      stringAllocation:
+        input.mpptStringAllocation,
     }).map((point) => ({
       ...point,
       mpptIndex: inverterIndex * input.mpptCountPerInverter + point.mpptIndex,

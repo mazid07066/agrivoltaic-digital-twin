@@ -362,6 +362,11 @@ export default function RooftopDashboard() {
               .stringsPerMppt ??
             null,
 
+          mpptStringAllocation:
+            site.pvConfiguration
+              .mpptStringAllocation ??
+            null,
+
           inverterCount:
             site.pvConfiguration
               .inverterCount ??
@@ -385,6 +390,7 @@ export default function RooftopDashboard() {
         site.pvConfiguration.modulesPerString,
         site.pvConfiguration.stringsPerInverter,
         site.pvConfiguration.stringsPerMppt,
+        site.pvConfiguration.mpptStringAllocation,
         site.pvConfiguration.inverterCount,
       ],
     );
@@ -907,6 +913,11 @@ export default function RooftopDashboard() {
                 stringsPerMppt={
                   site.pvConfiguration
                     .stringsPerMppt ??
+                  null
+                }
+                mpptStringAllocation={
+                  site.pvConfiguration
+                    .mpptStringAllocation ??
                   null
                 }
                 minimumDesignTemperatureC={

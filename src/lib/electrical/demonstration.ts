@@ -183,6 +183,7 @@ export function simulateDemonstrationElectricalTimestep({
   modulesPerString,
   stringsPerInverter,
   stringsPerMppt,
+  mpptStringAllocation,
   inverterCount,
   moduleTemperatureC,
 }: {
@@ -194,6 +195,7 @@ export function simulateDemonstrationElectricalTimestep({
   modulesPerString?: number | null;
   stringsPerInverter?: number | null;
   stringsPerMppt?: number | null;
+  mpptStringAllocation?: number[] | null;
   inverterCount?: number | null;
   moduleTemperatureC?: number | null;
 }): DemonstrationElectricalTimestep {
@@ -313,6 +315,13 @@ export function simulateDemonstrationElectricalTimestep({
             moduleCount,
             modulesPerString,
             stringsPerMppt,
+            ...(
+              mpptStringAllocation
+                ? {
+                    mpptStringAllocation,
+                  }
+                : {}
+            ),
             inverterCount:
               configuredInverterCount,
             ...(

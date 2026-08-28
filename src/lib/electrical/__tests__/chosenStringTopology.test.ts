@@ -110,6 +110,40 @@ describe(
     );
 
     it(
+      "applies a valid explicit allocation instead of rebalancing it",
+      () => {
+        const result =
+          simulateDemonstrationElectricalTimestep({
+            timestamp:
+              "2026-08-23T12:00:00",
+            pvPowerKw: 42,
+            inverterProfileId,
+            moduleProfileId,
+            moduleCount: 119,
+            modulesPerString: 17,
+            stringsPerInverter: 7,
+            stringsPerMppt: 2,
+            mpptStringAllocation: [
+              1,
+              1,
+              1,
+              1,
+              1,
+              2,
+            ],
+            inverterCount: 1,
+            moduleTemperatureC: 45,
+          });
+
+        expect(
+          result.inverter.dcInput.mppts.map(
+            (mppt) => mppt.strings.length,
+          ),
+        ).toEqual([1, 1, 1, 1, 1, 2]);
+      },
+    );
+
+    it(
       "does not apply a chosen topology without enough installed modules",
       () => {
         const result =

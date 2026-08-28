@@ -23,6 +23,7 @@ function createDefaultPVConfiguration() {
     modulesPerString: null,
     stringsPerInverter: null,
     stringsPerMppt: null,
+    mpptStringAllocation: null,
     minimumDesignTemperatureC: null,
     maximumDesignCellTemperatureC: null,
     bifacialCurrentFactor: null,
