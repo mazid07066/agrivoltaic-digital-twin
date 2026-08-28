@@ -45,13 +45,14 @@ function numericValue(
     : 0;
 }
 
-function average(values: number[]): number {
-  if (values.length === 0) {
-    return 0;
+function average(values: Array<number | null>): number | null {
+  const available = values.filter((value): value is number => typeof value === "number");
+  if (available.length === 0) {
+    return null;
   }
 
-  return values.reduce((total, value) => total + value, 0) /
-    values.length;
+  return available.reduce((total, value) => total + value, 0) /
+    available.length;
 }
 
 function isValidDate(date: string): boolean {

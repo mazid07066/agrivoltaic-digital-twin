@@ -116,16 +116,19 @@ function toLegacyHourlyPoint(
 
 function average(
   values:
-    number[],
-): number {
+    Array<number | null>,
+): number | null {
+  const available = values.filter(
+    (value): value is number => typeof value === "number",
+  );
   if (
-    values.length === 0
+    available.length === 0
   ) {
-    return 0;
+    return null;
   }
 
   return (
-    values.reduce(
+    available.reduce(
       (
         sum,
         value,
@@ -133,7 +136,7 @@ function average(
         sum + value,
       0,
     ) /
-    values.length
+    available.length
   );
 }
 

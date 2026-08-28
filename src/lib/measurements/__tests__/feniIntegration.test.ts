@@ -31,7 +31,7 @@ describe(
         expect(definition).not.toBeNull();
         expect(
           definition?.timezone,
-        ).toBe("UTC");
+        ).toBe("Asia/Dhaka");
         expect(
           definition?.metadata
             ?.stationId,

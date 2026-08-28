@@ -6,9 +6,13 @@ export interface WeatherHourlyPoint {
   diffuseRadiation: number;
   temperature: number;
   relativeHumidity: number;
-  cloudCover: number;
+  cloudCover: number | null;
   windSpeed: number;
   precipitation: number;
+  pressure?: number | null;
+  windDirection?: number | null;
+  qualityStatus?: "complete" | "partial" | "invalid";
+  validSourceMinutes?: number;
 }
 
 export interface WeatherSummary {
@@ -22,9 +26,9 @@ export interface WeatherSummary {
   minimumTemperature: number;
   totalPrecipitation: number;
   maximumWindSpeed: number;
-  averageCloudCover: number;
+  averageCloudCover: number | null;
   dailyGHI: number;
-  source: "Open-Meteo";
+  source: "Open-Meteo" | "World Bank/ESMAP Feni BDFE2";
 }
 
 export interface WeatherResponse {
@@ -41,7 +45,12 @@ export interface WeatherApiError {
 export type WeatherSeriesSource =
   | "historical"
   | "forecast"
+  | "measured"
   | "mixed";
+
+export type WeatherProvider =
+  | "open_meteo"
+  | "feni_measured";
 
 export interface WeatherRangeSegment {
   source:
@@ -76,6 +85,31 @@ export interface WeatherRangePlan {
 
   segments:
     WeatherRangeSegment[];
+
+  provider?: WeatherProvider;
+
+  station?: {
+    id: string;
+    name: string;
+    latitude: number;
+    longitude: number;
+    elevationM: number;
+  };
+
+  target?: {
+    latitude: number;
+    longitude: number;
+    classification: "co_located" | "spatial_transfer";
+  };
+
+  dataset?: {
+    id: string;
+    license: string;
+    sourceTimezone: "UTC";
+    applicationTimezone: "Asia/Dhaka";
+    normalizedResolution: "1 hour";
+    sha256: string;
+  };
 }
 
 export interface WeatherRangeDay {
@@ -84,7 +118,8 @@ export interface WeatherRangeDay {
 
   source:
     | "historical"
-    | "forecast";
+    | "forecast"
+    | "measured";
 
   weather:
     WeatherResponse;

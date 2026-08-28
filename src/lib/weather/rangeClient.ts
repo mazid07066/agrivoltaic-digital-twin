@@ -1,5 +1,6 @@
 import type {
   WeatherApiError,
+  WeatherProvider,
   WeatherRangeResponse,
 } from "@/types/weather";
 
@@ -21,6 +22,8 @@ export interface WeatherRangeRequest {
 
   timeoutMs?:
     number;
+
+  provider?: WeatherProvider;
 }
 
 export async function getWeatherRange({
@@ -30,6 +33,7 @@ export async function getWeatherRange({
   endDate,
   signal,
   timeoutMs = 30_000,
+  provider = "open_meteo",
 }: WeatherRangeRequest): Promise<WeatherRangeResponse> {
   const parameters =
     new URLSearchParams({
@@ -42,6 +46,8 @@ export async function getWeatherRange({
       startDate,
 
       endDate,
+
+      provider,
     });
 
   const requestController =

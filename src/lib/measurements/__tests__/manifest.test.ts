@@ -129,6 +129,13 @@ describe(
           FENI_VALIDATION_SITE
             .station.timezone,
         ).toBe(
+          "Asia/Dhaka",
+        );
+
+        expect(
+          FENI_VALIDATION_SITE
+            .sourceTimezone,
+        ).toBe(
           "UTC",
         );
 

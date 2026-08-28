@@ -1,0 +1,43 @@
+{
+  "schema": "agritwin-feni-hourly-manifest-v1",
+  "datasetId": "world-bank-esmap-feni-bdfe2-hourly-bst-v1",
+  "station": {
+    "id": "BDFE2",
+    "name": "BDFE2 (Feni)",
+    "latitude": 22.80029,
+    "longitude": 91.35819,
+    "elevationM": 5
+  },
+  "publisher": "World Bank Group / ESMAP",
+  "license": "CC BY 4.0",
+  "sourceTimezone": "UTC",
+  "applicationTimezone": "Asia/Dhaka",
+  "sourceResolution": "1 minute",
+  "normalizedResolution": "1 hour",
+  "aggregation": {
+    "irradianceTemperatureHumidityWindPressure": "arithmetic mean of valid source minutes",
+    "precipitation": "sum of valid source minutes",
+    "windDirection": "circular mean",
+    "cloudCover": "not measured; retained as null"
+  },
+  "sourceRows": 1216800,
+  "hourlyRows": 20280,
+  "sourceStartUtc": "2017-06-08T00:00:00Z",
+  "sourceEndUtc": "2019-09-30T23:59:00Z",
+  "localStart": "2017-06-08T06:00:00+06:00",
+  "localEnd": "2019-10-01T05:00:00+06:00",
+  "completeLocalDayStart": "2017-06-09",
+  "completeLocalDayEnd": "2019-09-30",
+  "invalidLocalDates": [
+    "2017-07-07",
+    "2017-07-08"
+  ],
+  "qualityStatusCounts": {
+    "complete": 20241,
+    "partial": 23,
+    "invalid": 16
+  },
+  "sourceSha256": "39a7697322612ff98e4e7a3454e3e8bd4eb206e53417973b73845394ec07d3c1",
+  "derivativeSha256": "f3ca4069ff99aee7bc0e6a874db0ae341c204c4d75f721bf1a4066661d0a2355",
+  "generatedAt": "2026-08-28T14:14:21.743783Z"
+}

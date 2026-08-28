@@ -52,6 +52,8 @@ phase-8a-backup-*/
 !/data/measured/world-bank-esmap-feni/raw/solar-measurements_bangladesh_feni_wb-esmap_header.csv
 /data/measured/world-bank-esmap-feni/bronze/
 /data/measured/world-bank-esmap-feni/silver/
+/data/weather/*raw*.csv
+/data/weather/solar-measurements_bangladesh_feni_wb-esmap_qc.csv
 
 # Python generated artifacts
 __pycache__/

@@ -371,6 +371,14 @@ export async function exportResearchWorkbook(
             row.windSpeed,
           precipitation_mm:
             row.precipitationMm,
+          pressure_hpa:
+            row.pressureHpa ?? "",
+          wind_direction_deg:
+            row.windDirectionDeg ?? "",
+          source_quality:
+            row.qualityStatus ?? "not supplied",
+          valid_source_minutes:
+            row.validSourceMinutes ?? "",
         }),
       ),
     ),
@@ -507,7 +515,27 @@ export async function exportResearchWorkbook(
           field:
             "weather_provider",
           value:
-            "Open-Meteo",
+            payload.weatherProvider ?? "open_meteo",
+        },
+        {
+          field:
+            "weather_dataset_id",
+          value:
+            payload.weatherDatasetId ?? "Open-Meteo request",
+        },
+        {
+          field:
+            "weather_station",
+          value:
+            payload.weatherStation
+              ? `${payload.weatherStation.id} · ${payload.weatherStation.name} · ${payload.weatherStation.latitude}, ${payload.weatherStation.longitude}`
+              : "Configured site coordinates",
+        },
+        {
+          field:
+            "weather_application_classification",
+          value:
+            payload.weatherApplicationClassification ?? "location_specific",
         },
         {
           field:

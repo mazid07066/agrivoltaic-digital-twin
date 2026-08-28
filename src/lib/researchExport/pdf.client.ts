@@ -908,8 +908,14 @@ export function exportResearchPdf(
     payload,
     cursor,
     "Weather",
-    `Open-Meteo ${payload.summary.source} series`,
+    payload.weatherProvider === "feni_measured"
+      ? `World Bank/ESMAP Feni BDFE2 measured series (${payload.weatherApplicationClassification ?? "classification unavailable"})`
+      : `Open-Meteo ${payload.summary.source} series`,
   );
+
+  if (payload.weatherDatasetId) {
+    keyValue(document, payload, cursor, "Weather dataset", payload.weatherDatasetId);
+  }
 
   keyValue(
     document,

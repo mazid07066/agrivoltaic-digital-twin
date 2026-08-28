@@ -114,20 +114,22 @@ function numericValue(
 }
 
 function average(
-  values:
-    number[],
-): number {
-  if (values.length === 0) {
-    return 0;
+  values: Array<number | null>,
+): number | null {
+  const available = values.filter(
+    (value): value is number => typeof value === "number",
+  );
+  if (available.length === 0) {
+    return null;
   }
 
   return (
-    values.reduce(
+    available.reduce(
       (total, value) =>
         total + value,
       0,
     ) /
-    values.length
+    available.length
   );
 }
 

@@ -14,7 +14,7 @@ export interface ResearchHourlyPowerRow {
   hour: string;
   timestampLocal: string;
   timezone: string;
-  source: "historical" | "forecast";
+  source: "historical" | "forecast" | "measured";
   powerKw: number;
 }
 
@@ -23,15 +23,19 @@ export interface ResearchWeatherRow {
   hour: string;
   timestampLocal: string;
   timezone: string;
-  source: "historical" | "forecast";
+  source: "historical" | "forecast" | "measured";
   ghiWM2: number;
   dniWM2: number;
   dhiWM2: number;
   temperatureC: number;
   relativeHumidityPercent: number;
-  cloudCoverPercent: number;
+  cloudCoverPercent: number | null;
   windSpeed: number;
   precipitationMm: number;
+  pressureHpa?: number | null;
+  windDirectionDeg?: number | null;
+  qualityStatus?: "complete" | "partial" | "invalid";
+  validSourceMinutes?: number;
 }
 
 export interface ResearchExportPayload {
@@ -49,4 +53,14 @@ export interface ResearchExportPayload {
   hourlyPower: ResearchHourlyPowerRow[];
   weather: ResearchWeatherRow[];
   warnings: string[];
+  weatherProvider?: "open_meteo" | "feni_measured";
+  weatherDatasetId?: string;
+  weatherStation?: {
+    id: string;
+    name: string;
+    latitude: number;
+    longitude: number;
+    elevationM: number;
+  };
+  weatherApplicationClassification?: "co_located" | "spatial_transfer";
 }

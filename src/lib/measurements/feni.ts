@@ -20,12 +20,13 @@ export const FENI_VALIDATION_SITE = {
     latitude: 22.80029,
     longitude: 91.35819,
     elevationM: 5,
-    timezone: "UTC",
+    timezone: "Asia/Dhaka",
   } satisfies MeasurementStationIdentity,
   measurementPeriod: {
     start: "2017-06-08T00:00:00Z",
     end: "2019-09-30T23:59:00Z",
   },
+  sourceTimezone: "UTC",
   datasetId:
     FENI_VALIDATION_DATASET_ID,
   source:

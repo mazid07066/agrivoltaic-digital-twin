@@ -114,5 +114,38 @@ describe(
         );
       },
     );
+
+    it("forwards the selected provider without source mixing", async () => {
+      const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        void input;
+        void init;
+        return new Response(JSON.stringify({
+        schema: "agritwin-weather-range-v1",
+        plan: {
+          schema: "agritwin-weather-range-plan-v1",
+          requestedStartDate: "2019-09-30",
+          requestedEndDate: "2019-09-30",
+          earliestHistoricalDate: "2017-06-09",
+          latestForecastDate: "2019-09-30",
+          source: "measured",
+          segments: [],
+          provider: "feni_measured",
+        },
+        days: [],
+        warnings: [],
+        }), { status: 200, headers: { "Content-Type": "application/json" } });
+      });
+      vi.stubGlobal("fetch", fetchMock);
+
+      await getWeatherRange({
+        latitude: 22.80029,
+        longitude: 91.35819,
+        startDate: "2019-09-30",
+        endDate: "2019-09-30",
+        provider: "feni_measured",
+      });
+
+      expect(String(fetchMock.mock.calls[0][0])).toContain("provider=feni_measured");
+    });
   },
 );

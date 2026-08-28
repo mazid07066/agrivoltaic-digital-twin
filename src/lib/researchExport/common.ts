@@ -365,7 +365,9 @@ export function researchFormulaRows():
 export function researchAssumptions():
   string[] {
   return [
-    "Open-Meteo weather values are external modeled/reanalysis/forecast inputs, not on-site measurements.",
+    "Weather provenance is provider-specific: Open-Meteo values are modeled/reanalysis/forecast inputs; Feni BDFE2 values are measured station observations normalized from UTC one-minute records to Asia/Dhaka hourly records.",
+    "Feni cloud cover is not measured and remains N/A; it is never replaced with Open-Meteo data.",
+    "Applying Feni station weather to a non-Feni site is spatial transfer and must not be described as co-located validation.",
     "Legacy-parity mode uses the historical aggregate system-efficiency parameter; physics/reference modes disable it and use explicit named losses.",
     "Soiling, mismatch, wiring, auxiliary, availability, degradation and curtailment parameters retain source classifications and enabled states.",
     "Negative module-quality loss represents a gain relative to nominal rather than an additional loss.",

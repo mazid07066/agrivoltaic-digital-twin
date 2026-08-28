@@ -136,19 +136,19 @@ export const LOCAL_ENVIRONMENT_DATASETS:
         "World Bank/ESMAP Feni QC Measurements",
 
       description:
-        "High-resolution measured solar and meteorological observations normalized by AgriTwin from one-minute logger records to hourly environmental records.",
+        "Runtime-safe measured solar and meteorological observations converted from UTC to Asia/Dhaka before deterministic one-minute-to-hourly aggregation.",
 
       filename:
-        "solar-mem-data.csv",
+        "feni-bdfe2-hourly-bst-v1.csv",
 
       format:
         "csv",
 
       parser:
-        "solar_mem",
+        "standard_csv",
 
       timezone:
-        "UTC",
+        "Asia/Dhaka",
 
       mode:
         "dataset",
@@ -160,37 +160,37 @@ export const LOCAL_ENVIRONMENT_DATASETS:
        */
       columnMap: {
         timestamp:
-          "JulianTime",
+          "timestamp_local",
 
         ghi:
-          "GHI_ThPyra1_Wm-2_avg",
+          "ghi_wm2",
 
         dni:
-          "DNI_ThPyrh1_Wm-2_avg",
+          "dni_wm2",
 
         dhi:
-          "DHI_ThPyra2_Wm-2_avg",
+          "dhi_wm2",
 
         temperature:
-          "Temp_ThHyg1_degC_avg",
+          "temperature_c",
 
         relativeHumidity:
-          "RH_ThHyg1_per100_avg",
+          "relative_humidity_pct",
 
         cloudCover:
           null,
 
         windSpeed:
-          "WindSpeed_Anemo1_ms_avg",
+          "wind_speed_ms",
 
         windDirection:
-          "WindDir_Wvane1_deg_avg360",
+          "wind_direction_deg",
 
         precipitation:
-          "Precip_Pluvio1_mm_sum",
+          "precipitation_mm",
 
         pressure:
-          "Pres_Logger1_hPa_avg",
+          "pressure_hpa",
 
         et0:
           null,
@@ -266,6 +266,18 @@ export const LOCAL_ENVIRONMENT_DATASETS:
 
         sourceTimezone:
           "UTC",
+
+        applicationTimezone:
+          "Asia/Dhaka",
+
+        completeLocalDayStart:
+          "2017-06-09",
+
+        completeLocalDayEnd:
+          "2019-09-30",
+
+        derivativeSha256:
+          "f3ca4069ff99aee7bc0e6a874db0ae341c204c4d75f721bf1a4066661d0a2355",
 
         sourceSha256:
           "39a7697322612ff98e4e7a3454e3e8bd4eb206e53417973b73845394ec07d3c1",

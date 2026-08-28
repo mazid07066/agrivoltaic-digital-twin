@@ -166,15 +166,19 @@ export default function WeatherConnectionCard({
             <span>Cloud cover</span>
 
             <strong>
-              {currentPoint
+              {currentPoint?.cloudCover !== null && currentPoint?.cloudCover !== undefined
                 ? currentPoint.cloudCover.toFixed(0)
-                : weather.summary.averageCloudCover.toFixed(0)}
-              <small> %</small>
+                : weather.summary.averageCloudCover !== null
+                  ? weather.summary.averageCloudCover.toFixed(0)
+                  : "N/A"}
+              {currentPoint?.cloudCover !== null && weather.summary.averageCloudCover !== null ? <small> %</small> : null}
             </strong>
 
             <p>
               Daily average:{" "}
-              {weather.summary.averageCloudCover.toFixed(0)}%
+              {weather.summary.averageCloudCover !== null
+                ? `${weather.summary.averageCloudCover.toFixed(0)}%`
+                : "N/A"}
             </p>
           </div>
         </article>

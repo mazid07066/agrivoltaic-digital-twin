@@ -25,6 +25,10 @@ import type {
   WeatherRangeResponse,
 } from "@/types/weather";
 
+import {
+  getFeniMeasuredRange,
+} from "@/lib/weather/feniMeasuredRange.server";
+
 export const dynamic =
   "force-dynamic";
 
@@ -107,6 +111,11 @@ export async function GET(
       "endDate",
     ) ?? "";
 
+  const provider =
+    searchParams.get("provider") === "feni_measured"
+      ? "feni_measured"
+      : "open_meteo";
+
   if (
     !validCoordinate(
       latitude,
@@ -143,6 +152,28 @@ export async function GET(
           400,
       },
     );
+  }
+
+  if (provider === "feni_measured") {
+    try {
+      return NextResponse.json(
+        await getFeniMeasuredRange({
+          startDate,
+          endDate,
+          targetLatitude: latitude,
+          targetLongitude: longitude,
+        }),
+      );
+    } catch (error) {
+      return NextResponse.json(
+        {
+          error: "Feni measured weather cannot provide the requested range.",
+          details: error instanceof Error ? error.message : "Unknown measured-weather error.",
+          retryable: false,
+        },
+        { status: 422 },
+      );
+    }
   }
 
   const todayDate =

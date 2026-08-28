@@ -39,6 +39,13 @@ import {
   OPEN_METEO_MAX_FUTURE_DAYS,
 } from "@/lib/weather/range";
 
+import {
+  FENI_COMPLETE_LOCAL_END_DATE,
+  FENI_COMPLETE_LOCAL_START_DATE,
+  FENI_DATASET_ID,
+  FENI_STATION,
+} from "@/lib/weather/feniMeasured";
+
 import type {
   FlatRoofSiteProfile,
   LandAgrivoltaicSiteProfile,
@@ -51,6 +58,7 @@ import type {
 } from "@/types/powerSeries";
 
 import type {
+  WeatherProvider,
   WeatherRangeDay,
 } from "@/types/weather";
 
@@ -268,6 +276,10 @@ function sourceLabel(
     return "Forecast";
   }
 
+  if (source === "measured") {
+    return "Measured · Feni BDFE2";
+  }
+
   return "Historical";
 }
 
@@ -293,6 +305,16 @@ export default function PowerOutputTimeSeries(
         today,
       ],
     );
+
+  const [
+    weatherProvider,
+    setWeatherProvider,
+  ] = useState<WeatherProvider>("open_meteo");
+
+  const [
+    applicationClassification,
+    setApplicationClassification,
+  ] = useState<"co_located" | "spatial_transfer" | null>(null);
 
   const [
     mode,
@@ -404,6 +426,39 @@ export default function PowerOutputTimeSeries(
         dailyPoints,
       ],
     );
+
+  const measuredWeather = weatherProvider === "feni_measured";
+  const minimumDate = measuredWeather
+    ? FENI_COMPLETE_LOCAL_START_DATE
+    : OPEN_METEO_EARLIEST_DATE;
+  const maximumDate = measuredWeather
+    ? FENI_COMPLETE_LOCAL_END_DATE
+    : latestForecastDate;
+
+  function clearGeneratedSeries() {
+    abortRef.current?.abort();
+    setDailyPoints([]);
+    setHourlyPoints([]);
+    setExportHourlyPower([]);
+    setExportWeather([]);
+    setWarnings([]);
+    setError("");
+    setExportStatus("");
+    setApplicationClassification(null);
+  }
+
+  function chooseWeatherProvider(provider: WeatherProvider) {
+    clearGeneratedSeries();
+    setWeatherProvider(provider);
+    if (provider === "feni_measured") {
+      setMode("day");
+      setStartDate(FENI_COMPLETE_LOCAL_END_DATE);
+      setEndDate(FENI_COMPLETE_LOCAL_END_DATE);
+    } else {
+      setStartDate(props.site.simulationDate);
+      setEndDate(props.site.simulationDate);
+    }
+  }
 
   function chooseDay(
     date:
@@ -547,7 +602,16 @@ export default function PowerOutputTimeSeries(
 
             signal:
               controller.signal,
+
+            provider:
+              weatherProvider,
           });
+
+        if (response.plan.provider && response.plan.provider !== weatherProvider) {
+          throw new Error("Weather provider isolation check failed; mixed-source execution was rejected.");
+        }
+
+        setApplicationClassification(response.plan.target?.classification ?? null);
 
         collectedWarnings.push(
           ...response.warnings,
@@ -648,6 +712,18 @@ export default function PowerOutputTimeSeries(
 
                 cloudCoverPercent:
                   point.cloudCover,
+
+                pressureHpa:
+                  point.pressure ?? null,
+
+                windDirectionDeg:
+                  point.windDirection ?? null,
+
+                qualityStatus:
+                  point.qualityStatus,
+
+                validSourceMinutes:
+                  point.validSourceMinutes,
 
                 windSpeed:
                   point.windSpeed,
@@ -810,6 +886,21 @@ export default function PowerOutputTimeSeries(
         exportWeather,
 
       warnings,
+
+      weatherProvider,
+
+      weatherDatasetId:
+        measuredWeather
+          ? FENI_DATASET_ID
+          : undefined,
+
+      weatherStation:
+        measuredWeather
+          ? FENI_STATION
+          : undefined,
+
+      weatherApplicationClassification:
+        applicationClassification ?? undefined,
     };
   }
 
@@ -928,18 +1019,22 @@ export default function PowerOutputTimeSeries(
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <span className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">
-            Open-Meteo power series
+            {measuredWeather
+              ? "Feni measured-weather power series"
+              : "Open-Meteo power series"}
           </span>
 
           <h2 className="mt-1 text-lg font-semibold text-slate-900">
-            PV power history and forecast
+            {measuredWeather
+              ? "PV power from measured Feni weather"
+              : "PV power history and forecast"}
           </h2>
 
           <p className="mt-1 max-w-3xl text-sm text-slate-500">
-            View hourly modeled power for one day or daily
-            modeled energy across a selected historical and
-            forecast range. Existing digital-twin outputs
-            remain unchanged.
+            Choose exactly one weather provider. Open-Meteo supplies
+            location-specific historical/forecast inputs; Feni supplies
+            measured hourly inputs only within its verified local-date
+            coverage. Sources are never blended or silently substituted.
           </p>
         </div>
 
@@ -980,7 +1075,38 @@ export default function PowerOutputTimeSeries(
         ) : null}
       </div>
 
-      <div className="mt-5 flex flex-wrap gap-2">
+      <div className="mt-5 grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-2">
+        <label className="space-y-1 text-xs text-slate-700">
+          <span className="font-medium">Weather data source</span>
+          <select
+            value={weatherProvider}
+            onChange={(event) => chooseWeatherProvider(event.target.value as WeatherProvider)}
+            disabled={loading}
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2"
+          >
+            <option value="open_meteo">Open-Meteo · location-specific</option>
+            <option value="feni_measured">Feni BDFE2 · measured dataset</option>
+          </select>
+        </label>
+
+        <div className="rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-600">
+          {measuredWeather ? (
+            <>
+              <strong className="text-slate-800">World Bank/ESMAP BDFE2, Feni</strong>
+              <p className="mt-1">UTC logger data converted to Asia/Dhaka, then aggregated from 1-minute records to 1-hour inputs. Cloud cover is N/A.</p>
+              <p className="mt-1 font-medium text-amber-700">Use at another site is spatial transfer, not co-located validation.</p>
+            </>
+          ) : (
+            <>
+              <strong className="text-slate-800">Open-Meteo</strong>
+              <p className="mt-1">Historical, reanalysis, and forecast weather resolved for the configured site coordinates.</p>
+            </>
+          )}
+        </div>
+      </div>
+
+      {!measuredWeather ? (
+      <div className="mt-3 flex flex-wrap gap-2">
         <button
           type="button"
           onClick={() =>
@@ -1030,6 +1156,7 @@ export default function PowerOutputTimeSeries(
           Last 30 days
         </button>
       </div>
+      ) : null}
 
       <div className="mt-4 grid gap-3 md:grid-cols-[auto_1fr_1fr_auto] md:items-end">
         <label className="space-y-1 text-xs text-slate-700">
@@ -1081,10 +1208,10 @@ export default function PowerOutputTimeSeries(
           <input
             type="date"
             min={
-              OPEN_METEO_EARLIEST_DATE
+              minimumDate
             }
             max={
-              latestForecastDate
+              maximumDate
             }
             value={
               startDate
@@ -1120,7 +1247,7 @@ export default function PowerOutputTimeSeries(
               startDate
             }
             max={
-              latestForecastDate
+              maximumDate
             }
             value={
               mode === "day"
@@ -1177,10 +1304,15 @@ export default function PowerOutputTimeSeries(
       </div>
 
       <p className="mt-3 text-xs text-slate-500">
-        Historical coverage begins{" "}
-        {OPEN_METEO_EARLIEST_DATE}. Forecast availability
-        currently ends{" "}
-        {latestForecastDate}.
+        {measuredWeather ? (
+          <>
+            Complete Bangladesh local-day coverage is {FENI_COMPLETE_LOCAL_START_DATE} to {FENI_COMPLETE_LOCAL_END_DATE}. Requests including 2017-07-07 or 2017-07-08 are rejected because a 16-hour DNI/DHI outage would invalidate the physics calculation.
+          </>
+        ) : (
+          <>
+            Historical coverage begins {OPEN_METEO_EARLIEST_DATE}. Forecast availability currently ends {latestForecastDate}.
+          </>
+        )}
       </p>
 
       {exportStatus ? (

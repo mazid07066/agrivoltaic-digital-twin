@@ -26,7 +26,8 @@ export interface DailyPowerPoint {
 
   source:
     "historical"
-    | "forecast";
+    | "forecast"
+    | "measured";
 }
 
 export interface PowerSeriesSummary {
