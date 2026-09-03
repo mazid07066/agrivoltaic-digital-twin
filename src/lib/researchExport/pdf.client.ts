@@ -950,7 +950,7 @@ export function exportResearchPdf(
   }
 
   if (
-    payload.warnings.length > 0
+    [...new Set(payload.warnings)].length > 0
   ) {
     heading(
       document,
@@ -961,7 +961,7 @@ export function exportResearchPdf(
 
     for (
       const warning of
-      payload.warnings
+      [...new Set(payload.warnings)]
     ) {
       paragraph(
         document,

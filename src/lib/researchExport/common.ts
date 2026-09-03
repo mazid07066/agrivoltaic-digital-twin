@@ -405,3 +405,13 @@ export function exportBasename(
     "_",
   );
 }
+
+export function deduplicateResearchWarnings(
+  warnings: string[],
+): string[] {
+  return [
+    ...new Set(
+      warnings,
+    ),
+  ];
+}

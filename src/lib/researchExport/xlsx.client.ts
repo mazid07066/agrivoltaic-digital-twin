@@ -484,7 +484,7 @@ export async function exportResearchWorkbook(
 
     createSheet(
       "Warnings",
-      payload.warnings.map(
+      [...new Set(payload.warnings)].map(
         (
           warning,
           index,

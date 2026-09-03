@@ -293,3 +293,70 @@ describe(
     );
   },
 );
+
+describe(
+  "Phase 9N original diagnostic 25C-to-65C regression",
+  () => {
+    it(
+      "keeps CS1U-420MS long-range gamma within the original diagnostic acceptance band",
+      () => {
+        const p25 =
+          calculateModuleOperatingPoint(
+            {
+              model:
+                "single_diode",
+
+              datasheet:
+                CANADIAN_SOLAR_CS1U_420MS,
+
+              effectiveIrradianceWm2:
+                1000,
+
+              cellTemperatureC:
+                25,
+            },
+          );
+
+        const p65 =
+          calculateModuleOperatingPoint(
+            {
+              model:
+                "single_diode",
+
+              datasheet:
+                CANADIAN_SOLAR_CS1U_420MS,
+
+              effectiveIrradianceWm2:
+                1000,
+
+              cellTemperatureC:
+                65,
+            },
+          );
+
+        const gamma25to65 =
+          (
+            (
+              p65.pmpW /
+              p25.pmpW
+            ) -
+            1
+          ) /
+          40 *
+          100;
+
+        expect(
+          gamma25to65,
+        ).toBeGreaterThan(
+          -0.45,
+        );
+
+        expect(
+          gamma25to65,
+        ).toBeLessThan(
+          -0.29,
+        );
+      },
+    );
+  },
+);
