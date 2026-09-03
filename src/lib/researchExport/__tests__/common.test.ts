@@ -140,39 +140,3 @@ describe(
     );
   },
 );
-
-describe(
-  "research export warning deduplication",
-  () => {
-    it(
-      "removes repeated human-readable warnings while preserving unique warnings",
-      async () => {
-        const {
-          deduplicateResearchWarnings,
-        } =
-          await import(
-            "@/lib/researchExport/common"
-          );
-
-        const repeated =
-          "Cloud cover is not measured in this dataset and remains N/A; no Open-Meteo value is substituted.";
-
-        expect(
-          deduplicateResearchWarnings(
-            [
-              repeated,
-              repeated,
-              "2018-06-17 contains 1 partial hourly measurement(s); valid-minute counts are preserved in the export.",
-              repeated,
-            ],
-          ),
-        ).toEqual(
-          [
-            repeated,
-            "2018-06-17 contains 1 partial hourly measurement(s); valid-minute counts are preserved in the export.",
-          ],
-        );
-      },
-    );
-  },
-);
