@@ -305,9 +305,9 @@ export function researchFormulaRows():
       equation:
         "I = IL − I0·(exp((V+I·Rs)/a)−1) − (V+I·Rs)/Rsh",
       parameters:
-        "Effective irradiance, cell temperature and datasheet-estimated five parameters",
+        "Effective irradiance, cell temperature and datasheet-calibrated five reference parameters",
       note:
-        "MPP is selected from the calculated I–V curve in physics/reference mode.",
+        "The five-parameter model is calibrated against manufacturer STC and temperature-coefficient constraints. MPP is solved numerically; sampled I–V points are retained only for visualization.",
     },
     {
       quantity:

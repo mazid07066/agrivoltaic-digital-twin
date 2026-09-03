@@ -158,7 +158,7 @@ export function runSimulation(
             pv.moduleTempCoeffIscPercentPerC ?? 0.05,
           noctC: pv.moduleNOCT,
           efficiencyFraction: pv.moduleEfficiency / 100,
-          cellsInSeries: pv.moduleCellsInSeries ?? 72,
+          cellsInSeries: pv.moduleCellsInSeries ?? undefined,
         },
         configuration: {
           ...physicsConfiguration,

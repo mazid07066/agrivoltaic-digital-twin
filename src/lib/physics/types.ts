@@ -164,6 +164,53 @@ export interface ModuleOperatingPoint {
   impA: number;
   vmpV: number;
   pmpW: number;
+
+  /**
+   * Phase 9N calibrated single-diode scientific validation.
+   * Present only for the calibrated single-diode model.
+   */
+  singleDiodeValidation?: {
+    status:
+      | "PASS"
+      | "WARNING"
+      | "FAIL";
+
+    converged: boolean;
+
+    optimizerIterationsTotal: number;
+
+    modelVersion: string;
+
+    parameterSourceCategory:
+      | "calibrated";
+
+    parameters: {
+      photoCurrentRefA: number;
+      saturationCurrentRefA: number;
+      seriesResistanceOhm: number;
+      shuntResistanceRefOhm: number;
+      modifiedDiodeFactorRefV: number;
+    };
+
+    residuals: {
+      pmpRelative: number;
+      vmpRelative: number;
+      impRelative: number;
+      vocRelative: number;
+      iscRelative: number;
+      gammaPmaxAbsolutePercentPerC: number;
+      betaVocAbsolutePercentPerC: number;
+    };
+
+    cellsInSeries:
+      number | null;
+
+    diodeIdealityFactor:
+      number | null;
+
+    warnings: string[];
+  };
+
   ivCurve?: Array<{ voltageV: number; currentA: number; powerW: number }>;
 }
 

@@ -354,6 +354,42 @@ export default function LandScientificModelPanel({
                 {point.physics.module.pmpW.toFixed(1)} W
               </p>
             </div>
+            {point.physics.module.singleDiodeValidation ? (
+              <div className="rounded-lg bg-white p-3">
+                <span className="text-slate-500">
+                  Module-model validation
+                </span>
+
+                <p className="mt-1 font-semibold text-slate-900">
+                  {point.physics.module.singleDiodeValidation.status}
+                  {" · "}
+                  γ error{" "}
+                  {point.physics.module.singleDiodeValidation.residuals.gammaPmaxAbsolutePercentPerC.toFixed(4)}
+                  {" pp/°C · "}
+                  β error{" "}
+                  {point.physics.module.singleDiodeValidation.residuals.betaVocAbsolutePercentPerC.toFixed(4)}
+                  {" pp/°C"}
+                </p>
+
+                <p className="mt-1 text-slate-500">
+                  Solver{" "}
+                  {point.physics.module.singleDiodeValidation.converged
+                    ? "converged"
+                    : "not converged"}
+                  {" · "}
+                  {point.physics.module.singleDiodeValidation.optimizerIterationsTotal}
+                  {" optimizer iterations"}
+                </p>
+
+                {point.physics.module.singleDiodeValidation.warnings.length > 0 ? (
+                  <p className="mt-1 text-amber-700">
+                    {point.physics.module.singleDiodeValidation.warnings.join(
+                      " ",
+                    )}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
             <div className="rounded-lg bg-white p-3">
               <span className="text-slate-500">DC at inverter</span>
               <p className="mt-1 font-semibold text-slate-900">
