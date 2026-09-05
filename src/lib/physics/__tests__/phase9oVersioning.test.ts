@@ -10,33 +10,33 @@ import {
 } from "@/lib/execution/versions";
 
 describe(
-  "Phase 9N physics identity",
+  "Phase 9O physics versioning",
   () => {
     it(
-      "uses distinct post-correction engine versions",
+      "identifies Land and Rooftop runs as relative-row-shading physics",
       () => {
         expect(
           LAND_PHYSICS_ENGINE_VERSION,
         ).toContain(
-          "phase9n-single-diode",
+          "phase9o-relative-row-shading",
         );
 
         expect(
           ROOFTOP_PHYSICS_ENGINE_VERSION,
         ).toContain(
-          "phase9n-single-diode",
+          "phase9o-relative-row-shading",
         );
 
         expect(
           LAND_PHYSICS_ENGINE_VERSION,
-        ).not.toBe(
-          "agritwin-land-phase9h-9l-physics-v1",
+        ).not.toContain(
+          "phase9n-single-diode",
         );
 
         expect(
           ROOFTOP_PHYSICS_ENGINE_VERSION,
-        ).not.toBe(
-          "agritwin-rooftop-phase9h-9l-physics-v1",
+        ).not.toContain(
+          "phase9n-single-diode",
         );
       },
     );

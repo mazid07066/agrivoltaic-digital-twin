@@ -8,10 +8,10 @@ export const ROOFTOP_ENGINE_VERSION =
   "agritwin-rooftop-phase8c";
 
 export const LAND_PHYSICS_ENGINE_VERSION =
-  "agritwin-land-phase9n-single-diode-v2";
+  "agritwin-land-phase9o-relative-row-shading-v1";
 
 export const ROOFTOP_PHYSICS_ENGINE_VERSION =
-  "agritwin-rooftop-phase9n-single-diode-v2";
+  "agritwin-rooftop-phase9o-relative-row-shading-v1";
 
 export const WEATHER_ADAPTER_VERSION =
   "agritwin-environment-9b-v1";
