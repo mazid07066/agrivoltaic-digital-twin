@@ -1,0 +1,564 @@
+.page {
+  min-height: 100vh;
+  padding: 32px;
+  background:
+    linear-gradient(
+      180deg,
+      #f7faf8 0%,
+      #eef4f0 100%
+    );
+  color: #17231c;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  gap: 32px;
+  max-width: 1500px;
+  margin: 0 auto 24px;
+}
+
+.header h1 {
+  margin: 8px 0 10px;
+  font-size: clamp(
+    2rem,
+    4vw,
+    3.25rem
+  );
+  line-height: 1.05;
+}
+
+.backLink {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.eyebrow {
+  margin: 24px 0 0;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+.subtitle {
+  max-width: 850px;
+  margin: 0;
+  color: #53625a;
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.statusCard {
+  align-self: flex-end;
+  min-width: 240px;
+  padding: 20px;
+  border: 1px solid #d7e1da;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow:
+    0 8px 28px
+    rgba(23, 35, 28, 0.05);
+}
+
+.statusCard strong,
+.statusCard span {
+  display: block;
+}
+
+.statusLabel {
+  margin-bottom: 8px;
+  color: #68776e;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.statusDetail {
+  margin-top: 8px;
+  color: #6e7a73;
+  font-size: 0.85rem;
+}
+
+.principles {
+  display: grid;
+  grid-template-columns:
+    repeat(
+      3,
+      minmax(0, 1fr)
+    );
+  gap: 12px;
+  max-width: 1500px;
+  margin: 0 auto 20px;
+}
+
+.principles > div {
+  padding: 16px 18px;
+  border: 1px solid #dce5df;
+  border-radius: 12px;
+  background: rgba(
+    255,
+    255,
+    255,
+    0.76
+  );
+}
+
+.principles strong,
+.principles span {
+  display: block;
+}
+
+.principles span {
+  margin-top: 5px;
+  color: #65736b;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 5px;
+  overflow-x: auto;
+  border: 1px solid #d8e1db;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.tab,
+.activeTab {
+  padding: 11px 18px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #647168;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.activeTab {
+  background: #1d3c2a;
+  color: #ffffff;
+}
+
+.panel {
+  max-width: 1500px;
+  margin: 16px auto 0;
+  padding: 28px;
+  border: 1px solid #d8e1db;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow:
+    0 8px 30px
+    rgba(23, 35, 28, 0.04);
+}
+
+.panel h2 {
+  margin: 0;
+}
+
+.panelHeading {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.panelHeading p,
+.panel > p {
+  margin: 7px 0 0;
+  color: #66746c;
+  line-height: 1.55;
+}
+
+.importGrid {
+  display: grid;
+  grid-template-columns:
+    repeat(
+      3,
+      minmax(0, 1fr)
+    );
+  gap: 14px;
+}
+
+.importCard {
+  min-height: 150px;
+  padding: 20px;
+  border: 1px solid #e0e7e2;
+  border-radius: 12px;
+  background: #fafcfb;
+}
+
+.cardNumber {
+  color: #829087;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.importCard h3 {
+  margin: 18px 0 8px;
+}
+
+.importCard p {
+  margin: 0;
+  color: #69756e;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.emptyState {
+  margin-top: 20px;
+  padding: 40px 20px;
+  border: 1px dashed #bccac1;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.emptyState p {
+  max-width: 600px;
+  margin: 8px auto 0;
+  color: #6a776f;
+}
+
+.datasetCard {
+  display: grid;
+  grid-template-columns:
+    2fr 1fr 2fr 1fr;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom:
+    1px solid #edf0ee;
+}
+
+.checkGrid {
+  border:
+    1px solid #e0e6e2;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.checkRow {
+  display: flex;
+  justify-content:
+    space-between;
+  gap: 20px;
+  padding: 13px 16px;
+  border-bottom:
+    1px solid #edf0ee;
+}
+
+.checkRow:last-child {
+  border-bottom: 0;
+}
+
+.blocked {
+  color: #9f3434;
+}
+
+.pending {
+  color: #8a651d;
+}
+
+.warning {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border: 1px solid #ead9a4;
+  border-radius: 10px;
+  background: #fff9e9;
+  color: #66531d;
+}
+
+@media (
+  max-width: 900px
+) {
+  .page {
+    padding: 18px;
+  }
+
+  .header {
+    flex-direction: column;
+  }
+
+  .statusCard {
+    align-self: stretch;
+  }
+
+  .principles,
+  .importGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.uploadStack {
+  display: grid;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.registeredSection {
+  margin-top: 28px;
+}
+
+.registeredGrid {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.registeredCard {
+  padding: 18px;
+  border: 1px solid #dce5df;
+  border-radius: 12px;
+  background: #f9fbfa;
+}
+
+.registeredCard > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.registeredCard > div:first-child span {
+  color: #637168;
+  text-transform: uppercase;
+}
+
+.registeredCard dl {
+  display: grid;
+  grid-template-columns:
+    repeat(
+      5,
+      minmax(0, 1fr)
+    );
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.registeredCard dl div {
+  min-width: 0;
+}
+
+.registeredCard dt {
+  color: #748178;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.registeredCard dd {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+}
+
+.registeredCard button {
+  padding: 7px 12px;
+  border: 1px solid #b9c5bd;
+  border-radius: 7px;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.alignmentSummary {
+  display: grid;
+  gap: 8px;
+  margin: 18px 0;
+  padding: 18px;
+  border: 1px solid #dce5df;
+  border-radius: 10px;
+  background: #f7faf8;
+}
+
+.checkRow > div {
+  display: grid;
+  gap: 4px;
+}
+
+.checkRow > div span {
+  color: #68766e;
+  font-size: 0.84rem;
+}
+
+.pass {
+  color: #23733f;
+}
+
+.readyBlock {
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid #b9d8c4;
+  border-radius: 10px;
+  background: #eff9f2;
+  color: #245f37;
+}
+
+@media (
+  max-width: 1000px
+) {
+  .registeredCard dl {
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      );
+  }
+}
+
+@media (
+  max-width: 650px
+) {
+  .registeredCard dl {
+    grid-template-columns:
+      1fr;
+  }
+}
+
+@media print {
+  .page {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+
+  .header {
+    display: grid !important;
+    grid-template-columns:
+      1fr auto !important;
+    gap: 6mm !important;
+    margin: 0 0 3mm !important;
+    padding: 0 !important;
+  }
+
+  .header h1 {
+    margin: 0 !important;
+    font-size: 20pt !important;
+    line-height: 1.05 !important;
+  }
+
+  .eyebrow {
+    margin: 0 0 1mm !important;
+    font-size: 7pt !important;
+  }
+
+  .subtitle {
+    margin: 1mm 0 0 !important;
+    font-size: 8pt !important;
+  }
+
+  .backLink {
+    display: none !important;
+  }
+
+  .statusCard {
+    min-width: 42mm !important;
+    padding: 3mm !important;
+    font-size: 8pt !important;
+  }
+
+  .tabs {
+    display: none !important;
+  }
+
+  .panel {
+    margin: 0 !important;
+    padding: 4mm !important;
+    border: none !important;
+    box-shadow: none !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .panel > h2 {
+    margin: 0 0 2mm !important;
+    font-size: 12pt !important;
+  }
+
+  .warning,
+  .readyBlock {
+    display: none !important;
+  }
+}
+
+/* Phase 12 validation report — final single-page print rules */
+@media print {
+  .page {
+    width: 100% !important;
+    max-width: none !important;
+    min-height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+
+  .header {
+    display: grid !important;
+    grid-template-columns:
+      1fr 38mm !important;
+    align-items: start !important;
+    gap: 5mm !important;
+    margin: 0 0 2.5mm !important;
+    padding: 0 !important;
+  }
+
+  .header h1 {
+    margin: 0 !important;
+    font-size: 18pt !important;
+    line-height: 1 !important;
+  }
+
+  .eyebrow {
+    margin: 0 0 0.7mm !important;
+    font-size: 6.5pt !important;
+    line-height: 1 !important;
+  }
+
+  .subtitle {
+    margin: 1mm 0 0 !important;
+    font-size: 7pt !important;
+    line-height: 1.15 !important;
+  }
+
+  .backLink,
+  .tabs {
+    display: none !important;
+  }
+
+  .statusCard {
+    min-width: 0 !important;
+    width: 38mm !important;
+    margin: 0 !important;
+    padding: 2.5mm !important;
+    border-radius: 3mm !important;
+    font-size: 7pt !important;
+    box-shadow: none !important;
+  }
+
+  .statusCard strong {
+    font-size: 8.5pt !important;
+  }
+
+  .panel {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 2.5mm !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .panel > h2 {
+    margin: 0 0 1.5mm !important;
+    font-size: 10pt !important;
+    line-height: 1 !important;
+  }
+}

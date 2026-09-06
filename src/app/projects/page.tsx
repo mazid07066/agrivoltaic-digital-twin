@@ -58,6 +58,12 @@ export default async function ProjectsPage({
             </Link>
 
             <Link
+              href="/validation"
+            >
+              Validation Studio
+            </Link>
+
+            <Link
               href="/analytics"
               className="rounded-xl border border-indigo-300 bg-white px-4 py-2 font-medium text-indigo-700"
             >

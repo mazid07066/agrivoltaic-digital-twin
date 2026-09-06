@@ -1,0 +1,336 @@
+.comparisonPanel {
+  display: grid;
+  gap: 18px;
+}
+
+.comparisonPanel label {
+  display: grid;
+  gap: 7px;
+  color: #2e3d35;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.comparisonPanel select {
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 38px 8px 12px;
+  border: 1px solid #c8d5cd;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #17251d;
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.comparisonPanel select:hover {
+  border-color: #8da398;
+}
+
+.comparisonPanel select:focus {
+  outline: 2px solid rgba(26, 92, 61, 0.18);
+  outline-offset: 1px;
+  border-color: #316b4e;
+}
+
+.controlGrid {
+  display: grid;
+  grid-template-columns:
+    repeat(
+      3,
+      minmax(180px, 1fr)
+    );
+  gap: 16px;
+}
+
+.displayInfo {
+  padding: 12px 14px;
+  border: 1px solid #dde6e0;
+  border-radius: 9px;
+  background: #f7faf8;
+  color: #53635a;
+  font-size: 0.88rem;
+}
+
+.exportToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid #d8e2dc;
+  border-radius: 10px;
+  background: #f7faf8;
+}
+
+.exportButton {
+  min-height: 40px;
+  padding: 8px 15px;
+  border: 1px solid #b7c8bd;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #204a34;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease,
+    transform 120ms ease;
+}
+
+.exportButton:hover {
+  border-color: #527965;
+  background: #edf5f0;
+}
+
+.exportButton:active {
+  transform: translateY(1px);
+}
+
+.chartShell {
+  width: 100%;
+  min-width: 0;
+  height: 480px;
+  padding: 14px 10px 2px;
+  border: 1px solid #dbe4de;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.metricsGrid {
+  display: grid;
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(300px, 1fr)
+    );
+  gap: 18px;
+}
+
+.metricsCard {
+  padding: 18px;
+  border: 1px solid #dbe4de;
+  border-radius: 11px;
+  background: #fbfcfb;
+}
+
+.metricsCard h3 {
+  margin: 0 0 14px;
+  color: #17251d;
+}
+
+.metricsCard table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.metricsCard td {
+  padding: 7px 4px;
+  border-bottom: 1px solid #e6ebe8;
+}
+
+.metricsCard td:last-child {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+@media (
+  max-width: 800px
+) {
+  .controlGrid {
+    grid-template-columns:
+      1fr;
+  }
+
+  .chartShell {
+    height: 400px;
+  }
+}
+
+@media print {
+  .exportToolbar {
+    display: none !important;
+  }
+
+  .chartShell {
+    border: none;
+    height: 480px;
+    padding: 0;
+  }
+}
+
+@media print {
+  .comparisonPanel {
+    display: block;
+    gap: 0;
+    font-size: 8.5pt;
+  }
+
+  .controlGrid {
+    display: none !important;
+  }
+
+  .displayInfo {
+    margin: 0 0 4mm;
+    padding: 2mm 3mm;
+    font-size: 8pt;
+    border: none;
+    background: transparent;
+  }
+
+  .exportToolbar {
+    display: none !important;
+  }
+
+  .chartShell {
+    width: 100% !important;
+    height: 265px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .metricsGrid {
+    display: grid !important;
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      ) !important;
+    gap: 8mm !important;
+    margin-top: 3mm !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .metricsCard {
+    padding: 2mm 3mm !important;
+    border: 1px solid #dbe4de !important;
+    border-radius: 4px !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .metricsCard h3 {
+    margin: 0 0 1.5mm !important;
+    font-size: 9pt !important;
+  }
+
+  .metricsCard td {
+    padding: 0.7mm 1mm !important;
+    font-size: 8pt !important;
+    line-height: 1.15 !important;
+  }
+}
+
+/* Phase 12 validation report — authoritative print layout */
+@media print {
+  .comparisonPanel {
+    display: block !important;
+    width: 100% !important;
+    font-size: 8pt !important;
+  }
+
+  .controlGrid,
+  .exportToolbar {
+    display: none !important;
+  }
+
+  .displayInfo {
+    margin: 0 0 2mm !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    font-size: 7.5pt !important;
+    line-height: 1.2 !important;
+  }
+
+  /*
+   * Recharts calculates its height before print CSS is applied.
+   * Force every layer of the responsive chart to the same compact
+   * print height so it cannot overlap the metrics section.
+   */
+  .chartShell {
+    display: block !important;
+    position: relative !important;
+    width: 100% !important;
+    height: 62mm !important;
+    min-height: 62mm !important;
+    max-height: 62mm !important;
+    margin: 0 0 3mm !important;
+    padding: 0 !important;
+    border: 0 !important;
+    overflow: hidden !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .chartShell > div,
+  .chartShell :global(.recharts-responsive-container),
+  .chartShell :global(.recharts-wrapper) {
+    width: 100% !important;
+    height: 62mm !important;
+    min-height: 62mm !important;
+    max-height: 62mm !important;
+  }
+
+  .chartShell :global(svg.recharts-surface) {
+    width: 100% !important;
+    height: 62mm !important;
+    max-height: 62mm !important;
+  }
+
+  .chartShell :global(.recharts-legend-wrapper) {
+    font-size: 7pt !important;
+  }
+
+  .metricsGrid {
+    display: grid !important;
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      ) !important;
+    gap: 5mm !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    position: relative !important;
+    clear: both !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .metricsCard {
+    margin: 0 !important;
+    padding: 2mm 3mm !important;
+    border: 1px solid #d7e0da !important;
+    border-radius: 3px !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .metricsCard h3 {
+    margin: 0 0 1mm !important;
+    font-size: 8.5pt !important;
+    line-height: 1.1 !important;
+  }
+
+  .metricsCard table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  .metricsCard td {
+    padding: 0.45mm 0.8mm !important;
+    font-size: 7.25pt !important;
+    line-height: 1.05 !important;
+  }
+}

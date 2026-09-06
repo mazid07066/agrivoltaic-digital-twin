@@ -438,6 +438,12 @@ export default function RooftopDashboard() {
             </Link>
 
             <Link
+              href="/validation"
+            >
+              Validation
+            </Link>
+
+            <Link
               href="/analytics"
               className="rounded-lg border border-indigo-300 px-3 py-2 text-sm text-indigo-700"
             >

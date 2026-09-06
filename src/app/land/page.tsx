@@ -360,6 +360,13 @@ export default function Home() {
       </Link>
 
       <Link
+        href="/validation"
+        className="nav-link"
+      >
+        <span>Validation</span>
+      </Link>
+
+      <Link
         href="/analytics"
         className="topbar-nav-link"
       >
