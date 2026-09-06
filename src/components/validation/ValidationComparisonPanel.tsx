@@ -26,10 +26,11 @@ import {
 } from "@/lib/validationStudio";
 
 import {
-  exportChartAsPng,
   exportComparisonCsv,
+  exportResearchChartPng,
+  exportResearchChartSvg,
   exportValidationWorkbook,
-  renderChartAsPngDataUrl,
+  renderResearchChartPngDataUrl,
 } from "@/lib/validationStudio/export";
 
 import styles from "./ValidationComparisonPanel.module.css";
@@ -86,6 +87,57 @@ const labels:
 
     cropIrradianceWm2:
       "Crop irradiance",
+  };
+
+const seriesColors = [
+  "#147a4b",
+  "#2768b2",
+  "#d36b22",
+  "#7d4ca5",
+];
+
+const units:
+  Partial<
+    Record<
+      ValidationStudioVariable,
+      string
+    >
+  > = {
+    ghiWm2:
+      "W/m²",
+
+    dniWm2:
+      "W/m²",
+
+    dhiWm2:
+      "W/m²",
+
+    poaWm2:
+      "W/m²",
+
+    ambientTemperatureC:
+      "°C",
+
+    moduleTemperatureC:
+      "°C",
+
+    dcPowerKw:
+      "kW",
+
+    acPowerKw:
+      "kW",
+
+    energyKWh:
+      "kWh",
+
+    dcVoltageV:
+      "V",
+
+    dcCurrentA:
+      "A",
+
+    cropIrradianceWm2:
+      "W/m²",
   };
 
 function formatTimestamp(
@@ -326,6 +378,54 @@ export default function ValidationComparisonPanel({
 
   const reference =
     datasets[0];
+
+  const researchExportOptions =
+    selectedVariable
+      ? {
+          title:
+            `${labels[selectedVariable]} cross-model comparison`,
+
+          subtitle:
+            reference
+              ? `Reference: ${reference.name}`
+              : undefined,
+
+          variableLabel:
+            labels[selectedVariable],
+
+          unitLabel:
+            units[selectedVariable] ??
+            "",
+
+          periodLabel:
+            rangedSeries.length > 0
+              ? `${rangedSeries[0]!.timestamp.slice(0, 10)} to ${rangedSeries[rangedSeries.length - 1]!.timestamp.slice(0, 10)}`
+              : "No displayed period",
+
+          resolutionLabel:
+            resolution,
+
+          series:
+            datasets.map(
+              (
+                dataset,
+                index,
+              ) => ({
+                name:
+                  dataset.name,
+
+                color:
+                  seriesColors[
+                    index %
+                    seriesColors.length
+                  ]!,
+              }),
+            ),
+
+          widthPx:
+            3000,
+        }
+      : null;
 
   const metricResults =
     useMemo(
@@ -652,14 +752,40 @@ export default function ValidationComparisonPanel({
             if (
               chartRef.current
             ) {
-              void exportChartAsPng(
-                chartRef.current,
-                `agritwin-validation-${selectedVariable}-${resolution}.png`,
-              );
+              if (
+                researchExportOptions
+              ) {
+                void exportResearchChartPng(
+                  chartRef.current,
+                  `agritwin-validation-${selectedVariable}-${resolution}-research.png`,
+                  researchExportOptions,
+                );
+              }
             }
           }}
         >
           Export Graph PNG
+        </button>
+
+        <button
+          type="button"
+          className={
+            styles.exportButton
+          }
+          onClick={() => {
+            if (
+              chartRef.current &&
+              researchExportOptions
+            ) {
+              exportResearchChartSvg(
+                chartRef.current,
+                `agritwin-validation-${selectedVariable}-${resolution}-research.svg`,
+                researchExportOptions,
+              );
+            }
+          }}
+        >
+          Export Vector SVG
         </button>
 
         <button
@@ -677,9 +803,17 @@ export default function ValidationComparisonPanel({
                 }
 
                 const snapshot =
-                  await renderChartAsPngDataUrl(
-                    chartRef.current,
-                  );
+                  researchExportOptions
+                    ? await renderResearchChartPngDataUrl(
+                        chartRef.current,
+                        {
+                          ...researchExportOptions,
+
+                          widthPx:
+                            3000,
+                        },
+                      )
+                    : null;
 
                 setPrintChartUrl(
                   snapshot,
@@ -764,8 +898,32 @@ export default function ValidationComparisonPanel({
 
             <YAxis
               width={
-                65
+                72
               }
+              tick={{
+                fontSize:
+                  11,
+              }}
+              label={{
+                value:
+                  selectedVariable
+                    ? `${labels[selectedVariable]} (${units[selectedVariable] ?? ""})`
+                    : "",
+
+                angle:
+                  -90,
+
+                position:
+                  "insideLeft",
+
+                style: {
+                  textAnchor:
+                    "middle",
+
+                  fontSize:
+                    11,
+                },
+              }}
             />
 
             <Tooltip />
@@ -795,17 +953,15 @@ export default function ValidationComparisonPanel({
                     false
                   }
                   strokeWidth={
-                    1.6
+                    index ===
+                    0
+                      ? 2.4
+                      : 1.7
                   }
                   stroke={
-                    [
-                      "#177245",
-                      "#316bb5",
-                      "#b05a2b",
-                      "#8e44ad",
-                    ][
+                    seriesColors[
                       index %
-                        4
+                      seriesColors.length
                     ]
                   }
                 />
@@ -813,6 +969,27 @@ export default function ValidationComparisonPanel({
             )}
           </LineChart>
         </ResponsiveContainer>
+      </div>
+
+      <div
+        className={
+          styles.interpretationStrip
+        }
+      >
+        <strong>
+          How to read this figure
+        </strong>
+
+        <span>
+          AgriTwin is the reference series.
+          The displayed curve uses
+          {` ${resolution} `}
+          aggregation for readability,
+          while MBE, MAE, RMSE,
+          nRMSE, R² and correlation
+          are calculated using all
+          synchronized raw observations.
+        </span>
       </div>
 
       <div

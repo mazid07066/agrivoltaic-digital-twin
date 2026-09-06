@@ -1,0 +1,428 @@
+.explainPanel {
+  display: grid;
+  gap: 22px;
+  margin-top: 18px;
+}
+
+.explainNotice,
+.validationWarning {
+  display: grid;
+  gap: 5px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  line-height: 1.5;
+}
+
+.explainNotice {
+  border-left: 4px solid #2d7651;
+  background: #f3f9f5;
+  color: #536159;
+}
+
+.explainNotice strong {
+  color: #214d35;
+}
+
+.validationWarning {
+  border: 1px solid #e2d4a8;
+  background: #fffaf0;
+  color: #67591f;
+}
+
+.matrixWrap {
+  overflow-x: auto;
+  border: 1px solid #dce5df;
+  border-radius: 12px;
+}
+
+.matrix {
+  width: 100%;
+  min-width: 1050px;
+  border-collapse: collapse;
+}
+
+.matrix th,
+.matrix td {
+  padding: 13px 14px;
+  border-right: 1px solid #e5ebe7;
+  border-bottom: 1px solid #e5ebe7;
+  vertical-align: top;
+}
+
+.matrix th {
+  background: #f4f8f5;
+  color: #33453a;
+  text-align: left;
+}
+
+.matrix th span,
+.matrix td small,
+.matrix td:first-child span {
+  display: block;
+  margin-top: 5px;
+  color: #728078;
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+
+.available,
+.partial,
+.unavailable {
+  display: inline-block;
+  padding: 4px 7px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.available {
+  background: #e6f6eb;
+  color: #23633a;
+}
+
+.partial {
+  background: #fff4d9;
+  color: #795c16;
+}
+
+.unavailable {
+  background: #f2f3f2;
+  color: #68736c;
+}
+
+.provenanceSection {
+  display: grid;
+  gap: 14px;
+}
+
+.provenanceSection h3 {
+  margin: 0;
+}
+
+.provenanceGrid {
+  display: grid;
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(300px, 1fr)
+    );
+  gap: 14px;
+}
+
+.provenanceCard {
+  padding: 17px;
+  border: 1px solid #dce5df;
+  border-radius: 11px;
+  background: #fafcfb;
+}
+
+.provenanceCard h4,
+.provenanceCard h5 {
+  margin:
+    0 0 11px;
+}
+
+.provenanceCard h5 {
+  margin-top: 18px;
+}
+
+.provenanceCard dl {
+  display: grid;
+  gap: 9px;
+  margin: 0;
+}
+
+.provenanceCard dt {
+  color: #748178;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.provenanceCard dd {
+  margin:
+    2px 0 0;
+  overflow-wrap: anywhere;
+}
+
+.provenanceCard ul {
+  margin: 0;
+  padding-left: 19px;
+  color: #59685f;
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+
+.exportToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.exportToolbar button {
+  padding: 9px 13px;
+  border: 1px solid #aac3b2;
+  border-radius: 8px;
+  background: #f4faf6;
+  color: #24583a;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.exportToolbar button:hover {
+  background: #eaf5ed;
+}
+
+@media print {
+  .exportToolbar {
+    display: none !important;
+  }
+
+  .matrixWrap {
+    overflow: visible !important;
+    border: 0 !important;
+  }
+
+  .matrix {
+    width: 100% !important;
+    min-width: 0 !important;
+    font-size: 6.6pt !important;
+    table-layout: fixed !important;
+  }
+
+  .matrix th,
+  .matrix td {
+    padding: 1.1mm !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .matrix th span,
+  .matrix td small,
+  .matrix td:first-child span {
+    font-size: 5.8pt !important;
+  }
+
+  .provenanceGrid {
+    grid-template-columns:
+      repeat(
+        3,
+        minmax(0, 1fr)
+      ) !important;
+    gap: 2mm !important;
+  }
+
+  .provenanceCard {
+    padding: 2mm !important;
+    font-size: 6pt !important;
+    break-inside: avoid !important;
+  }
+
+  .validationWarning {
+    margin-top: 2mm !important;
+    padding: 1.5mm 2mm !important;
+    font-size: 6.5pt !important;
+  }
+}
+
+.reportHeader {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(260px, 340px);
+  gap: 28px;
+  align-items: start;
+  padding: 20px;
+  border: 1px solid #d7e2db;
+  border-radius: 12px;
+  background:
+    linear-gradient(
+      135deg,
+      #f4faf6,
+      #ffffff
+    );
+}
+
+.reportKicker {
+  display: block;
+  margin-bottom: 7px;
+  color: #50705d;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+.reportHeader h3 {
+  margin: 0;
+  color: #173824;
+  font-size: 1.35rem;
+}
+
+.reportHeader p {
+  max-width: 780px;
+  margin: 8px 0 0;
+  color: #5d6c63;
+  line-height: 1.5;
+}
+
+.reportMeta {
+  display: grid;
+  gap: 9px;
+  margin: 0;
+}
+
+.reportMeta div {
+  display: grid;
+  grid-template-columns:
+    110px 1fr;
+  gap: 8px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid #e1e8e3;
+}
+
+.reportMeta dt {
+  color: #748078;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.reportMeta dd {
+  margin: 0;
+  color: #29392f;
+  font-weight: 600;
+}
+
+@media print {
+  .reportHeader {
+    display: grid !important;
+    grid-template-columns:
+      1fr 48mm !important;
+    gap: 5mm !important;
+    margin: 0 0 4mm !important;
+    padding: 3mm !important;
+    border: 1px solid #adbdb3 !important;
+    border-radius: 2mm !important;
+    background: #f7faf8 !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .reportKicker {
+    margin-bottom: 1mm !important;
+    font-size: 6pt !important;
+  }
+
+  .reportHeader h3 {
+    margin: 0 !important;
+    font-size: 13pt !important;
+  }
+
+  .reportHeader p {
+    margin-top: 1mm !important;
+    font-size: 7pt !important;
+    line-height: 1.25 !important;
+  }
+
+  .reportMeta {
+    gap: 1mm !important;
+  }
+
+  .reportMeta div {
+    grid-template-columns:
+      22mm 1fr !important;
+    gap: 1mm !important;
+    padding-bottom: 0.7mm !important;
+  }
+
+  .reportMeta dt,
+  .reportMeta dd {
+    font-size: 6pt !important;
+  }
+
+  /*
+   * Allow the explainability table to span pages.
+   */
+  .matrixWrap {
+    overflow: visible !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  .matrix {
+    width: 100% !important;
+    min-width: 0 !important;
+    table-layout: fixed !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  .matrix thead {
+    display: table-header-group !important;
+  }
+
+  .matrix tbody {
+    display: table-row-group !important;
+  }
+
+  .matrix tr {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .matrix th,
+  .matrix td {
+    padding: 1.2mm !important;
+    font-size: 6.5pt !important;
+    line-height: 1.2 !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .provenanceSection {
+    margin-top: 4mm !important;
+    break-before: auto !important;
+    page-break-before: auto !important;
+  }
+
+  .provenanceSection h3 {
+    padding-bottom: 1.5mm !important;
+    border-bottom: 1px solid #bbc7bf !important;
+    font-size: 10pt !important;
+  }
+
+  .provenanceCard {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+}
+
+@media (max-width: 800px) {
+  .reportHeader {
+    grid-template-columns: 1fr;
+  }
+}
+
+.reportFooter {
+  padding-top: 12px;
+  border-top: 1px solid #dce4df;
+  color: #718078;
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.validationWarning strong,
+.validationWarning span {
+  display: block;
+}
+
+.validationWarning strong {
+  margin-bottom: 4px;
+}
+
+@media print {
+  .reportFooter {
+    margin-top: 3mm !important;
+    padding-top: 2mm !important;
+    border-top: 1px solid #aebbb3 !important;
+    font-size: 6pt !important;
+  }
+}

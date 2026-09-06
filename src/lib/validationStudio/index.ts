@@ -47,7 +47,9 @@ export type {
   ValidationImportBuildInput,
   ValidationImportColumn,
   ValidationImportConfidence,
-} from "./importTypes";export {
+} from "./importTypes";
+
+export {
   autoImportValidationDataset,
 } from "./autoImport";
 
@@ -55,13 +57,20 @@ export {
   aggregateComparisonSeries,
   automaticComparisonResolution,
   buildComparisonSeries,
+  buildCumulativeEnergySeries,
+  buildDailyEnergySeries,
+  buildParityPairs,
+  buildResidualSeries,
   calculateValidationMetrics,
   filterComparisonRange,
+  reduceComparisonForVisualization,
+  supportsEnergyComparison,
 } from "./comparison";
 
 export type {
   ComparisonPoint,
   ComparisonRange,
   ComparisonResolution,
+  ParityPoint,
   ValidationMetrics,
 } from "./comparison";

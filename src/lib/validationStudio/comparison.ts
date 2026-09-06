@@ -774,3 +774,551 @@ export function calculateValidationMetrics(
         : Number.NaN,
   };
 }
+
+/* PHASE12_ADVANCED_COMPARISON */
+
+export interface ParityPoint {
+  reference:
+    number;
+
+  candidate:
+    number;
+
+  timestamp:
+    string;
+}
+
+function localCalendarDate(
+  timestamp:
+    string,
+
+  timezone:
+    string,
+): string {
+  const formatter =
+    new Intl.DateTimeFormat(
+      "en-CA",
+      {
+        timeZone:
+          timezone,
+
+        year:
+          "numeric",
+
+        month:
+          "2-digit",
+
+        day:
+          "2-digit",
+      },
+    );
+
+  const parts =
+    formatter.formatToParts(
+      new Date(
+        timestamp,
+      ),
+    );
+
+  const year =
+    parts.find(
+      (part) =>
+        part.type ===
+        "year",
+    )?.value;
+
+  const month =
+    parts.find(
+      (part) =>
+        part.type ===
+        "month",
+    )?.value;
+
+  const day =
+    parts.find(
+      (part) =>
+        part.type ===
+        "day",
+    )?.value;
+
+  if (
+    !year ||
+    !month ||
+    !day
+  ) {
+    throw new Error(
+      `Unable to derive local calendar date for ${timestamp}.`,
+    );
+  }
+
+  return `${year}-${month}-${day}`;
+}
+
+export function buildResidualSeries(
+  series:
+    ComparisonPoint[],
+
+  referenceId:
+    string,
+
+  candidateIds:
+    string[],
+): ComparisonPoint[] {
+  return series.map(
+    (point) => {
+      const reference =
+        point.values[
+          referenceId
+        ];
+
+      const values:
+        Record<
+          string,
+          number | null
+        > =
+        {};
+
+      for (
+        const candidateId of
+        candidateIds
+      ) {
+        const candidate =
+          point.values[
+            candidateId
+          ];
+
+        values[
+          candidateId
+        ] =
+          typeof reference ===
+            "number" &&
+          Number.isFinite(
+            reference,
+          ) &&
+          typeof candidate ===
+            "number" &&
+          Number.isFinite(
+            candidate,
+          )
+            ? candidate -
+              reference
+            : null;
+      }
+
+      return {
+        timestamp:
+          point.timestamp,
+
+        values,
+      };
+    },
+  );
+}
+
+export function buildParityPairs(
+  series:
+    ComparisonPoint[],
+
+  referenceId:
+    string,
+
+  candidateId:
+    string,
+): ParityPoint[] {
+  const points:
+    ParityPoint[] =
+    [];
+
+  for (
+    const point of
+    series
+  ) {
+    const reference =
+      point.values[
+        referenceId
+      ];
+
+    const candidate =
+      point.values[
+        candidateId
+      ];
+
+    if (
+      typeof reference !==
+        "number" ||
+      !Number.isFinite(
+        reference,
+      ) ||
+      typeof candidate !==
+        "number" ||
+      !Number.isFinite(
+        candidate,
+      )
+    ) {
+      continue;
+    }
+
+    points.push({
+      reference,
+      candidate,
+      timestamp:
+        point.timestamp,
+    });
+  }
+
+  return points;
+}
+
+export function supportsEnergyComparison(
+  variable:
+    ValidationStudioVariable,
+): boolean {
+  return (
+    variable ===
+      "acPowerKw" ||
+    variable ===
+      "dcPowerKw" ||
+    variable ===
+      "energyKWh"
+  );
+}
+
+export function buildDailyEnergySeries(
+  series:
+    ComparisonPoint[],
+
+  datasets:
+    ValidationStudioDataset[],
+
+  variable:
+    ValidationStudioVariable,
+): ComparisonPoint[] {
+  if (
+    !supportsEnergyComparison(
+      variable,
+    )
+  ) {
+    return [];
+  }
+
+  if (
+    datasets.length ===
+    0
+  ) {
+    return [];
+  }
+
+  const timezone =
+    datasets[0]!
+      .timezone;
+
+  const buckets =
+    new Map<
+      string,
+      Record<
+        string,
+        {
+          sum:
+            number;
+
+          count:
+            number;
+        }
+      >
+    >();
+
+  for (
+    const point of
+    series
+  ) {
+    const dateKey =
+      localCalendarDate(
+        point.timestamp,
+        timezone,
+      );
+
+    let bucket =
+      buckets.get(
+        dateKey,
+      );
+
+    if (
+      !bucket
+    ) {
+      bucket =
+        {};
+
+      buckets.set(
+        dateKey,
+        bucket,
+      );
+    }
+
+    for (
+      const dataset of
+      datasets
+    ) {
+      const value =
+        point.values[
+          dataset.id
+        ];
+
+      if (
+        typeof value !==
+          "number" ||
+        !Number.isFinite(
+          value,
+        )
+      ) {
+        continue;
+      }
+
+      bucket[
+        dataset.id
+      ] ??= {
+        sum:
+          0,
+
+        count:
+          0,
+      };
+
+      const contribution =
+        variable ===
+        "energyKWh"
+          ? value
+          : value *
+            (
+              dataset.intervalMinutes /
+              60
+            );
+
+      bucket[
+        dataset.id
+      ]!.sum +=
+        contribution;
+
+      bucket[
+        dataset.id
+      ]!.count +=
+        1;
+    }
+  }
+
+  return [
+    ...buckets.entries(),
+  ]
+    .sort(
+      (
+        left,
+        right,
+      ) =>
+        left[0].localeCompare(
+          right[0],
+        ),
+    )
+    .map(
+      (
+        [
+          dateKey,
+          bucket,
+        ],
+      ) => {
+        const values:
+          Record<
+            string,
+            number | null
+          > =
+          {};
+
+        for (
+          const dataset of
+          datasets
+        ) {
+          const entry =
+            bucket[
+              dataset.id
+            ];
+
+          values[
+            dataset.id
+          ] =
+            entry &&
+            entry.count >
+              0
+              ? entry.sum
+              : null;
+        }
+
+        return {
+          timestamp:
+            dateKey,
+
+          values,
+        };
+      },
+    );
+}
+
+export function buildCumulativeEnergySeries(
+  dailySeries:
+    ComparisonPoint[],
+
+  datasets:
+    ValidationStudioDataset[],
+): ComparisonPoint[] {
+  const running:
+    Record<
+      string,
+      number
+    > =
+    {};
+
+  for (
+    const dataset of
+    datasets
+  ) {
+    running[
+      dataset.id
+    ] =
+      0;
+  }
+
+  return dailySeries.map(
+    (point) => {
+      const values:
+        Record<
+          string,
+          number | null
+        > =
+        {};
+
+      for (
+        const dataset of
+        datasets
+      ) {
+        const value =
+          point.values[
+            dataset.id
+          ];
+
+        if (
+          typeof value ===
+            "number" &&
+          Number.isFinite(
+            value,
+          )
+        ) {
+          running[
+            dataset.id
+          ] +=
+            value;
+
+          values[
+            dataset.id
+          ] =
+            running[
+              dataset.id
+            ]!;
+        } else {
+          values[
+            dataset.id
+          ] =
+            null;
+        }
+      }
+
+      return {
+        timestamp:
+          point.timestamp,
+
+        values,
+      };
+    },
+  );
+}
+
+/**
+ * Reduce a comparison series only for rendering/export.
+ *
+ * Scientific calculations must continue to use the original
+ * synchronized series. This function performs deterministic
+ * uniform sampling and preserves the first and last points.
+ */
+export function reduceComparisonForVisualization<T>(
+  points:
+    T[],
+
+  maximumPoints =
+    4000,
+): T[] {
+  if (
+    maximumPoints <
+    2
+  ) {
+    throw new Error(
+      "maximumPoints must be at least 2.",
+    );
+  }
+
+  if (
+    points.length <=
+    maximumPoints
+  ) {
+    return points;
+  }
+
+  const result:
+    T[] =
+    [];
+
+  const step =
+    (
+      points.length -
+      1
+    ) /
+    (
+      maximumPoints -
+      1
+    );
+
+  let previousIndex =
+    -1;
+
+  for (
+    let index =
+      0;
+    index <
+    maximumPoints;
+    index +=
+      1
+  ) {
+    const sourceIndex =
+      Math.min(
+        points.length -
+          1,
+        Math.round(
+          index *
+            step,
+        ),
+      );
+
+    if (
+      sourceIndex ===
+      previousIndex
+    ) {
+      continue;
+    }
+
+    result.push(
+      points[
+        sourceIndex
+      ]!,
+    );
+
+    previousIndex =
+      sourceIndex;
+  }
+
+  return result;
+}

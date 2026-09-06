@@ -562,3 +562,38 @@
     line-height: 1 !important;
   }
 }
+
+/* Phase 12 professional validation reporting */
+@media print {
+  /*
+   * Detailed Metrics and Explain reports may span multiple pages.
+   * Do not force the complete panel onto one page.
+   */
+  .panel {
+    break-before: auto !important;
+    page-break-before: auto !important;
+    break-after: auto !important;
+    page-break-after: auto !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  .page {
+    background: #ffffff !important;
+  }
+
+  .header {
+    margin-bottom: 4mm !important;
+    border-bottom: 1px solid #bcc9c1 !important;
+    padding-bottom: 3mm !important;
+  }
+
+  .header h1 {
+    color: #173824 !important;
+  }
+
+  .statusCard {
+    border: 1px solid #b9c9bf !important;
+    background: #f6faf7 !important;
+  }
+}

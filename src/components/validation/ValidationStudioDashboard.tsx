@@ -17,6 +17,9 @@ import type {
 
 import AutoValidationDatasetUpload from "./AutoValidationDatasetUpload";
 import ValidationComparisonPanel from "./ValidationComparisonPanel";
+import ValidationExplainabilityPanel from "./ValidationExplainabilityPanel";
+import ValidationMetricsPanel from "./ValidationMetricsPanel";
+import ValidationScientificViews from "./ValidationScientificViews";
 
 import styles from "./ValidationStudioDashboard.module.css";
 
@@ -573,11 +576,19 @@ export default function ValidationStudioDashboard() {
           </h2>
 
           {alignmentReady ? (
-            <ValidationComparisonPanel
-              datasets={
-                datasets
-              }
-            />
+            <>
+              <ValidationComparisonPanel
+                datasets={
+                  datasets
+                }
+              />
+
+              <ValidationScientificViews
+                datasets={
+                  datasets
+                }
+              />
+            </>
           ) : (
             <div
               className={
@@ -603,17 +614,24 @@ export default function ValidationStudioDashboard() {
             Validation metrics
           </h2>
 
-          <div
-            className={
-              alignmentReady
-                ? styles.readyBlock
-                : styles.warning
-            }
-          >
-            {alignmentReady
-              ? "Aligned observations are ready for MAE, MBE, RMSE, nRMSE, R² and energy-error calculation."
-              : "Metrics remain locked until datasets are synchronized."}
-          </div>
+          {alignmentReady ? (
+            <ValidationMetricsPanel
+              datasets={
+                datasets
+              }
+            />
+          ) : (
+            <div
+              className={
+                styles.warning
+              }
+            >
+              Metrics remain
+              locked until
+              datasets are
+              synchronized.
+            </div>
+          )}
         </section>
       )}
 
@@ -629,15 +647,14 @@ export default function ValidationStudioDashboard() {
             explainability
           </h2>
 
-          <p>
-            Physics-stage
-            attribution will be
-            connected after the
-            aligned comparison
-            engine is verified.
-          </p>
+          <ValidationExplainabilityPanel
+            datasets={
+              datasets
+            }
+          />
         </section>
       )}
+
     </main>
   );
 }

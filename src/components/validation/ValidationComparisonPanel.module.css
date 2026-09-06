@@ -367,3 +367,29 @@
     page-break-inside: avoid !important;
   }
 }
+
+.interpretationStrip {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border-left: 4px solid #2d7651;
+  border-radius: 7px;
+  background: #f4f9f6;
+  color: #506159;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.interpretationStrip strong {
+  color: #204a34;
+}
+
+@media print {
+  .interpretationStrip {
+    margin: 2mm 0 2mm !important;
+    padding: 1.5mm 2mm !important;
+    border-left-width: 2px !important;
+    font-size: 6.8pt !important;
+    line-height: 1.15 !important;
+  }
+}
