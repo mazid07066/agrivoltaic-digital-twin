@@ -29,6 +29,7 @@ import {
   exportChartAsPng,
   exportComparisonCsv,
   exportValidationWorkbook,
+  renderChartAsPngDataUrl,
 } from "@/lib/validationStudio/export";
 
 import styles from "./ValidationComparisonPanel.module.css";
@@ -179,6 +180,14 @@ export default function ValidationComparisonPanel({
 }: Props) {
   const chartRef =
     useRef<HTMLDivElement>(
+      null,
+    );
+
+  const [
+    printChartUrl,
+    setPrintChartUrl,
+  ] =
+    useState<string | null>(
       null,
     );
   const commonVariables =
@@ -643,7 +652,7 @@ export default function ValidationComparisonPanel({
             if (
               chartRef.current
             ) {
-              exportChartAsPng(
+              void exportChartAsPng(
                 chartRef.current,
                 `agritwin-validation-${selectedVariable}-${resolution}.png`,
               );
@@ -658,14 +667,58 @@ export default function ValidationComparisonPanel({
           className={
             styles.exportButton
           }
-          onClick={() =>
-            window.print()
-          }
+          onClick={() => {
+            void (
+              async () => {
+                if (
+                  !chartRef.current
+                ) {
+                  return;
+                }
+
+                const snapshot =
+                  await renderChartAsPngDataUrl(
+                    chartRef.current,
+                  );
+
+                setPrintChartUrl(
+                  snapshot,
+                );
+
+                await new Promise<void>(
+                  (resolve) => {
+                    requestAnimationFrame(
+                      () => {
+                        requestAnimationFrame(
+                          () =>
+                            resolve(),
+                        );
+                      },
+                    );
+                  },
+                );
+
+                window.print();
+              }
+            )();
+          }}
         >
           Print / Save PDF
         </button>
       </div>
 
+
+      {printChartUrl && (
+        <img
+          src={
+            printChartUrl
+          }
+          alt={`${labels[selectedVariable]} cross-model comparison`}
+          className={
+            styles.printChartImage
+          }
+        />
+      )}
 
       <div
         ref={

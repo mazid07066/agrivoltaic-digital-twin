@@ -360,11 +360,12 @@ export default function Home() {
       </Link>
 
       <Link
-        href="/validation"
-        className="nav-link"
-      >
-        <span>Validation</span>
-      </Link>
+      href="/validation"
+      className="topbar-nav-link"
+    >
+      <Activity size={15} />
+      <span>Validation</span>
+    </Link>
 
       <Link
         href="/analytics"

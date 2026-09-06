@@ -538,37 +538,34 @@ export async function exportValidationWorkbook(
   );
 }
 
-export function exportChartAsPng(
+function resolveMainChartSvg(
   container:
     HTMLElement,
-
-  fileName:
-    string,
-) {
-  const svgCandidates =
+): SVGSVGElement {
+  const candidates =
     Array.from(
       container.querySelectorAll(
         "svg",
       ),
     ).filter(
       (
-        candidate,
-      ): candidate is SVGSVGElement =>
-        candidate instanceof
+        element,
+      ): element is SVGSVGElement =>
+        element instanceof
         SVGSVGElement,
     );
 
   if (
-    svgCandidates.length ===
+    candidates.length ===
     0
   ) {
     throw new Error(
-      "No chart SVG was found.",
+      "No validation chart SVG was found.",
     );
   }
 
-  const sourceSvg =
-    svgCandidates
+  const ranked =
+    candidates
       .map(
         (svg) => {
           const bounds =
@@ -576,7 +573,13 @@ export function exportChartAsPng(
 
           return {
             svg,
-            bounds,
+
+            width:
+              bounds.width,
+
+            height:
+              bounds.height,
+
             area:
               bounds.width *
               bounds.height,
@@ -590,32 +593,142 @@ export function exportChartAsPng(
         ) =>
           right.area -
           left.area,
-      )[0];
+      );
+
+  const resolved =
+    ranked[0];
 
   if (
-    !sourceSvg ||
-    sourceSvg.bounds.width <
-      100 ||
-    sourceSvg.bounds.height <
-      100
+    !resolved ||
+    resolved.width <
+      200 ||
+    resolved.height <
+      150
   ) {
     throw new Error(
-      "The main chart SVG could not be resolved.",
+      "The full validation chart SVG could not be resolved.",
     );
   }
 
+  return resolved.svg;
+}
+
+function copySvgComputedStyles(
+  source:
+    Element,
+
+  target:
+    Element,
+) {
+  const computed =
+    window.getComputedStyle(
+      source,
+    );
+
+  const properties = [
+    "font-family",
+    "font-size",
+    "font-weight",
+    "font-style",
+    "fill",
+    "fill-opacity",
+    "stroke",
+    "stroke-width",
+    "stroke-opacity",
+    "stroke-dasharray",
+    "stroke-linecap",
+    "stroke-linejoin",
+    "opacity",
+    "color",
+    "text-anchor",
+    "dominant-baseline",
+    "visibility",
+  ];
+
+  for (
+    const property of
+    properties
+  ) {
+    const value =
+      computed.getPropertyValue(
+        property,
+      );
+
+    if (
+      value
+    ) {
+      (
+        target as
+          HTMLElement
+      ).style.setProperty(
+        property,
+        value,
+      );
+    }
+  }
+
+  const sourceChildren =
+    Array.from(
+      source.children,
+    );
+
+  const targetChildren =
+    Array.from(
+      target.children,
+    );
+
+  sourceChildren.forEach(
+    (
+      sourceChild,
+      index,
+    ) => {
+      const targetChild =
+        targetChildren[
+          index
+        ];
+
+      if (
+        targetChild
+      ) {
+        copySvgComputedStyles(
+          sourceChild,
+          targetChild,
+        );
+      }
+    },
+  );
+}
+
+export async function renderChartAsPngDataUrl(
+  container:
+    HTMLElement,
+): Promise<string> {
+  const sourceSvg =
+    resolveMainChartSvg(
+      container,
+    );
+
+  const bounds =
+    sourceSvg.getBoundingClientRect();
+
   const width =
-    Math.round(
-      sourceSvg.bounds.width,
+    Math.max(
+      1,
+      Math.round(
+        bounds.width,
+      ),
     );
 
   const height =
-    Math.round(
-      sourceSvg.bounds.height,
+    Math.max(
+      1,
+      Math.round(
+        bounds.height,
+      ),
     );
 
   const svg =
-    sourceSvg.svg.cloneNode(
+    sourceSvg.cloneNode(
       true,
     ) as SVGSVGElement;
 
@@ -649,92 +762,8 @@ export function exportChartAsPng(
   svg.style.height =
     `${height}px`;
 
-  function copyComputedStyles(
-    source:
-      Element,
-
-    target:
-      Element,
-  ) {
-    const computed =
-      window.getComputedStyle(
-        source,
-      );
-
-    const properties = [
-      "font-family",
-      "font-size",
-      "font-weight",
-      "font-style",
-      "fill",
-      "fill-opacity",
-      "stroke",
-      "stroke-width",
-      "stroke-opacity",
-      "stroke-dasharray",
-      "opacity",
-      "color",
-      "text-anchor",
-      "dominant-baseline",
-      "visibility",
-    ];
-
-    for (
-      const property of
-      properties
-    ) {
-      const value =
-        computed.getPropertyValue(
-          property,
-        );
-
-      if (
-        value
-      ) {
-        (
-          target as
-            HTMLElement
-        ).style.setProperty(
-          property,
-          value,
-        );
-      }
-    }
-
-    const sourceChildren =
-      Array.from(
-        source.children,
-      );
-
-    const targetChildren =
-      Array.from(
-        target.children,
-      );
-
-    sourceChildren.forEach(
-      (
-        sourceChild,
-        index,
-      ) => {
-        const targetChild =
-          targetChildren[
-            index
-          ];
-
-        if (
-          targetChild
-        ) {
-          copyComputedStyles(
-            sourceChild,
-            targetChild,
-          );
-        }
-      },
-    );
-  }
-
-  copyComputedStyles(
-    sourceSvg.svg,
+  copySvgComputedStyles(
+    sourceSvg,
     svg,
   );
 
@@ -795,116 +824,136 @@ export function exportChartAsPng(
       },
     );
 
-  const url =
+  const objectUrl =
     URL.createObjectURL(
       svgBlob,
     );
 
-  const image =
-    new Image();
+  try {
+    const image =
+      await new Promise<HTMLImageElement>(
+        (
+          resolve,
+          reject,
+        ) => {
+          const candidate =
+            new Image();
 
-  image.onload =
-    () => {
-      const scale =
-        2;
+          candidate.onload =
+            () =>
+              resolve(
+                candidate,
+              );
 
-      const canvas =
-        document.createElement(
-          "canvas",
-        );
+          candidate.onerror =
+            () =>
+              reject(
+                new Error(
+                  "Unable to rasterize validation chart.",
+                ),
+              );
 
-      canvas.width =
-        width *
-        scale;
-
-      canvas.height =
-        height *
-        scale;
-
-      const context =
-        canvas.getContext(
-          "2d",
-        );
-
-      if (
-        !context
-      ) {
-        URL.revokeObjectURL(
-          url,
-        );
-
-        console.error(
-          "Unable to create PNG canvas context.",
-        );
-
-        return;
-      }
-
-      context.setTransform(
-        scale,
-        0,
-        0,
-        scale,
-        0,
-        0,
-      );
-
-      context.fillStyle =
-        "#ffffff";
-
-      context.fillRect(
-        0,
-        0,
-        width,
-        height,
-      );
-
-      context.drawImage(
-        image,
-        0,
-        0,
-        width,
-        height,
-      );
-
-      canvas.toBlob(
-        (png) => {
-          URL.revokeObjectURL(
-            url,
-          );
-
-          if (
-            !png
-          ) {
-            console.error(
-              "PNG generation returned an empty Blob.",
-            );
-
-            return;
-          }
-
-          downloadBlob(
-            png,
-            fileName,
-          );
+          candidate.src =
+            objectUrl;
         },
-        "image/png",
-        1,
-      );
-    };
-
-  image.onerror =
-    () => {
-      URL.revokeObjectURL(
-        url,
       );
 
-      console.error(
-        "Unable to rasterize validation chart SVG.",
-      );
-    };
+    const scale =
+      2;
 
-  image.src =
-    url;
+    const canvas =
+      document.createElement(
+        "canvas",
+      );
+
+    canvas.width =
+      width *
+      scale;
+
+    canvas.height =
+      height *
+      scale;
+
+    const context =
+      canvas.getContext(
+        "2d",
+      );
+
+    if (
+      !context
+    ) {
+      throw new Error(
+        "Unable to create validation chart canvas.",
+      );
+    }
+
+    context.setTransform(
+      scale,
+      0,
+      0,
+      scale,
+      0,
+      0,
+    );
+
+    context.fillStyle =
+      "#ffffff";
+
+    context.fillRect(
+      0,
+      0,
+      width,
+      height,
+    );
+
+    context.drawImage(
+      image,
+      0,
+      0,
+      width,
+      height,
+    );
+
+    return canvas.toDataURL(
+      "image/png",
+      1,
+    );
+  } finally {
+    URL.revokeObjectURL(
+      objectUrl,
+    );
+  }
+}
+
+export async function exportChartAsPng(
+  container:
+    HTMLElement,
+
+  fileName:
+    string,
+) {
+  const dataUrl =
+    await renderChartAsPngDataUrl(
+      container,
+    );
+
+  const anchor =
+    document.createElement(
+      "a",
+    );
+
+  anchor.href =
+    dataUrl;
+
+  anchor.download =
+    fileName;
+
+  document.body.appendChild(
+    anchor,
+  );
+
+  anchor.click();
+
+  anchor.remove();
 }
 

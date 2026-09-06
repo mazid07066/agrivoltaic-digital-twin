@@ -334,3 +334,36 @@
     line-height: 1.05 !important;
   }
 }
+
+.printChartImage {
+  display: none;
+}
+
+@media print {
+  /*
+   * Do not ask Chromium to print the live ResponsiveContainer/Recharts tree.
+   * The report uses a pre-rendered high-resolution snapshot instead.
+   */
+  .chartShell {
+    display: none !important;
+  }
+
+  .printChartImage {
+    display: block !important;
+    width: 100% !important;
+    height: 61mm !important;
+    margin: 0 0 3mm !important;
+    padding: 0 !important;
+    object-fit: contain !important;
+    object-position: center !important;
+    background: #ffffff !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .metricsGrid {
+    margin-top: 0 !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+}
