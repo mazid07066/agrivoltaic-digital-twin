@@ -8,6 +8,11 @@ import {
   buildValidationDatasetFromRows,
 } from "./importBuilder";
 
+import {
+  localTimestampInZoneToAbsolute,
+  requireAbsoluteTimestamp,
+} from "./canonical";
+
 import type {
   ValidationColumnMapping,
 } from "./importTypes";
@@ -113,6 +118,52 @@ function rowsFromSheet(
     );
 }
 
+function canonicalMergeTimestamp(
+  row:
+    Row,
+
+  fallbackTimezone =
+    "Asia/Dhaka",
+): string | null {
+  const raw =
+    (
+      row.timestamp ??
+      row.timestamp_local ??
+      ""
+    ).trim();
+
+  if (
+    !raw
+  ) {
+    return null;
+  }
+
+  const hasExplicitZone =
+    /(?:Z|[+-]\d{2}:\d{2})$/i.test(
+      raw,
+    );
+
+  if (
+    hasExplicitZone
+  ) {
+    return requireAbsoluteTimestamp(
+      raw,
+    );
+  }
+
+  const timezone =
+    (
+      row.timezone ??
+      fallbackTimezone
+    ).trim() ||
+    fallbackTimezone;
+
+  return localTimestampInZoneToAbsolute(
+    raw,
+    timezone,
+  );
+}
+
 function mergeRowsByTimestamp(
   power:
     Row[],
@@ -131,8 +182,9 @@ function mergeRowsByTimestamp(
     weather
   ) {
     const timestamp =
-      row.timestamp_local ??
-      row.timestamp;
+      canonicalMergeTimestamp(
+        row,
+      );
 
     if (
       timestamp
@@ -147,8 +199,9 @@ function mergeRowsByTimestamp(
   return power.map(
     (powerRow) => {
       const timestamp =
-        powerRow.timestamp_local ??
-        powerRow.timestamp;
+        canonicalMergeTimestamp(
+          powerRow,
+        );
 
       const weatherRow =
         timestamp
@@ -160,6 +213,18 @@ function mergeRowsByTimestamp(
       return {
         ...(weatherRow ?? {}),
         ...powerRow,
+
+        /*
+         * Preserve one canonical absolute instant after merging.
+         * mappingForRows() will therefore use absolute timestamps
+         * rather than whichever local-text representation happened
+         * to appear in the source worksheet.
+         */
+        ...(timestamp
+          ? {
+              timestamp,
+            }
+          : {}),
       };
     },
   );
@@ -376,6 +441,7 @@ function mappingForRows(
     "acPowerKw",
     [
       "modeled_power_kw",
+      "net_plant_ac_kw",
       "Plant_AC_power_kW",
       "Plant_AC_Power_kW",
     ],
