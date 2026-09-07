@@ -10,6 +10,15 @@ import type {
   ValidationStudioVariable,
 } from "./types";
 
+import {
+  FENI_VALIDATION_SITE,
+  validationSiteCoordinateLabel,
+} from "./site";
+
+import {
+  formatValidationLocalDateTime,
+} from "./reportingTime";
+
 function downloadBlob(
   blob:
     Blob,
@@ -90,7 +99,8 @@ export function exportComparisonCsv(
 ) {
   const rows = [
     [
-      "timestamp",
+      "timestamp_utc",
+      "timestamp_site_local",
       ...input.datasets.map(
         (dataset) =>
           dataset.name,
@@ -100,6 +110,11 @@ export function exportComparisonCsv(
     ...input.series.map(
       (point) => [
         point.timestamp,
+
+        formatValidationLocalDateTime(
+          point.timestamp,
+          FENI_VALIDATION_SITE.timezone,
+        ),
 
         ...input.datasets.map(
           (dataset) =>
@@ -223,6 +238,117 @@ export async function exportValidationWorkbook(
     ],
   ];
 
+  summaryData.push(
+    [
+      {
+        value:
+          "Validation site",
+      },
+      {
+        value:
+          FENI_VALIDATION_SITE.name,
+      },
+    ],
+    [
+      {
+        value:
+          "Coordinates",
+      },
+      {
+        value:
+          validationSiteCoordinateLabel(),
+      },
+    ],
+    [
+      {
+        value:
+          "Latitude",
+      },
+      {
+        value:
+          FENI_VALIDATION_SITE.latitude,
+      },
+    ],
+    [
+      {
+        value:
+          "Longitude",
+      },
+      {
+        value:
+          FENI_VALIDATION_SITE.longitude,
+      },
+    ],
+    [
+      {
+        value:
+          "Site timezone",
+      },
+      {
+        value:
+          `${FENI_VALIDATION_SITE.timezone} (${FENI_VALIDATION_SITE.utcOffsetLabel})`,
+      },
+    ],
+    [
+      {
+        value:
+          "Period start UTC",
+      },
+      {
+        value:
+          input.series[0]?.timestamp ??
+          "",
+      },
+    ],
+    [
+      {
+        value:
+          "Period start site local",
+      },
+      {
+        value:
+          input.series[0]
+            ? formatValidationLocalDateTime(
+                input.series[0].timestamp,
+                FENI_VALIDATION_SITE.timezone,
+              )
+            : "",
+      },
+    ],
+    [
+      {
+        value:
+          "Period end UTC",
+      },
+      {
+        value:
+          input.series[
+            input.series.length -
+              1
+          ]?.timestamp ??
+          "",
+      },
+    ],
+    [
+      {
+        value:
+          "Period end site local",
+      },
+      {
+        value:
+          input.series.length > 0
+            ? formatValidationLocalDateTime(
+                input.series[
+                  input.series.length -
+                    1
+                ]!.timestamp,
+                FENI_VALIDATION_SITE.timezone,
+              )
+            : "",
+      },
+    ],
+  );
+
   const metricsData = [
     [
       {
@@ -320,13 +446,25 @@ export async function exportValidationWorkbook(
     [
       {
         value:
-          "timestamp",
+          "timestamp_utc",
+        fontWeight:
+          "bold" as const,
+      },
+
+      {
+        value:
+          "timestamp_site_local",
+        fontWeight:
+          "bold" as const,
       },
 
       ...input.datasets.map(
         (dataset) => ({
           value:
             dataset.name,
+
+          fontWeight:
+            "bold" as const,
         }),
       ),
     ],
@@ -336,6 +474,14 @@ export async function exportValidationWorkbook(
         {
           value:
             point.timestamp,
+        },
+
+        {
+          value:
+            formatValidationLocalDateTime(
+              point.timestamp,
+              FENI_VALIDATION_SITE.timezone,
+            ),
         },
 
         ...input.datasets.map(
@@ -356,38 +502,62 @@ export async function exportValidationWorkbook(
       {
         value:
           "Dataset",
+        fontWeight:
+          "bold" as const,
       },
       {
         value:
           "Source",
+        fontWeight:
+          "bold" as const,
       },
       {
         value:
           "File",
+        fontWeight:
+          "bold" as const,
       },
       {
         value:
           "Timezone",
+        fontWeight:
+          "bold" as const,
       },
       {
         value:
           "Interval (min)",
+        fontWeight:
+          "bold" as const,
       },
       {
         value:
-          "Rows",
+          "Start UTC",
+        fontWeight:
+          "bold" as const,
       },
       {
         value:
-          "Start",
+          "Start site local",
+        fontWeight:
+          "bold" as const,
       },
       {
         value:
-          "End",
+          "End UTC",
+        fontWeight:
+          "bold" as const,
+      },
+      {
+        value:
+          "End site local",
+        fontWeight:
+          "bold" as const,
       },
       {
         value:
           "Variables",
+        fontWeight:
+          "bold" as const,
       },
     ],
 
@@ -416,15 +586,25 @@ export async function exportValidationWorkbook(
         },
         {
           value:
-            dataset.observations.length,
-        },
-        {
-          value:
             dataset.startTimestamp,
         },
         {
           value:
+            formatValidationLocalDateTime(
+              dataset.startTimestamp,
+              dataset.timezone,
+            ),
+        },
+        {
+          value:
             dataset.endTimestamp,
+        },
+        {
+          value:
+            formatValidationLocalDateTime(
+              dataset.endTimestamp,
+              dataset.timezone,
+            ),
         },
         {
           value:
@@ -1946,6 +2126,91 @@ export async function exportValidationMetricsWorkbook(
     ],
   ];
 
+  summary.push(
+    [
+      {
+        value:
+          "Validation site",
+      },
+      {
+        value:
+          FENI_VALIDATION_SITE.name,
+      },
+    ],
+    [
+      {
+        value:
+          "Coordinates",
+      },
+      {
+        value:
+          validationSiteCoordinateLabel(),
+      },
+    ],
+    [
+      {
+        value:
+          "Site timezone",
+      },
+      {
+        value:
+          `${FENI_VALIDATION_SITE.timezone} (${FENI_VALIDATION_SITE.utcOffsetLabel})`,
+      },
+    ],
+    [
+      {
+        value:
+          "Start UTC",
+      },
+      {
+        value:
+          input.startTimestamp ??
+          "",
+      },
+    ],
+    [
+      {
+        value:
+          "Start site local",
+      },
+      {
+        value:
+          input.startTimestamp
+            ? formatValidationLocalDateTime(
+                input.startTimestamp,
+                FENI_VALIDATION_SITE.timezone,
+              )
+            : "",
+      },
+    ],
+    [
+      {
+        value:
+          "End UTC",
+      },
+      {
+        value:
+          input.endTimestamp ??
+          "",
+      },
+    ],
+    [
+      {
+        value:
+          "End site local",
+      },
+      {
+        value:
+          input.endTimestamp
+            ? formatValidationLocalDateTime(
+                input.endTimestamp,
+                FENI_VALIDATION_SITE.timezone,
+              )
+            : "",
+      },
+    ],
+  );
+
   const metricRows = [
     [
       {
@@ -2286,6 +2551,148 @@ export async function exportValidationExplainabilityWorkbook(
   input:
     ValidationExplainabilityWorkbookInput,
 ) {
+  const firstDataset =
+    input.datasets[0];
+
+  const reportMetadataRows = [
+    [
+      {
+        value:
+          "Field",
+        fontWeight:
+          "bold" as const,
+      },
+      {
+        value:
+          "Value",
+        fontWeight:
+          "bold" as const,
+      },
+    ],
+    [
+      {
+        value:
+          "Report",
+      },
+      {
+        value:
+          "Physics Explainability & Provenance Report",
+      },
+    ],
+    [
+      {
+        value:
+          "Validation site",
+      },
+      {
+        value:
+          FENI_VALIDATION_SITE.name,
+      },
+    ],
+    [
+      {
+        value:
+          "Coordinates",
+      },
+      {
+        value:
+          validationSiteCoordinateLabel(),
+      },
+    ],
+    [
+      {
+        value:
+          "Latitude",
+      },
+      {
+        value:
+          FENI_VALIDATION_SITE.latitude,
+      },
+    ],
+    [
+      {
+        value:
+          "Longitude",
+      },
+      {
+        value:
+          FENI_VALIDATION_SITE.longitude,
+      },
+    ],
+    [
+      {
+        value:
+          "Site timezone",
+      },
+      {
+        value:
+          `${FENI_VALIDATION_SITE.timezone} (${FENI_VALIDATION_SITE.utcOffsetLabel})`,
+      },
+    ],
+    [
+      {
+        value:
+          "Start UTC",
+      },
+      {
+        value:
+          firstDataset?.startTimestamp ??
+          "",
+      },
+    ],
+    [
+      {
+        value:
+          "Start site local",
+      },
+      {
+        value:
+          firstDataset
+            ? formatValidationLocalDateTime(
+                firstDataset.startTimestamp,
+                firstDataset.timezone,
+              )
+            : "",
+      },
+    ],
+    [
+      {
+        value:
+          "End UTC",
+      },
+      {
+        value:
+          firstDataset?.endTimestamp ??
+          "",
+      },
+    ],
+    [
+      {
+        value:
+          "End site local",
+      },
+      {
+        value:
+          firstDataset
+            ? formatValidationLocalDateTime(
+                firstDataset.endTimestamp,
+                firstDataset.timezone,
+              )
+            : "",
+      },
+    ],
+    [
+      {
+        value:
+          "Validation class",
+      },
+      {
+        value:
+          "Cross-model verification",
+      },
+    ],
+  ];
+
   const matrixRows = [
     [
       {
@@ -2559,6 +2966,12 @@ export async function exportValidationExplainabilityWorkbook(
   ];
 
   await writeExcelFile([
+    {
+      data:
+        reportMetadataRows,
+      sheet:
+        "Report Metadata",
+    },
     {
       data:
         matrixRows,

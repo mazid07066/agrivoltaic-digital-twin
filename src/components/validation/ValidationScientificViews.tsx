@@ -28,6 +28,10 @@ import {
   buildResidualSeries,
   reduceComparisonForVisualization,
   supportsEnergyComparison,
+  FENI_VALIDATION_SITE,
+  formatValidationAxisTick,
+  formatValidationDateRange,
+  formatValidationLocalDateTime,
 } from "@/lib/validationStudio";
 
 import {
@@ -423,7 +427,14 @@ export default function ValidationScientificViews({
   const periodLabel =
     rawSeries.length >
     0
-      ? `${rawSeries[0]!.timestamp.slice(0, 10)} to ${rawSeries[rawSeries.length - 1]!.timestamp.slice(0, 10)}`
+      ? formatValidationDateRange(
+          rawSeries[0]!.timestamp,
+          rawSeries[
+            rawSeries.length -
+              1
+          ]!.timestamp,
+          FENI_VALIDATION_SITE.timezone,
+        )
       : "No synchronized period";
 
   const title =
@@ -834,11 +845,42 @@ export default function ValidationScientificViews({
                     minTickGap={
                       44
                     }
+                    tickFormatter={(
+                      value,
+                    ) =>
+                      view ===
+                      "residual"
+                        ? formatValidationAxisTick(
+                            String(
+                              value,
+                            ),
+                            FENI_VALIDATION_SITE.timezone,
+                          )
+                        : String(
+                            value,
+                          )
+                    }
                   />
 
                   <YAxis />
 
-                  <Tooltip />
+                  <Tooltip
+                    labelFormatter={(
+                      value,
+                    ) =>
+                      view ===
+                      "residual"
+                        ? formatValidationLocalDateTime(
+                            String(
+                              value,
+                            ),
+                            FENI_VALIDATION_SITE.timezone,
+                          )
+                        : String(
+                            value,
+                          )
+                    }
+                  />
 
                   <Legend />
 

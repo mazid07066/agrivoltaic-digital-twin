@@ -163,18 +163,20 @@ function formatTimestamp(
     resolution ===
     "monthly"
   ) {
-    return date.toLocaleDateString(
+    return new Intl.DateTimeFormat(
       "en-GB",
       {
+        timeZone:
+          FENI_VALIDATION_SITE.timezone,
+
         month:
           "short",
 
         year:
           "numeric",
-
-        timeZone:
-          "UTC",
       },
+    ).format(
+      date,
     );
   }
 
@@ -182,9 +184,12 @@ function formatTimestamp(
     resolution ===
     "daily"
   ) {
-    return date.toLocaleDateString(
+    return new Intl.DateTimeFormat(
       "en-GB",
       {
+        timeZone:
+          FENI_VALIDATION_SITE.timezone,
+
         day:
           "2-digit",
 
@@ -193,31 +198,15 @@ function formatTimestamp(
 
         year:
           "numeric",
-
-        timeZone:
-          "UTC",
       },
+    ).format(
+      date,
     );
   }
 
-  return date.toLocaleString(
-    "en-GB",
-    {
-      day:
-        "2-digit",
-
-      month:
-        "short",
-
-      hour:
-        "2-digit",
-
-      minute:
-        "2-digit",
-
-      timeZone:
-        "UTC",
-    },
+  return formatValidationAxisTick(
+    timestamp,
+    FENI_VALIDATION_SITE.timezone,
   );
 }
 
@@ -406,7 +395,14 @@ export default function ValidationComparisonPanel({
 
           periodLabel:
             rangedSeries.length > 0
-              ? `${rangedSeries[0]!.timestamp.slice(0, 10)} to ${rangedSeries[rangedSeries.length - 1]!.timestamp.slice(0, 10)}`
+              ? formatValidationDateRange(
+                  rangedSeries[0]!.timestamp,
+                  rangedSeries[
+                    rangedSeries.length -
+                      1
+                  ]!.timestamp,
+                  FENI_VALIDATION_SITE.timezone,
+                )
               : "No displayed period",
 
           resolutionLabel:
