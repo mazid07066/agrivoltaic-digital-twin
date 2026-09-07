@@ -292,18 +292,7 @@ export async function exportValidationWorkbook(
     [
       {
         value:
-          "Period start UTC",
-      },
-      {
-        value:
-          input.series[0]?.timestamp ??
-          "",
-      },
-    ],
-    [
-      {
-        value:
-          "Period start site local",
+          "Period start",
       },
       {
         value:
@@ -318,21 +307,7 @@ export async function exportValidationWorkbook(
     [
       {
         value:
-          "Period end UTC",
-      },
-      {
-        value:
-          input.series[
-            input.series.length -
-              1
-          ]?.timestamp ??
-          "",
-      },
-    ],
-    [
-      {
-        value:
-          "Period end site local",
+          "Period end",
       },
       {
         value:
@@ -446,14 +421,7 @@ export async function exportValidationWorkbook(
     [
       {
         value:
-          "timestamp_utc",
-        fontWeight:
-          "bold" as const,
-      },
-
-      {
-        value:
-          "timestamp_site_local",
+          "timestamp_local",
         fontWeight:
           "bold" as const,
       },
@@ -471,11 +439,6 @@ export async function exportValidationWorkbook(
 
     ...input.series.map(
       (point) => [
-        {
-          value:
-            point.timestamp,
-        },
-
         {
           value:
             formatValidationLocalDateTime(
@@ -531,25 +494,13 @@ export async function exportValidationWorkbook(
       },
       {
         value:
-          "Start UTC",
+          "Start local",
         fontWeight:
           "bold" as const,
       },
       {
         value:
-          "Start site local",
-        fontWeight:
-          "bold" as const,
-      },
-      {
-        value:
-          "End UTC",
-        fontWeight:
-          "bold" as const,
-      },
-      {
-        value:
-          "End site local",
+          "End local",
         fontWeight:
           "bold" as const,
       },
@@ -586,18 +537,10 @@ export async function exportValidationWorkbook(
         },
         {
           value:
-            dataset.startTimestamp,
-        },
-        {
-          value:
             formatValidationLocalDateTime(
               dataset.startTimestamp,
               dataset.timezone,
             ),
-        },
-        {
-          value:
-            dataset.endTimestamp,
         },
         {
           value:
