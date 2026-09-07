@@ -33,6 +33,13 @@ import {
   renderResearchChartPngDataUrl,
 } from "@/lib/validationStudio/export";
 
+import {
+  FENI_VALIDATION_SITE,
+  formatValidationAxisTick,
+  formatValidationDateRange,
+  validationSiteCoordinateLabel,
+} from "@/lib/validationStudio";
+
 import styles from "./ValidationComparisonPanel.module.css";
 
 import type {
