@@ -17,7 +17,7 @@
 | Phase 8 | Complete | Multi-site, Supabase, Land/Rooftop, environmental abstraction and immutable site foundation. |
 | Phase 9 | Complete with later corrective extensions | Scenarios, reproducible execution, analytics, electrical model, validation export and scientific corrections through 9O. |
 | Phase 10 | **FORMALLY COMPLETE** | Measured-data foundation using World Bank/ESMAP Feni data. |
-| Phase 11 | **Not formally closed in the preserved record** | Gold synchronization architecture and implementation work exist, but a final closure checkpoint is not currently preserved. |
+| Phase 11 | **FORMALLY COMPLETE** | Deterministic Feni Gold synchronization, provider alignment, bounded cleaning, causal features, chronological splits, manifests and fingerprints completed and verified. |
 | Phase 12 | **Active / advanced** | Validation & Explainability Studio, cross-model comparison, exact timestamp-intersection alignment, local-time reporting and research exports. |
 
 ### Roadmap note
@@ -282,9 +282,9 @@ Recorded at closure:
 # 7. Phase 11 — Feni Gold Synchronization Foundation
 
 ## Status
-# **NOT FORMALLY CLOSED IN THE AVAILABLE DEVELOPMENT RECORD**
+# **FORMALLY COMPLETE**
 
-Substantial Phase 11 design and implementation work exists, but the preserved record does not currently contain a final closure checkpoint equivalent to Phase 10.
+Phase 11 implementation, verification and closure are now preserved in `AGRITWIN_PHASE_11_CLOSURE.md` and the Phase 11 branch history.
 
 ## Intended branch
 `feature/phase-11-feni-gold-synchronization`

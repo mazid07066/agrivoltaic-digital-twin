@@ -295,8 +295,8 @@ Final acceptance verification completed successfully.
 - dependency audit: PASS — 0 vulnerabilities
 - expensive Phase 9N catalogue-calibration test: PASS with narrow
   per-test timeout increased from 30 seconds to 60 seconds
-- Git implementation commit: pending at time of document generation
-- remote push/upstream verification: pending at time of document generation
+- Git implementation commit: PASS — `c04470e` (`feat(data): complete Phase 11 Feni Gold synchronization`)
+- remote push/upstream verification: PASS — local and remote resolve to `c04470e38eb6ad5f493516d99269f823ed56cef9`
 
 The catalogue-calibration timeout change does not alter scientific
 behavior. The test repeatedly completed near or above the previous
