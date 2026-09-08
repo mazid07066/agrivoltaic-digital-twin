@@ -119,14 +119,21 @@ export function evaluateSynchronization(
   });
 
   for (
-    const dataset
-    of datasets
+    const dataset of
+    datasets
   ) {
     validateDatasetBounds(
       dataset,
     );
   }
 
+  /*
+   * Source ranges are provenance information only.
+   *
+   * Different source start/end dates do not prevent comparison.
+   * The actual comparison period is derived from the exact
+   * canonical timestamps common to every dataset.
+   */
   const starts =
     datasets.map(
       (dataset) =>
@@ -146,29 +153,34 @@ export function evaluateSynchronization(
   const exactDateRange =
     new Set(
       starts,
-    ).size === 1 &&
+    ).size ===
+      1 &&
     new Set(
       ends,
-    ).size === 1;
+    ).size ===
+      1;
 
   checks.push({
     key:
       "date_range",
 
     label:
-      "Date range",
+      "Source date ranges",
 
     level:
-      exactDateRange
-        ? "PASS"
-        : "FAIL",
+      "PASS",
 
     message:
       exactDateRange
-        ? "All datasets use the same absolute start and end timestamps."
-        : "Dataset date ranges differ. Comparison is blocked until the ranges are aligned explicitly.",
+        ? "All source datasets declare the same start and end timestamps."
+        : "Source date ranges differ. Validation will use only exact timestamps shared by every dataset; no date-range truncation, interpolation or extrapolation is applied.",
   });
 
+  /*
+   * Timezone declarations remain an explicit compatibility
+   * requirement for this Phase 12 workflow. Timestamps themselves
+   * are compared only after canonical absolute-time conversion.
+   */
   const timezones =
     new Set(
       datasets.map(
@@ -196,9 +208,16 @@ export function evaluateSynchronization(
     message:
       timezoneMatch
         ? `All datasets declare ${datasets[0].timezone}.`
-        : "Dataset timezones differ. Apply and record an explicit timezone conversion before comparison.",
+        : "Dataset timezone declarations differ. Resolve and record the timezone basis before comparison.",
   });
 
+  /*
+   * Different declared sampling intervals are allowed.
+   *
+   * No resampling occurs here. For example, hourly and 30-minute
+   * datasets can be compared at timestamps that exist exactly in
+   * both datasets.
+   */
   const resolutions =
     new Set(
       datasets.map(
@@ -219,14 +238,25 @@ export function evaluateSynchronization(
       "Sampling resolution",
 
     level:
-      resolutionMatch
-        ? "PASS"
-        : "FAIL",
+      "PASS",
 
     message:
       resolutionMatch
-        ? `All datasets use ${datasets[0].intervalMinutes}-minute observations.`
-        : "Sampling resolutions differ. Explicit aggregation or resampling is required.",
+        ? `All datasets declare ${datasets[0].intervalMinutes}-minute observations.`
+        : `Source sampling intervals differ (${[
+            ...resolutions,
+          ]
+            .sort(
+              (
+                left,
+                right,
+              ) =>
+                left -
+                right,
+            )
+            .join(
+              ", ",
+            )} minutes). Comparison uses exact common timestamps only; no resampling is applied.`,
   });
 
   const duplicateSummary =
@@ -261,16 +291,26 @@ export function evaluateSynchronization(
       "Duplicate timestamps",
 
     level:
-      duplicateCount === 0
+      duplicateCount ===
+      0
         ? "PASS"
         : "FAIL",
 
     message:
-      duplicateCount === 0
+      duplicateCount ===
+      0
         ? "No duplicate timestamps were detected."
         : `${duplicateCount} duplicate timestamp(s) were detected across the datasets.`,
   });
 
+  /*
+   * This is the authoritative Phase 12 alignment policy:
+   *
+   *      exact canonical timestamp intersection
+   *
+   * There is no nearest-neighbour matching, rounding,
+   * interpolation, extrapolation or automatic resampling.
+   */
   const timestampSets =
     datasets.map(
       datasetTimestampSet,
@@ -281,35 +321,29 @@ export function evaluateSynchronization(
       timestampSets,
     );
 
-  const exactTimestampAlignment =
-    timestampSets.every(
-      (set) =>
-        set.size ===
-          timestampSets[0].size &&
-        [...set].every(
-          (timestamp) =>
-            timestampSets[0].has(
-              timestamp,
-            ),
-        ),
-    );
+  const commonTimestamps =
+    [
+      ...commonTimestampSet,
+    ].sort();
 
   checks.push({
     key:
       "timestamps",
 
     label:
-      "Timestamp alignment",
+      "Timestamp overlap",
 
     level:
-      exactTimestampAlignment
+      commonTimestamps.length >
+      0
         ? "PASS"
         : "FAIL",
 
     message:
-      exactTimestampAlignment
-        ? `${commonTimestampSet.size} timestamps align exactly across all datasets.`
-        : `${commonTimestampSet.size} timestamps are common, but the complete timestamp sets do not match.`,
+      commonTimestamps.length >
+      0
+        ? `${commonTimestamps.length} exact canonical timestamp(s) are shared by all datasets. Only these observations will be compared.`
+        : "The datasets do not contain any exact canonical timestamps in common.",
   });
 
   const sharedVariables =
@@ -352,19 +386,21 @@ export function evaluateSynchronization(
     commonVariables:
       sharedVariables,
 
-    commonTimestamps:
-      [
-        ...commonTimestampSet,
-      ].sort(),
+    commonTimestamps,
 
+    /*
+     * The comparison bounds are the bounds of the exact
+     * intersection, not the declared bounds of any one source.
+     */
     startTimestamp:
-      exactDateRange
-        ? starts[0]
-        : null,
+      commonTimestamps[0] ??
+      null,
 
     endTimestamp:
-      exactDateRange
-        ? ends[0]
-        : null,
+      commonTimestamps[
+        commonTimestamps.length -
+          1
+      ] ??
+      null,
   };
 }

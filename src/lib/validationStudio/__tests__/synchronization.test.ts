@@ -152,45 +152,78 @@ describe(
     );
 
     it(
-      "blocks comparison when date ranges differ",
-      () => {
-        const report =
-          evaluateSynchronization(
-            [
-              dataset(),
+  "allows different source date ranges when exact timestamps overlap",
+  () => {
+    const report =
+      evaluateSynchronization(
+        [
+          dataset(),
 
-              dataset({
-                id:
-                  "source-b",
+          dataset({
+            id:
+              "source-b",
 
-                name:
-                  "PVlib",
+            name:
+              "PVlib",
 
-                endTimestamp:
-                  "2018-01-01T03:00:00+06:00",
-              }),
-            ],
-          );
+            endTimestamp:
+              "2018-01-01T03:00:00+06:00",
+          }),
+        ],
+      );
 
-        expect(
-          report.ready,
-        ).toBe(
-          false,
-        );
-
-        expect(
-          report.checks.find(
-            (check) =>
-              check.key ===
-              "date_range",
-          )?.level,
-        ).toBe(
-          "FAIL",
-        );
-      },
+    expect(
+      report.ready,
+    ).toBe(
+      true,
     );
 
-    it(
+    expect(
+      report.checks.find(
+        (check) =>
+          check.key ===
+          "date_range",
+      )?.level,
+    ).toBe(
+      "PASS",
+    );
+
+    expect(
+      report.checks.find(
+        (check) =>
+          check.key ===
+          "timestamps",
+      )?.level,
+    ).toBe(
+      "PASS",
+    );
+
+    expect(
+      report.commonTimestamps,
+    ).toHaveLength(
+      3,
+    );
+
+    expect(
+      report.startTimestamp,
+    ).toBe(
+      report.commonTimestamps[
+        0
+      ],
+    );
+
+    expect(
+      report.endTimestamp,
+    ).toBe(
+      report.commonTimestamps[
+        report.commonTimestamps.length -
+          1
+      ],
+    );
+  },
+);
+
+it(
       "blocks silent timezone mismatch",
       () => {
         const utc =
@@ -274,70 +307,92 @@ describe(
     );
 
     it(
-      "detects missing timestamps even when bounds match",
-      () => {
-        const incomplete =
-          dataset({
-            id:
-              "source-b",
+  "uses exact timestamp intersection when timestamps are missing",
+  () => {
+    const incomplete =
+      dataset({
+        id:
+          "source-b",
 
-            name:
-              "Measured",
+        name:
+          "Measured",
 
-            sourceType:
-              "measured",
+        sourceType:
+          "measured",
 
-            observations:
-              [
-                {
-                  timestamp:
-                    "2018-01-01T00:00:00+06:00",
+        observations:
+          [
+            {
+              timestamp:
+                "2018-01-01T00:00:00+06:00",
 
-                  values: {
-                    acPowerKw:
-                      0,
-                  },
-                },
+              values: {
+                acPowerKw:
+                  0,
+              },
+            },
 
-                {
-                  timestamp:
-                    "2018-01-01T02:00:00+06:00",
+            {
+              timestamp:
+                "2018-01-01T02:00:00+06:00",
 
-                  values: {
-                    acPowerKw:
-                      20,
-                  },
-                },
-              ],
-          });
+              values: {
+                acPowerKw:
+                  20,
+              },
+            },
+          ],
+      });
 
-        const report =
-          evaluateSynchronization(
-            [
-              dataset(),
-              incomplete,
-            ],
-          );
+    const report =
+      evaluateSynchronization(
+        [
+          dataset(),
+          incomplete,
+        ],
+      );
 
-        expect(
-          report.ready,
-        ).toBe(
-          false,
-        );
-
-        expect(
-          report.checks.find(
-            (check) =>
-              check.key ===
-              "timestamps",
-          )?.level,
-        ).toBe(
-          "FAIL",
-        );
-      },
+    expect(
+      report.ready,
+    ).toBe(
+      true,
     );
 
-    it(
+    expect(
+      report.checks.find(
+        (check) =>
+          check.key ===
+          "timestamps",
+      )?.level,
+    ).toBe(
+      "PASS",
+    );
+
+    expect(
+      report.commonTimestamps,
+    ).toHaveLength(
+      2,
+    );
+
+    expect(
+      report.startTimestamp,
+    ).toBe(
+      report.commonTimestamps[
+        0
+      ],
+    );
+
+    expect(
+      report.endTimestamp,
+    ).toBe(
+      report.commonTimestamps[
+        1
+      ],
+    );
+  },
+);
+
+it(
       "rejects duplicate timestamps",
       () => {
         const duplicated =
