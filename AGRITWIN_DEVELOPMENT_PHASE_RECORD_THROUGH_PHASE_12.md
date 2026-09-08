@@ -1,9 +1,9 @@
 # AgriTwin Development Phase Record — Through Phase 12
 
-**Project:** Weather-, Sensor- and Geometry-Aware Digital Twin for Agrivoltaic Land and Rooftop Systems  
-**Repository:** `~/Projects/agrivoltaic-digital-twin`  
-**Current OS:** Debian 13  
-**Current branch:** `feature/phase-12-validation-explainability`  
+**Project:** Weather-, Sensor- and Geometry-Aware Digital Twin for Agrivoltaic Land and Rooftop Systems
+**Repository:** `~/Projects/agrivoltaic-digital-twin`
+**Current OS:** Debian 13
+**Current branch:** `feature/phase-12-validation-explainability`
 **Purpose:** Persistent development record of completed phases, verified checkpoints, scientific constraints, unresolved work, and the next development sequence.
 
 ---
@@ -330,36 +330,39 @@ while preserving UTC synchronization, provenance, QC, deterministic preprocessin
 ### Explicit exclusion
 **No final ML training in Phase 11.**
 
-## Missing formal closure evidence
+## Formal closure evidence
 
-A final Phase 11 closure record should still capture:
-1. final branch and HEAD;
-2. implementation commit(s);
-3. final Gold schema;
-4. aggregation behavior;
-5. QC rules;
-6. interpolation bounds;
-7. synchronization tests;
-8. causal-feature tests;
-9. chronological-split tests;
-10. complete Vitest count;
-11. TypeScript result;
-12. production build result;
-13. remote push/upstream verification;
-14. known limitations;
-15. formal closure statement.
+Phase 11 subsequently completed all required formal closure activities.
+
+The authoritative closure record is:
+
+`AGRITWIN_PHASE_11_CLOSURE.md`
+
+Final closure includes:
+
+- implementation commit `c04470e`;
+- formal closure commit `6915576`;
+- full repository verification;
+- Phase 10 + 11 Python verification;
+- full Vitest verification;
+- TypeScript verification;
+- production-build verification;
+- dependency audit;
+- remote branch preservation;
+- scientific-boundary documentation.
+
 
 ## Current judgement
-**Phase 11 is functionally advanced/substantially implemented, but not formally closed in the preserved development record.**
+**Phase 11 is formally complete. Its implementation, full repository verification, closure record and remote preservation are complete.**
 
-A short retrospective Phase 11 audit should be performed before claiming an unbroken formally closed Phase 10 -> Phase 11 -> Phase 12 sequence.
+Phase 11 subsequently completed its retrospective audit, full repository verification, formal closure and remote preservation. The Phase 10 -> Phase 11 -> Phase 12 sequence is now formally closed.
 
 ---
 
 # 8. Phase 12 — Cross-Model Validation & Explainability Studio
 
 ## Status
-**ACTIVE / ADVANCED**
+**FORMALLY COMPLETE**
 
 ## Branch
 `feature/phase-12-validation-explainability`
@@ -547,55 +550,27 @@ Expected stack:
 
 ---
 
-# 12. Immediate Phase 11 retrospective audit
+# 12. Phase 10 -> Phase 11 -> Phase 12 closure continuity
 
-Before declaring Phase 11 complete:
+The previously planned retrospective Phase 11 audit has been completed.
 
-## Git
-- locate `feature/phase-11-feni-gold-synchronization`
-- identify final HEAD
-- identify implementation commit(s)
-- verify remote branch
+The formally preserved sequence is now:
 
-## Code
-Verify:
-- Gold aggregation
-- provider synchronization
-- QC propagation
-- interpolation limits
-- solar/cyclical features
-- causal lag/rolling features
-- chronological splits
-- manifests/fingerprints
+- Phase 10 — formally complete;
+- Phase 11 — formally complete and remotely preserved;
+- Phase 12 — formally complete and remotely preserved.
 
-## Scientific
-Confirm:
-- UTC synchronization
-- deterministic aggregation
-- no leakage
-- no silent interpolation
-- no Phase 11 ML training
+Phase 12 was reconciled with the formally closed Phase 11 history before
+its final acceptance and closure.
 
-## Gates
-Run:
-- TypeScript
-- `git diff --check`
-- targeted Phase 11 tests
-- full Vitest
-- production build
+No Phase 11 final ML training was performed, preserving the intended
+scientific boundary.
 
-## Closure artifact
-Create:
-`AGRITWIN_PHASE_11_CLOSURE.md`
-
-If all pass, change Phase 11 status in this master record to **COMPLETE**.
-
----
 
 # 13. Recommended next sequence
 
-1. **Retrospective Phase 11 closure audit**
-2. **Final deployed Phase 12 acceptance**
+1. **Phase 11 formal closure completed**
+2. **Phase 12 final acceptance completed**
    - import
    - mismatched date ranges
    - timestamp intersection
