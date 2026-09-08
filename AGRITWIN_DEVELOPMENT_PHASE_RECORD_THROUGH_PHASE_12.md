@@ -18,7 +18,7 @@
 | Phase 9 | Complete with later corrective extensions | Scenarios, reproducible execution, analytics, electrical model, validation export and scientific corrections through 9O. |
 | Phase 10 | **FORMALLY COMPLETE** | Measured-data foundation using World Bank/ESMAP Feni data. |
 | Phase 11 | **FORMALLY COMPLETE** | Deterministic Feni Gold synchronization, provider alignment, bounded cleaning, causal features, chronological splits, manifests and fingerprints completed and verified. |
-| Phase 12 | **Active / advanced** | Validation & Explainability Studio, cross-model comparison, exact timestamp-intersection alignment, local-time reporting and research exports. |
+| Phase 12 | **FORMALLY COMPLETE** | Validation & Explainability Studio, cross-model comparison, exact timestamp-intersection alignment, local-time reporting, explainability and research exports completed and verified. |
 
 ### Roadmap note
 
